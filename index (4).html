@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TAB">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1B1917">
+<title>TAB — Dossiers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#F5F0E7; --surface:#FFFFFF; --surface-2:#FBF6EE;
+    --accent:#C68A4E; --steel:#93A7AD;
+    --text:#3E362C; --text-muted:#948A79; --danger:#C17A63; --success:#84A377; --border:#E7DECD;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
+  .app{max-width:900px;margin:0 auto;padding:26px 18px 60px;}
+  header.top{border-bottom:2px solid var(--border);padding-bottom:14px;margin-bottom:18px;}
+  header.top h1{font-family:'Oswald',sans-serif;font-weight:700;font-size:24px;margin:0;letter-spacing:.4px;}
+  header.top p{margin:2px 0 0;color:var(--text-muted);font-size:12.5px;}
+
+  .fil{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:12.5px;color:var(--text-muted);margin-bottom:18px;}
+  .fil span.sep{color:var(--border);}
+  .fil button.lien{background:none;border:none;color:var(--steel);font-family:'Inter',sans-serif;font-size:12.5px;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:2px;}
+  .fil button.lien:hover{color:var(--accent);}
+  .fil .courant{color:var(--text);}
+
+  .panneau-header{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
+  .panneau-header h2{font-family:'Oswald',sans-serif;font-size:19px;margin:0;font-weight:600;}
+  .panneau-header .sous{color:var(--text-muted);font-size:12px;margin-top:2px;}
+  .ct-info{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted);margin-bottom:16px;}
+  .ct-info b{color:var(--text);font-weight:500;}
+  .ct-info.retard b{color:var(--danger);}
+  .ct-info button.discret{padding:2px 4px;}
+
+  .alerte{border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:9px;background:var(--surface);padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(62,54,44,0.05);}
+  .alerte.rouge{border-left-color:var(--danger);}
+  .alerte-titre{font-family:'Oswald',sans-serif;font-size:12.5px;font-weight:600;letter-spacing:.3px;color:var(--text);margin-bottom:8px;}
+  .alerte-ligne{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid var(--border);font-size:12.5px;}
+  .alerte-ligne:first-of-type{border-top:none;}
+  .alerte-ligne .desc{color:var(--text);cursor:pointer;}
+  .alerte-ligne .desc b{color:var(--accent);font-weight:600;}
+  .alerte-ligne .desc:hover{text-decoration:underline;}
+  .alerte-ligne .quand{color:var(--text-muted);white-space:nowrap;margin-left:8px;}
+
+  .statut-select{display:inline-flex;gap:5px;flex-wrap:wrap;margin:6px 0;}
+  .statut-opt{font-family:'Oswald',sans-serif;font-size:10.5px;font-weight:600;letter-spacing:.3px;padding:3px 9px;border-radius:5px;border:1px solid var(--border);cursor:pointer;color:var(--text-muted);background:linear-gradient(180deg,var(--surface) 0%,var(--surface-2) 100%);box-shadow:0 1px 0 rgba(62,54,44,0.06);transition:all .12s ease;}
+  .statut-opt.actif{transform:translateY(1px);box-shadow:inset 0 1px 3px rgba(62,54,44,0.14);}
+  .statut-opt.actif.en_attente{border-color:var(--steel);color:#5F767D;background:rgba(147,167,173,0.16);}
+  .statut-opt.actif.valide{border-color:var(--success);color:#5C7D50;background:rgba(132,163,119,0.18);}
+  .statut-opt.actif.refuse{border-color:var(--danger);color:#A5573F;background:rgba(193,122,99,0.18);}
+  .commande-btn{font-size:11px;padding:4px 9px;margin-top:6px;}
+
+  .recherche-zone{margin-bottom:16px;}
+  .recherche-zone input{font-size:14px;}
+  .resultat-groupe{margin-bottom:14px;}
+  .resultat-groupe-titre{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;}
+
+  .badge.paye{background:rgba(132,163,119,0.16);color:#5C7D50;}
+  .badge.non_paye{background:rgba(193,122,99,0.16);color:#A5573F;}
+  .paiement-toggle{margin:6px 0;}
+
+  .total-ligne{font-size:12.5px;color:var(--text-muted);margin-top:2px;}
+  .total-ligne b{color:var(--accent);font-weight:600;}
+  .fiche-tarifs .total{color:var(--accent);font-weight:600;}
+
+  .barre-outils{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .barre-outils button{font-size:12px;padding:7px 12px;}
+  input[type="file"].cache{display:none;}
+
+  .fiche-actions-bas{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+  .fiche-actions-bas button{font-size:11.5px;padding:6px 10px;}
+
+  #zone-impression{display:none;}
+  @media print{
+    body > *{display:none !important;}
+    #zone-impression{display:block !important;position:absolute;top:0;left:0;width:100%;}
+  }
+
+  button{font-family:'Oswald',sans-serif;font-weight:500;letter-spacing:.2px;border-radius:8px;border:1px solid var(--border);background:linear-gradient(180deg,var(--surface) 0%,var(--surface-2) 100%);color:var(--text);padding:9px 14px;cursor:pointer;font-size:13px;box-shadow:0 2px 0 rgba(62,54,44,0.07),0 1px 3px rgba(62,54,44,0.06);transition:all .12s ease;}
+  button:active{transform:translateY(1px);box-shadow:0 0 0 rgba(62,54,44,0),inset 0 1px 3px rgba(62,54,44,0.1);}
+  button.primaire{background:linear-gradient(180deg,#D69A5E 0%,var(--accent) 100%);border-color:#B87D42;color:#FFF8F0;box-shadow:0 2px 0 rgba(150,95,40,0.35),0 2px 5px rgba(150,95,40,0.18);}
+  button.primaire:hover{background:linear-gradient(180deg,#DCA46A 0%,#CC9257 100%);}
+  button.primaire:active{box-shadow:inset 0 1px 4px rgba(90,55,20,0.35);}
+  button.discret{background:none;border:none;color:var(--text-muted);padding:4px 6px;font-family:'Inter',sans-serif;font-size:12px;box-shadow:none;}
+  button.discret:active{box-shadow:none;transform:none;}
+  button.discret:hover{color:var(--danger);}
+
+  input, textarea, select{background:var(--surface-2);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;border-radius:7px;padding:9px 10px;width:100%;}
+  input:focus, textarea:focus, select:focus{outline:none;border-color:var(--accent);background:var(--surface);}
+  textarea{resize:vertical;min-height:56px;}
+
+  .dossier{display:flex;align-items:center;gap:12px;background:linear-gradient(180deg,var(--surface) 0%,var(--surface-2) 100%);border:1px solid var(--border);border-radius:10px;padding:13px 14px;margin-bottom:9px;cursor:pointer;box-shadow:0 3px 0 rgba(62,54,44,0.05),0 2px 6px rgba(62,54,44,0.07);transition:all .12s ease;}
+  .dossier:hover{box-shadow:0 4px 0 rgba(62,54,44,0.06),0 4px 12px rgba(62,54,44,0.1);transform:translateY(-1px);}
+  .dossier:active{box-shadow:inset 0 2px 4px rgba(62,54,44,0.12);transform:translateY(2px);}
+  .dossier .tab{font-family:'Oswald',sans-serif;font-weight:600;font-size:12px;background:var(--accent);color:#FFF8F0;border-radius:5px;padding:4px 8px;white-space:nowrap;}
+  .dossier .info{flex:1;min-width:0;}
+  .dossier .titre-d{font-size:14px;color:var(--text);}
+  .dossier .compte{font-size:11px;color:var(--text-muted);white-space:nowrap;}
+
+  .vide{border:1px dashed var(--border);border-radius:6px;padding:36px 18px;text-align:center;color:var(--text-muted);font-size:13px;margin-bottom:14px;}
+
+  .formulaire{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:18px;display:none;}
+  .formulaire.ouvert{display:block;}
+  .formulaire h3{font-family:'Oswald',sans-serif;font-size:13px;margin:0 0 12px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);}
+  .grille{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+  .grille.trois{grid-template-columns:1fr 1fr 1fr;}
+  @media (max-width:520px){.grille, .grille.trois{grid-template-columns:1fr 1fr;}}
+  @media (max-width:400px){.grille, .grille.trois{grid-template-columns:1fr;}}
+  .champ{display:flex;flex-direction:column;gap:5px;}
+  .champ label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;}
+  .champ.large{grid-column:1/-1;}
+  .champ .apercu-calcul{font-size:12px;color:var(--accent);margin-top:2px;}
+  .form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px;}
+  .erreur{color:var(--danger);font-size:12px;margin:-4px 0 8px;}
+
+  .type-select{display:flex;gap:8px;margin-bottom:12px;}
+  .type-opt{flex:1;border:1px solid var(--border);border-radius:7px;padding:9px;text-align:center;cursor:pointer;font-family:'Oswald',sans-serif;font-size:12.5px;letter-spacing:.3px;color:var(--text-muted);background:linear-gradient(180deg,var(--surface) 0%,var(--surface-2) 100%);box-shadow:0 2px 0 rgba(62,54,44,0.06),0 1px 2px rgba(62,54,44,0.05);transition:all .12s ease;}
+  .type-opt.actif{border-color:var(--accent);color:#A56C36;background:linear-gradient(180deg,rgba(198,138,78,0.16) 0%,rgba(198,138,78,0.09) 100%);box-shadow:inset 0 2px 4px rgba(150,95,40,0.16);transform:translateY(1px);}
+
+  .defaut-ligne{display:flex;gap:6px;margin-bottom:6px;}
+  .defaut-ligne input{flex:1;}
+  .btn-ajout-ligne{align-self:flex-start;font-size:12px;padding:6px 10px;margin-top:2px;}
+
+  .piece-carte{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:10px 10px 8px;margin-bottom:8px;}
+  .piece-carte .piece-entete{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .piece-carte .piece-nom{flex:1;}
+  .piece-champs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+  @media (max-width:480px){.piece-champs{grid-template-columns:1fr 1fr;}}
+  .piece-champs .champ label{font-size:10px;}
+  .piece-sous-total{text-align:right;font-size:11.5px;color:var(--accent);margin-top:6px;}
+
+  .fiche{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:15px 17px 13px;margin-bottom:15px;box-shadow:0 1px 3px rgba(62,54,44,0.05);}
+  .fiche::before{content:"";position:absolute;top:0;left:16px;right:16px;height:1px;background-image:radial-gradient(circle,var(--surface-2) 1.5px,transparent 1.5px);background-size:8px 1px;}
+  .fiche-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px;}
+  .fiche-titre-ligne{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .badge{font-family:'Oswald',sans-serif;font-size:10.5px;font-weight:600;letter-spacing:.4px;padding:3px 8px;border-radius:5px;transition:all .12s ease;}
+  .paiement-toggle .badge{box-shadow:0 2px 0 rgba(62,54,44,0.06);}
+  .paiement-toggle .badge:active{box-shadow:inset 0 1px 3px rgba(62,54,44,0.15);transform:translateY(1px);}
+  .badge.intervention{background:rgba(198,138,78,0.14);color:#A56C36;}
+  .badge.devis{background:rgba(147,167,173,0.16);color:#5F767D;}
+  .fiche-titre{font-family:'Oswald',sans-serif;font-weight:600;font-size:15px;color:var(--text);}
+  .fiche-date{font-size:12px;color:var(--text-muted);white-space:nowrap;text-align:right;}
+  .fiche-date .km{display:block;color:var(--text-muted);}
+  .fiche-pieces{font-size:13px;line-height:1.5;margin:4px 0 10px;color:var(--text);}
+  .fiche-pieces b{color:var(--text-muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:3px;}
+
+  .fiche-tarifs{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--text-muted);margin:8px 0;}
+  .fiche-tarifs b{color:var(--text);font-weight:500;}
+
+  .bloc-titre{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin:10px 0 6px;border-top:1px solid var(--border);padding-top:9px;}
+  .defauts-liste{list-style:none;margin:0;padding:0;font-size:13px;}
+  .defauts-liste li{padding:3px 0 3px 14px;position:relative;}
+  .defauts-liste li::before{content:"—";position:absolute;left:0;color:var(--danger);}
+
+  .pieces-jointes{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
+  .vignette{width:64px;height:64px;border-radius:8px;border:1px solid var(--border);object-fit:cover;cursor:pointer;background:var(--surface-2);box-shadow:0 2px 0 rgba(62,54,44,0.06),0 2px 5px rgba(62,54,44,0.08);transition:all .12s ease;}
+  .vignette:active{box-shadow:inset 0 2px 4px rgba(62,54,44,0.15);transform:translateY(1px);}
+  .vignette-doc{width:64px;height:64px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-muted);text-align:center;cursor:pointer;box-shadow:0 2px 0 rgba(62,54,44,0.06),0 2px 5px rgba(62,54,44,0.08);transition:all .12s ease;}
+  .vignette-doc:active{box-shadow:inset 0 2px 4px rgba(62,54,44,0.15);transform:translateY(1px);}
+
+  .fiche-actions{position:absolute;top:11px;right:11px;}
+  .upload-label{display:inline-block;font-size:12px;padding:8px 12px;border:1px dashed var(--border);border-radius:7px;color:var(--text-muted);cursor:pointer;text-align:center;transition:all .12s ease;}
+  .upload-label:hover{border-color:var(--accent);color:var(--accent);}
+  .upload-label:active{transform:translateY(1px);}
+  .apercus{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+  .apercu-item{position:relative;}
+  .apercu-item .retirer{position:absolute;top:-6px;right:-6px;background:var(--danger);color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;line-height:16px;text-align:center;cursor:pointer;border:none;padding:0;}
+</style>
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjogIlRBQiIsICJzaG9ydF9uYW1lIjogIlRBQiIsICJkZXNjcmlwdGlvbiI6ICJEb3NzaWVycyBjbGllbnRzLCB2w6loaWN1bGVzIGV0IGludGVydmVudGlvbnMiLCAic3RhcnRfdXJsIjogIi4vIiwgInNjb3BlIjogIi4vIiwgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsICJiYWNrZ3JvdW5kX2NvbG9yIjogIiNGNUYwRTciLCAidGhlbWVfY29sb3IiOiAiI0M2OEE0RSIsICJvcmllbnRhdGlvbiI6ICJwb3J0cmFpdCIsICJpY29ucyI6IFt7InNyYyI6ICJkYXRhOmltYWdlL3BuZztiYXNlNjQsaVZCT1J3MEtHZ29BQUFBTlNVaEVVZ0FBQU1BQUFBREFDQUlBQUFEZHZ2dFFBQUFKelVsRVFWUjRuTzNjU1d3YjF4M0g4VmxJaXF1NDA3Smx5WksxeTdXczJJMFYyVkVSdEVFTXBFR0F0Q2lNQWtWUm81Y0VMYnFjMGtPQjlsQ2doYnNGNktGQmkxemNRNXREMEJWb0RhZUZFeSt4NDlaSzdGajdFa3RlSkM0aUtWRVVSWkV6UFJoUlhVZWVOK0ovNXRFWi9qNG5XMzR6N3dIK2lqTWNEa2U4ZVBKNUFhQlNVclVYQUo5c0NBaElFQkNRSUNBZ1FVQkFnb0NBQkFFQkNRSUNFZ1FFSkFnSVNCQVFrQ0FnSUVGQVFJS0FnQVFCQVFrQ0FoSUVCQ1FJQ0VnUUVKQWdJQ0JCUUVDQ2dJQUVBUUVKQWdJU0JBUWtDQWhJRUJDUUlDQWdRVUJBZ29DQUJBRUJDUUlDRWdRRUpBZ0lTQkFRa0NBZ0lFRkFRSUtBZ0FRQkFRa0NBaElFQkNRSUNFZ1FFSkFnSUNCQlFFQ0NnSUFFQVFFSkFnSVNCQVFrQ0FoSUVCQ1FJQ0FnUVVCQWdvQ0FCQUVCQ1FJQ0VnUUVKQWdJU0JBUWtDQWdJRUZBUUlLQWdBUUJBUWtDQWhJRUJDUUlDRWdRRUpBZ0lDQkJRRUNDZ0lBRUFRR0p6ZkE5ZGozM25kRGVnNGJ2Vmo5VlZTNzk2bXZNWWFHMlExMmYvN2JPZlNaR3owMmQrUzFwV1lJZ3lmYUJiN3hXMGFhcVdpNHJTcWxjWEN1djU0dXJtZldWVkNHOXNKcWN5eTFNbDlaWGlRdWpNRDZnVDRwb3o1RCt3YUgyeDZXenA1U05kZlBXbzBrVVpac3MyMlM3VS9BRVhhSEcvLzJMcXViaXM2bXBLNG5SOHh2NUxQK1YxZWdoek9ieUJWc082Qjh2MjUzaDlzZk5XMC9sUk5HN1krK2VvOGNQbnZobDYxTmZ0VGs5bk9ldjBZQ2lYVWRFU2Q3ZUp0dDV4ZUpQa20wTmZVLzNmK1VudmwyZFhPZmxPZG1qbzRJYS9MdTc2M3dSTXhaaklMdmIzL3ZDeS83ZHZkeG1yTVdBM0pFbVQ3UjUrOXVKMFo2anhxL0dhSkpzNzN6Mm13NVBrTk4wZktaNXBNUXFQUmc5NGtleFRUYW50L25vY1Q1ejFWeEFvaVJIdW85VXRxM1RIK044aGxHeGFOZWd3eHZpTUZITnZZMFA3T216dStvcjNqeldNN1J5WjhMQTlYemN0ZDkvZnpVeDk4QVBKWnZENFEzVzcrcmErZGd4ZDdpSnZSZFJESGNjdmp2OEQxT1dlQi9qQXhyLzJ5dmJHbi80eFZkbGgxdDd6T2lmZjVhNWVhM3lOZDBuMWtzNkRJVTdEcysrOVR1bFZEUmtNZm9wcFdJaHMxaklMQ2JHTHJSOTd1dlJuaWVabS9oMzkzQUlxTFlPWVRhbk45alNUOW1EN0hDRjJqNXQwSElxb1NybDZYKytWc2pHbVNQLzczcWphV29yb0VqWG9DaHJ2ZWlxNVJMekNCWFQ4ZHR2S2xVcHgyK2NaUTdqY3c1VVd3RXgzMzlsNXE0dmZ2QXY3VEgrcG4xOC9tODA1QlpubVdNazJTYUtwdi8vMWxCQTduQ2pKOWFpUFNZNWZtbHA1aXJqRkVjVTlaeUNtS3BjWEdPT1VWVkZWUld6VjFKREFUR3Y0aWlsNHRMczFYS3hrUDd3ZmUyUlZUK0t5UTRYYzB5cHdPTlQrbG9KU0JTbGFEZmpPbko2ZHZqZTUrMnB5Y3ZhSTUyQkJ0L09kc01XdDMzZVdDdHpURDQxejJFbHRSSlFZRStmM2UzWEhwT2N1SFR2RCtuWjk4b2JCZTNCVmJ3cUxVcHliTjlubU1PVzUwYzVMS1pXQW1LZXRaU0wrY3hIUnk2bFZFelBER3VQRDNjTVNMTGRtTVZ0aHlqSmV6OTd3aGxvMEI2bXFrcGkvQ0tIOWRURWxXaGJuU2ZJdWtseWFmcXFVaTV0L2pVNWNTblNOYWk1VDNldzdXQnFnbkd3TTRvazJ4M2VZSDFqZDhPQlovUjhFaHkvOGRiNmNvTER3bW9pb0VqWEU1TG01UjlCRUpJVDc5ei8xOHpjOWRKNjNsYW5kWWs4MWpOa1JrQjlYLzRSY1ErRnpNTE44Mzh3WkRGTU5YRUlZNTZ2bE5aV3N2TWo5LzlFTFplV3B2K3R2WlcvK1ZQYzdwclFyNUNOai96cHAzcmU1eHZDK2dHNVFydThPL1pxajBsTnZhc3E1UWQvK05FNTljT0lvbFR4Qi9zbVNZNWZ2UDc2RC9nY3ZPNnhma0I2N3Y1SmJ0VktkbjVrWTIyRnRmTXFYeERhcEpRM0prLy9ldkwwcTN3dS8yeXlla0NpeUh5UktPYlN5N2UzK1B4TFZaV2xxU3ZhMjdwQ2pjeVhOejRrMmQ1eDdLWDl4My9vYjlySGRWNmVrL0VYYU43UFBFMUpUVjRXQkhYTGY5cnlsZWtCajlSdGl0NGRlM3RmZUxuOW1SY2xtNFBQakJZUHFPTGoxejNMZDhhTHViVDI1cEhPSjdRLzRlY3YybjJrOXd2ZjQ5T1FsUU9TSGU1Z0crUHlUeUVienkzT1BQU2ZWVFUxOWE3MkhteE9UNmoxc1FxV1p5cGZRM3ZIc1pjNFRQUm8vZW9ZSzlMSnZsak1mS3VWbXJpOHMvK1k5cGhvNzFDS2RiYWszNWEzdEFxaWFITzRITjZnSjlZYTdoZ0l0dlFKZ3FpOW4xRGJvWERIQVBOelBTSXJ2d0pGZGR5OXlqekxXVm1ZV2w5T2FvOEpOTzluZnRCR3BhcWw5WHcrZFRzeGVuN3NMeisvOGNhUFM0VWNjNlBtSTE5aWRrWmsyWUNjZ1FaZkErTUQ4M3pxZGo1MWk3bXI1Q1RyZ3BBa1IvbGVFRnErUFRiMjExODg3TngvazlNZjgrL3VNWFVsbGoyRTZibDUzaDF1SFB6V0tVT21pL1k4ZWVmcTN3M1psVTRyZDZlV1pvYVpEMElKdEJ6STNoclJIa05oMFZjZ1VXVGUvV01zZDdpSmVidWo0VEtzRzk4RVFURDdNcFUxQTZyS2Jjdjg3M010NXBhWVkrcDhZVlBYWU0yQUt2N3lNa1cwYzNDN1Qvd2dZNThnMjV5TTc5d1JXVEFnMmVFS3RSM2lQNi9ONVF1Mjl2T2NzYTdlM0ZjWFBTd1lVTGhqZ051Ri9BZHcvbGdqb09NWldhVjFjKy9yc0dCQXhDOHZVd1JiRHRoZFBqNXorWFoxNm5uSTJycU83N0JTV0MwZ1oyQ0hiMmRIdFdZWEpUblN4ZU9Da0g5M2IvZHozOVZ6RHBTTHM3K0NTR0cxNjBCVi84cGZ0R2ZvN251bmpkK3ZLTXAyVjUwdjVJbTFSam9IQW52NmRHNlgrZENZaDFJOGpNVUMwblg1Wi9ic3FZVnJiMWF3ZDRjM2VPakVLNEtvOVh2dmlUYTdJMDM1Wk9YZnlhTGZFNzJwa0kxbmI1bjc1UjVMSGNMOFRiM014eGdxNWRJRDk4L3JWOHlsTS9NM21NT3FjaEZoUy9QdnZNSDh1SVBJVWdIcE9YNmxaNjVTYnZwTWpKNWpqb2wwYi9zUnNHWklUVjJwK0ZkRlArc0VKTnVkWVIxUDdvbVB2RTJaWlduNlA4d3ZQTmhkOWZyUFVVeXlmR2Q4NnN4dk9FeGtuWURDSFljbGU1MzJtT0pxSmp2M0FXVVdwVlRVYzRkTkZTOGxDSUlRSDNsNzlJOG4rVHhYM3pvbjBYb3U0aVhHenRPZmVCSWZPUmZiOTVUMm1HQkx2ODNwNGZ3RkNVRVFWaE0zNXk2OG5xSDlrbXlMUlFKeSttUDFqZXpucHlaRzJHY3dUQ3QzSnd1WkJlMXZwNHV5TGRKMVpPSDlNL1RwOU5oWVcwblBEaWZITHBqOW51dmpMQkpRdFBzbzg2cGFibUY2TFgzWGtPa1NveGVhQnIrb1BTYldNMlIwUUtxcUtFcHBvMXpNYjZ6bGlybFVJUnZQcDI3bEZtZnl5VnRtdjl0NkdQSGl5ZWVyTWpGWWczVk9vcUVxRUJDUUlDQWdRVUJBZ29DQUJBRUJDUUlDRWdRRUpBZ0lTQkFRa0NBZ0lFRkFRSUtBZ0FRQkFRa0NBaElFQkNRSUNFZ1FFSkFnSUNCQlFFQ0NnSUFFQVFFSkFnSVNCQVFrQ0FoSUVCQ1FJQ0FnUVVCQWdvQ0FCQUVCQ1FJQ0VnUUVKQWdJU0JBUWtDQWdJRUZBUUlLQWdBUUJBUWtDQWhJRUJDUUlDRWdRRUpBZ0lDQkJRRUNDZ0lBRUFRRUpBZ0lTQkFRa0NBaElFQkNRSUNBZ1FVQkFnb0NBQkFFQkNRSUNFZ1FFSkFnSVNCQVFrQ0FnSUVGQVFJS0FnQVFCQVFrQ0FoSUVCQ1FJQ0VnUUVKQWdJQ0JCUUVDQ2dJQUVBUUVKQWdJU0JBUWsvd1Z1ZDNwbS96ZTJWd0FBQUFCSlJVNUVya0pnZ2c9PSIsICJzaXplcyI6ICIxOTJ4MTkyIiwgInR5cGUiOiAiaW1hZ2UvcG5nIiwgInB1cnBvc2UiOiAiYW55IG1hc2thYmxlIn0sIHsic3JjIjogImRhdGE6aW1hZ2UvcG5nO2Jhc2U2NCxpVkJPUncwS0dnb0FBQUFOU1VoRVVnQUFBZ0FBQUFJQUNBSUFBQUI3R2tPdEFBQWNXRWxFUVZSNG5PM2RhV3liOTMzQThlZmhKWklTSlVva2RWaXlMTXV5Uk5sTzdOaU9IUjhwc3FKM2wzWmRlcXpkMWkxRE1SUnIwWmZEaGhZYnRoNURPeXhvaDczYVZtd3JzTFJvVTZ4cDAyN3J0clpJMGppeG5jdHg0a095WTh1VzVVT2tLRkVIUmZIWUMzVlo0bE9pK0h2K0QvbjdmdDdac2YrLy93dEhYL0k1N1dlKzlnRUxBS0NQeC9RR0FBQm1FQUFBVUlvQUFJQlNCQUFBbENJQUFLQVVBUUFBcFFnQUFDaEZBQUJBS1FJQUFFb1JBQUJRaWdBQWdGSUVBQUNVSWdBQW9CUUJBQUNsQ0FBQUtFVUFBRUFwQWdBQVNoRUFBRkNLQUFDQVVnUUFBSlFpQUFDZ0ZBRUFBS1VJQUFBb1JRQUFRQ2tDQUFCS0VRQUFVSW9BQUlCU0JBQUFsQ0lBQUtBVUFRQUFwUWdBQUNoRkFBQkFLUUlBQUVvUkFBQlFpZ0FBZ0ZJRUFBQ1VJZ0FBb0JRQkFBQ2xDQUFBS0VVQUFFQXBBZ0FBU2hFQUFGQ0tBQUNBVWdRQUFKUWlBQUNnRkFFQUFLVUlBQUFvUlFBQVFDa0NBQUJLRVFBQVVJb0FBSUJTQkFBQWxDSUFBS0FVQVFBQXBRZ0FBQ2hGQUFCQUtRSUFBRW9SQUFCUWlnQUFnRklFQUFDVUlnQUFvQlFCQUFDbENBQUFLRVVBQUVBcEFnQUFTaEVBQUZDS0FBQ0FVZ1FBQUpRaUFBQ2dGQUVBQUtVSUFBQW9SUUFBUUNrQ0FBQktFUUFBVUlvQUFJQlNCQUFBbENJQUFLQVVBUUFBcFFnQUFDaEZBQUJBS1FJQUFFb1JBQUJRaWdBQWdGSUVBQUNVSWdBQW9CUUJBQUNsQ0FBQUtFVUFBRUFwQWdBQVNoRUFBRkNLQUFDQVVnUUFBSlFpQUFDZ0ZBRUFBS1VJQUFBb1JRQUFRQ2tDQUFCS0VRQUFVSW9BQUlCU0JBQUFsQ0lBQUtBVUFRQUFwUWdBQUNoRkFBQkFLUUlBQUVvUkFBQlFpZ0FBZ0ZJRUFBQ1VJZ0FBb0JRQkFBQ2xDQUFBS0VVQUFFQXBBZ0FBU2hFQUFGQ0tBQUNBVWdRQUFKUWlBQUNnRkFFQUFLVUlBQUFvUlFBQVFDa0NBQUJLRVFBQVVJb0FBSUJTQkFBQWxDSUFBS0FVQVFBQXBRZ0FBQ2hGQUFCQUtRSUFBRW9SQUFCUWlnQUFnRklFQUFDVUlnQUFvQlFCQUFDbENBQUFLRVVBQUVBcEFnQUFTaEVBQUZDS0FBQ0FVZ1FBQUpRaUFBQ2dGQUVBQUtVSUFBQW9SUUFBUUNrQ0FBQktFUUFBVUlvQUFJQlNCQUFBbENJQUFLQVVBUUFBcFFnQUFDaEZBQUJBS1FJQUFFb1JBQUJRaWdBQWdGSUVBQUNVSWdBQW9CUUJBQUNsQ0FBQUtFVUFBRUFwQWdBQVNoRUFBRkNLQUFDQVVnUUFBSlFpQUFDZ0ZBRUFBS1VJQUFBb1JRQUFRQ2tDQUFCS0VRQUFVSW9BQUlCU0JBQUFsQ0lBQUtBVUFRQUFwUWdBQUNoRkFBQkFLUUlBQUVvUkFBQlFpZ0FBZ0ZJRUFBQ1VJZ0FBb0JRQkFBQ2xDQUFBS0VVQUFFQXBBZ0FBU2hFQUFGQ0tBQUNBVWdRQUFKUWlBQUNnRkFFQUFLVUlBQUFvNVRPOWdlb0x0WGJ0K04ydm10NUYzWm9aUC9ucTk3L2l3S0JFY3YvQXV6N3R3S0EzS3hYeVIvL3hzOFY4enVHNTFlTHgrdmQrNXB1bWQzR0RjcmxVS3BaTGhYS3BXQzRWeThWaXFiaFV6QzhVRnVlTGkvT0Z4Ym5pNHZ4U2JqWS9tODVuVTR1ejZYdzJYU291bWQ2MENuVVlBTlNIUlBLZzgwTTl2a0JzWU0vVjE1NTBmblE5czIyUDEyZDVWL0hUWm1raG01dWFtRTlkbkU5ZG5FOWRtRTlkTE9UbTVEYW9GZ0dBR3dXYVdsdldielV5T2pGOGtBQVk1dzlGL0tGSVpOM2dHNytUeTF5ZXZuaHladnprelBqSi9HemE0TjdxQ1FHQUd5V1NCeXpiTmpLNnVYdW9vVG0rT0ROcFpEcHVKUmp0REVZN083WTlZRmxXTG5NNU5Yb2tOWEo0N3RwNTAvdXFiUVFBYnBSSUhqQTMzRTRrRDF3OC9MaTVEZUFPZ3RITzd0MFBkdTkrTUplNU1qbnk3SlZqUDh2UFRabmVWRTNpS2lDNFRsTkhmNml0MitBR2pKeCtRQVdDMFk2ZWV6KzQ4K0ZIQnQ3MTZjYjJQdFBicVQxOEE0RHJKSVlOLy93TlJqc2lYWnV6RXlObXQ0RVZzajNlUkhKL0lybC82dHhMNTU1OE5KZTViSHBITllOdkFIQVgyK3VMRDk1bmVoZm1JNFFLdFBidDJQSGJYOWx3NEdQZVFORDBYbW9EQVlDN3RQWnQ5d1diVE8vQ2lnL3U5WGo5cG5lQlZiTzl2blc3M24vM3g3L1VtT2cxdlpjYVFBRGdMb25oKzAxdndiSXN5eHNJdDI3YWFYb1hxRkN3cFgzYlIvKzhmY3ZiVEcvRTdRZ0FYTVFYaXJUMmJUZTlpMTlwZDBlS1VCbVAxNy9wSFovcTNmZGgweHR4TlFJQUY0a1AzbWQ3dktaMzhTc3R2ZHY4NFJiVHU4Q2FkTi83Z2ZYM1BXUjZGKzVGQU9BaXJ2clFiZHVlUkhLLzZWMWdyWHIyZkxCNzk0T21kK0ZTQkFCdUVXcnJkdHVsM0Z3TFZCOTY5MzNZMUpORlhJNEF3QzNhM2ZmVE5oeGJ6OFVrOWNDMk43LzcweHpRdXhFQmdEdllkdHlWeDF0Y2NsVVMxc2dmYnRuMDlvZE43OEoxQ0FCY0lkcTdMZERZYW5vWE54RWYydWVlODlKWWk5YituYzNkU2RPN2NCY0NBRmR3N2RGMmY2ZzV1dUZ1MDd0QWRXeTQvK09XWmVZcHMrNUVBR0NlTnhCcTY5OWxlaGUzNU5vNFliV2EyamUyOWQ5amVoY3VRZ0JnWG16ekhvOHZZSG9YdDlTNjhSNWZRNlBwWGFBNjJyYzlZSG9MTGtJQVlKN0xQMko3dkw2WUM1NVBoNnFJYnJnNzBPVEdzMDFHRUFBWTF0Q2NhSDdUbS8vY0tURnM4QVUxcUNiYjl2QytoemZ3UGdBWWxoZys2UDd6Y3BIT2dWQnIxOExVaE9tTm1KYysrOEtwSjc1ZXdWLzArQnQ4RFdGdklPd1BSUnJiKzVvNk5rWTZCeHFhRTlYZTRKMUZOOXc5ZnZSSHpzOTFJUUlBdzR5Ky9YRVZFc2tEWTRjZU03MkxHbFphV3N3dkxWclcxSUpsell5ZlhQN041blZESFhmOVd0dkFIby9YdVo5RmtjNU5IbCtnVk1nN050RzE2akFBQzFNVGgvNzJrNmFtMng3dmZaLzlKOUVSVStkZU92bkRSMFJIT0taNTNWQ3dwZDMwTGxZa2tUdzRkdWo3bGxVMnZaRzZNblBwMU15bFU4SG5makR3emorTWRBMDRNOVQyK2lKZG02Y3Z2T3JNT0RmakhBQk1xcUZqNjRGSVcwdlBzT2xkMUtkYzV2S3JqMzFwL01nUEhadm9XR3hjamdEQUdJOHZFTnU4eC9RdVZzSGxWeXZWdEhLNU5IYm9zWW1YL3RPWmNjRm9wek9EWEk0QXdKaTIvbDNlUU5qMExsWWhObkN2eDk5Z2VoZjE3TnlUajJiT0gzTmdVTENsdzRFcDdrY0FZRXdOSGY5WjV2RTN4QWJ1TmIyTCtsWSs5OVMzeStXUzlKaGdsQUJZRmdHQUtZSEdhRXZ2TnFIRjVTN3c0Q2lRdElYMCtPVEpYMHBQOFljaVRsNTM1Rm9FQUdiRWgvYmJ0c2cvdjNLNU5QYkw3MHFzYkZsV1M4OXdReVFtdERpV1RaNSsxb0VwSE0yekNBQk1rZnNvUFhQeHhKVlhmMUZjeXNrc2I4ZHI1TWFGMmpVemZxcFVYSktlUWdBc0FnQWpHdHY3d3JFZW9jVW5UejliS3VTblhuOVJhSDBYdnJtc3pwUUsrZGtyWjZXbmVQMUI2Ukh1UndCZ2dOekgvM0t4a0I0OWFsblc1T25uaEVZRW81MlJUcTRpbDdVME55MDl3dVAxUzQ5d1B3SUFwOWtlYjN4d245RGltYkZYQ290emxtVmx6aDhyTE00TFRlRlVzTFNsaGF6MGlIS3BJRDNDL1FnQW5CYnQyKzRQUllRV2YrUDhZYmxZU0o4NUtqUWxOcmlYYTBoRUZSZm5wRWVVQ3VLbkdkeVBBTUJwY3NmUVM0VjgrdXdMYi94UzdtSVNYME5qNjBaZUxDWElLLzhHSGdlK1pMZ2ZBWUNqZk1IRzFyNGRRb3RQblgyeHRMVDR4aTluTHJ5MnREQWpOQ3N4ZkwvUXlyQXN5eDlxRWwyL1ZNZ1g4d3VpSTJvQ0FZQ2o0b1AzMldJSFR5WkgzdktSdjF3dXBVYU9DTTJLYnJqTEgyb1dXaHorY0l2bytybnBxNkxyMXdvQ0FFZkpmWEF1NXVjejUxNis3amRUWWtlQmJJODNQaVIxS2xzNWo5ZlgxTkV2T21JaFBTNjZmcTBnQUhCT3FMVkw3bi9zOUpublM4WHJyK3VZdVhRNlA1c1dtc2hSSUNHUmRVTWVYMEIweE96VmM2THIxd29DQU9lSS9zU2NQSFhvWnI5ZFRvMGNGcHJZbU9nTng5WUxMYTZaQXc4SnoxNDZMVDJpSmhBQU9NVzJFMFA3aGRaZVdwaVp2dkRhVGYrVDZJTmx1Q0dnNm9JdDdlMWIzaVk2b3BDYmMrQk80NXBBQU9DUWxwNHRnVWliME9LcGtTTzNlb2J3N0pXemNtZjhFa21wUjlxcDFYdmdZN2JIS3pwaTZ2VVh5NldpNkloYXdiOWRPRVQyK00vcG14Ny8rUlc1VThIK2NFdDB3MTFDaXl1MGZ1K0hISGpqd3JVVFQwbVBxQlVFQUU3dytvT3hUYnVFRnM5bjA5bExJN2Y1QTdKSGdaSWNCYXFPZFR2ZjE3UDNROUpURnFZbXBpK2VrSjVTSzdpZEhVNW9rM3laNHVUSXM1WlZ2czBmbUU5ZG5FK05oMlBkRXROYk4rMzBOWVRsbmp1a1FVTWt0dWtkbjJwWnY5V0JXVTYrZXQ3OUNBQ2NJUG9JNVpWOHdFK2RmamE4N3lHSjZSNnZQN1o1NzVYalA1ZFl2TzQxZGZSM2JIc2dQcmpQbWFmekw2VEhiM0cxbUZJRUFPSWFJdkhtbnFUUTRybk01YmtWWE5NOU9mTHNlcGtBV0phVkdENUlBTzdJNHd2NEdzTGVRTWdmYW01TWJHanMyQmpwM0JTTWRqcTVoN08vK0pZREx4eXVJUVFBNGhMSkE1WmxDeTIrd3VQN3VjeVZ1YXZuR3R2N0pQWVE2ZG9jakhia01sY2tGbmVidHY2ZCt6NzNMZE83cU1URXl6K2Q0ZWovVzNFU0dPSVN3NEx2VUZ6NUNWNU9CV3MyYytuVSthZStiWG9YcmtNQUlDdlN0Vm51YS83YzVOaEMrdElLLy9BZHp4V3ZoZWkzSEt4UmZqWjkraWQveDdYL055SUFrQ1Y2cjJ6cTFDbysxT2V6NmV6RXFOQk9HcHJqemQxRFFvdGpMZkp6bVJPUC84M1N2UGc3Sm1zUkFZQWdqOWNYMjd4WGJ2M3Judjk4NXo4dmVRVUlqNFZ3b1lXcGllUGYvY3Y1MUFYVEczRXBBZ0JCcmYyN2ZBMWhvY1d6RTZPTE01T3IraXVwa2NOeUY0SEVCdlpJUDhNU3E1S2RHRG4rdlM4dVpsZjNqMFFWQWdCQm9xZC9LM2pBdzlMQ2pOeDFJTjVBc0czVGJxSEZzU3FsUXY3ODA5OTU5YkV2RjNLenB2ZmlhZ1FBVXZ6aGxtaXYySE55eXVYSmtlY3ErSHVpMXdLSjN1K0dGWnE1ZU9MbFJ6OS82WVdmY01uL0hYRWZBS1RFaC9iSlBkWnhldnhFWmFmMTBxTkgreC80UGFIWFVyYXMzeHBvYXBON0JRMXViM3JzK1BnTFA1a2VPMjU2SXpXREFFQkt1K3pyWHlyOElGOVluTXVNSFcvZHVLT3EyL2svdHAxSTdoOC8rb1RJNHJpMXVXdm56L3ozUDh4ZEd6TzlrUnJESVNDSWFJejNodU5TYjhzcWw0cnAwY3JmOXM0ZFlmV25NYkZoOEgyZjY5My9VWWVmTFZIcitBWUFFYUxYUkdiT3YxSlluS3Y0cjArZGZhRlV5QXRkc1JOcVc5ZlUwYzhMcDV3WGJHbnYzdjNyM2J2Zm56bC8vTktMLzg2Qm9KWGdHd0Nxei9aNDQwUDc1TmEvL2V0ZjdxaTRsSnM2OTNLMU5uTWpiZ2d3eW81dXVHdkxiL3p4MW9jK0grbmFiSG96YmtjQVVIM1IzcnY4NFJhaHhVdUYvTlRaRjllNGlPZ2RZZkhCKzRST01tUGxtcnVIdG4za0MvMXYvd081TzFIcUFBRkE5WWwrQko1Ni9jWGlVbTZOaTJUT3ZWek1MMVJsUHpmeUJadGErN1lMTFk3VnNEdTJQYkQ5ZC82cWVSMVA2Ymc1QW9BcTh6V0VXL3QzeXExZmxWTzRwZUpTK3V3TGExL25Wa1JmZ0l4VkNUUzJidm5OUCttNjV6Mm1OK0pHQkFCVkZodTh6eU4yQUtTWW44OVU2ZkM5M0p2aUxjdHE3ZHZ1QzBYazFzZXEyQjV2My8yZjZMdi9Fenl4OVRvRUFGVW1laDFrK3N6enBXS2hLa3RseG83TFBTZkE5bmpqZy9jSkxZN0tkTjN6bnY2M1AyeDZGKzVDQUZCTndXaG5wR3RBYnYwcVhzSmZMaFZUbzBlcnRkcU5STytEUTJVNnRqM1F1LzhqcG5maElnUUExU1Q2TUp5bGhlejBoZGVxdUtEb1VhREc5cjV3ckZ0dWZWU21lL2VEN1Z2ZVpub1hia0VBVUVWMlBMbGZidlhVeU9IcXZ0UnBldnhFZmk1VHhRV3Z3MTNCN3JUeGdVL0szYVplV3dnQXFxYWxKOWtRaWN1dFgvMFA3T1h5V2g0cGNVZng1SDdiNW44eDEvSDRBb1B2K1NQdTFiQjRGQVNxU1BUYXgveHNldWJTNmFvdk8zbjZVT2YyZDFaOTJXV0J4dGFXM3EyWjg2OElyVzlFK3V3THA1NzRlbVYvMS9aNGJhL1A2MnZ3aDF2OGpTMmhhR2VvYlYya2N5Q2M2SFc0bEtHMjd1NWQ3Nzk0K0hFbmg3b1FBVUIxZVB3TmJRT0NyME9aUFAyY3hDdmRzeE9qaTlsSnVTOHVpZUdEZFJhQXRTaVhpdVZTc2JTMHVMUXdZNlV1dlBHNEhtOGczTlovVHp4NUlOcTd6YkhOZE4vN3dXc25ubDdNcGh5YjZFSjhQMFYxeERidDl2cURjdXV2OGZrL3Q1RTZYY21MWlZhb3JYK1hOeENTVzc4K0ZQUHoxMDcrOHNRUHZ2Ynl2LzVwK3N6enpnejFlSDA5ZXova3pDelhJZ0NvRHRISFArUXlsK2V1bmhOYVhQVHAwQjVmSUxaNWo5ejZkV1krTlg3cXg5ODQrY05IQ2d0WkI4WWxoZzhHb3gwT0RISXRBb0FxQ0RTMXRmUnNrVnQvVXZKRCt0eTE4d3RURTNMcjgzRFExWm82OTlLeDcveFpMbk5aZXBCdGV6cnZmb2YwRkRjakFLaUNSUEtBWlF2ZVpDOTMvR2RacXFMWEM2OVE4N3JCaHVhRTNQcDFhVEdiT3Y3WWx4MDRRSjhZdmwvb3pSQTFnUUNnQ2tRLzVNNVBYbGhJWDVKYjN4SitPclJsMlh3SnFNRFMvUFNwSDMranVuZCszTWpYRUc3dHYwZDBoSnNSQUt4VlUrZW1VR3VYM1ByU0gvOHR5MXFZbXBpZnZDQzNmaUo1UUc3eE9qWjM5ZHpFaS84aFBTVTJvUGNrRFFIQVdrbmY3eXA2a3ZaTlV3UXpFMnhwajZ3YmxGdS9qbDA4OGlPNU56Y3NhKzNiYm51OG9pTmNpL3NBc0NhMjF5ZjkyTXVkdi8rSTZQck9hQjgrbUJXNGthM3VGZlB6VjE5N3Ntdkh1K1ZHZUh5QnBvNys3TVNJM0FqWDRoc0ExcVJ0NHoyK1lLUHBYZFNBMk9hOW1rODJyb1hvalJyTDFMNHlqQUJnVFRpOXVVTGVRS2l0ZjVmcFhkU2s3T1V6aGR5YzZJakc5ajdSOVYyTEFLQnkvbEFrdXVGdTA3dW9HWWxoVGdWWHBqeDc1WXpvQUxVUDdpWUFxRng4YUwvYXMyY1ZhT25kRm1pTW10NUZUWksrRGpnWTdkVDVMNWtBb0hJYy8xa1YyL2JFaHdUZmwxREhGbWNtUmRlM1BWNS91RmwwaERzUkFGUW9IT3RwVEd3d3ZZc2FReklyVThqUFM0L3doMXVrUjdnUUFVQ0YrRmxXZ1hDc1IrMzV4clVvTFMxS2p3Z1FBR0NGT0pwUk1jSlpDZm5YeGVpOFNKY0FvQktjejZ4WWZIQ2Z6dk9OYStIeCtldGdoQXNSQUZTQ2o3RVY4NGNpMGI3dHBuZFJZL3doOFRPMHRrZmpZeEVJQUZiTkd3aTM5ZTgwdllzYTFrNCtWNmtoRXBNZVVTeUluMlp3SVFLQVZZc1A3dEY1d0xSYVd2dDI4UHlNVlFuSDEwdVBjT0E4c3dzUkFLeWE5T00vNjU0RFQ5Q3JKN2JINjhDbFV3UUF1RE9lYkZ3VmllSDdUVytoWmpSM0o3MytvUFNVSWdFQTdvalR2MVhSMU5FditoYWRldUxNdDZYOFhNYUJLVzVEQUxBcU5pKzNxaGErQkt5RVA5UWNUNHJmY1ZJcUx1Vm5wNlNudUJBQndDbzBkL04rODZwSkpQZGJ0bTE2RjI2M2Z0OURIcS80RmZxTDAxY3RxeXc5eFlVSUFGYUJENjFWRkdocWErblpZbm9YcnRiY005eXg5UUVIQnVVeVZ4eVk0a0lFQUN2bDhRVmlBL2VhM2tWZElhaTMwZEFjSDN6dlo1ejVralEzT2ViQUZCY2lBRmlwdGsyN3ZJR1E2VjNVbGRqQWJnZXViNmxGd1dqbnRvZSs0TUFOd010bUxwNTBacERiRUFDc0ZCOVhxODdqQzdUeHBlb0dzY0c5ZC8vV1h3UWliYzZNS3hjTDJjdWp6c3h5RzQyUHYwQUZBbzJ0MGZWYlRlK2lEclVQSDd4MjRpblR1M0NMeHZhK0Rmcy8ydEs3emNtaDJTdG5Tb1c4a3hQZGd3QmdSZUxDbDZ4Y08vSDA2SC85dmR6NmE3SHo0VWNhSW5HaHhadDdrZzJSK0dKVzlvMVhMdWNMTnJWdDJwVklIbXp1SG5KK2VucjBxUE5EWFlJQVlFV2tILytRR25sT2RQMjFTSTBjV2JmenZXTEwyNG5rZ1l0SEhoZGIzMFZzMjJQNy9GNWZnei9jN0crTWhxS2Q0VmgzVTlmbXh0aDZVMWZFbGt2RnlWUFBHQm50QmdRQWQ5YlV2akVjNjVaYnY3QTRseGs3THJmK0dxVkdEMHNHd0VvTTExSUEydnAzN3Z2Y3QwenZvbXFtWG45cGFTRnJlaGZHY0JJWWR5YjkrSWYwbWVmTHBhTG9pTFdZdlh4bU1adVNXejhZN1l4MGJaWmJIN2R4NWZqUFRXL0JKQUtBTzdBOVh1bUhzYVJHRG91dXYzYnAwU09pNi9PRUpTT3lsMGN6NTQrWjNvVkpCQUIzMExweGh5OFVrVnUva0p1YnZ2Q3EzUHBWSVoybzJPYTlEanp3QU5jWmUrWjdwcmRnR0FIQUhVaWYvazJmT2VybTR6L0xzc0pIZ1h3TjRWWmVzdWFzelBsak14ZFBtTjZGWVFRQXQrTUxOclVLdjhEV3pkZi92RWxaL2lnUWoxbDFUakcvY1Bibi8yeDZGK1lSQU54T2ZHaWY3Ulc4Vkt5UW01MnVrVTloMGtlQm9yMTMrY010b2lQd2h0ZC84UytMTTZydnZWaEdBSEE3MGljblU2TTFjUHhuV2ZieW1YdzJMYmUrN2ZIR2gvYkpyWTgzVEo0NmRPMmszbXYvMzR3QTRKWkNiZXVhMmplS2pxaVI0ei9MeXFsUjJTOEI3VHh0U2Q3TStLa3ovL05OMDd0d0N3S0FXNUwrK0wrMGtLMnRzM0RTQVFqSDF6ZkdlMFZIS0RkMzlkekpIejJpOXNrL055SUF1QVhiVGd6Sm5wWk1uemxhTHBkRVIxUlhka0wyS0pERkRRR1M1aWN2bkhqOHI0djVCZE1iY1JFQ2dKdUxydDhhYUdvVkhaRTZYVVBIZjVhSkh3V0tKL2ZiSHEvb0NKM1NaMTg0L3IwdmFuN3F3MDBSQU55Yy9QR2ZtWm54Mm5zTGgzUUEvS0htYU85ZG9pTVVHai82eEtrbnZsRmN5cG5laU9zUUFOeUVOeEJzMjdSYmRFUjY5RWh0SGY5WmxwMDRrNS9sS0ZETnlFMWZmZTNmdmpyMnpIZDF2dlA5am5nYUtHNGlOckRINHd1SWpwaDAvZk4vYnFHY0dqM1N0ZVBkY2dOYSszZjZHaG9MaTNOeUl6UW9sMHVYWC9ycDJLSEhPT1Y3RzN3RHdFMUl2LzF4YVg2NkZvLy9MSk8rSTh6ajljVUc5NHFPcUhQbGNtcmt1V09QZnY3Y1U0L3kwLy8yK0FhQTZ6VTB4NXU3QjBWSHBFYVBXT1ZhL1VxZW5Sak56NllEVFlKdnJFMGtEMTU1NVdkeTY5ZXJjcm1VR2psODhmRGpDK2x4MDN1cERRUUExMHNrRDFxVzdPdVphdXIrcnh1Skh3V0tkQTBFbzUyNXpHVzVFWFVtbDdsODliV25ycDE4T2o4N1pYb3Z0WVFBNEhyU0p5SHpjNW1aUzZkRlIwaExqUndXRFlCbFdlM0RCOGNPUFNZNm9nN2tNbGN5NTQ5Tm5uNDJPekZpZWk4MWlRRGdMU0pkbTRNdDdhSWowclY4L0dlWkEwZUI0c2tEWTRlK3o3VXJOMXBhbUptZEdNMk1IYytjUDVhYnZtcDZPN1dOQU9BdHBFLy9XcFkxV2R2SGY1YUpId1ZxaU1SYWVwSzE4cWhVT2VWU2NYRm1NamQ5WmU3cXVkbXJyODllZlYzNlpteFZDQUQrbjhmcmp3L3VFUjJSbjV2S1hxcUhiK3NPSEFWS0ROOWZwd0VvbDR2RlVxbFFMaGJMcFVLNVdDd1Y4MHU1MlVKdXRyQXdXMWljS3l6TTV1ZW1GbWV1NWFhdkxjNm1hdjM3b3B2WnozenRBNmIzQUFBd2dQc0FBRUFwQWdBQVNoRUFBRkNLQUFDQVVnUUFBSlFpQUFDZ0ZBRUFBS1VJQUFBb1JRQUFRQ2tDQUFCS0VRQUFVSW9BQUlCU0JBQUFsQ0lBQUtBVUFRQUFwUWdBQUNoRkFBQkFLUUlBQUVvUkFBQlFpZ0FBZ0ZJRUFBQ1VJZ0FBb0JRQkFBQ2xDQUFBS0VVQUFFQXBBZ0FBU2hFQUFGQ0tBQUNBVWdRQUFKUWlBQUNnRkFFQUFLVUlBQUFvUlFBQVFDa0NBQUJLRVFBQVVJb0FBSUJTQkFBQWxDSUFBS0FVQVFBQXBRZ0FBQ2hGQUFCQUtRSUFBRW9SQUFCUWlnQUFnRklFQUFDVUlnQUFvQlFCQUFDbENBQUFLRVVBQUVBcEFnQUFTaEVBQUZDS0FBQ0FVZ1FBQUpRaUFBQ2dGQUVBQUtVSUFBQW9SUUFBUUNrQ0FBQktFUUFBVUlvQUFJQlNCQUFBbENJQUFLQVVBUUFBcFFnQUFDaEZBQUJBS1FJQUFFb1JBQUJRaWdBQWdGSUVBQUNVSWdBQW9CUUJBQUNsQ0FBQUtFVUFBRUFwQWdBQVNoRUFBRkNLQUFDQVVnUUFBSlFpQUFDZ0ZBRUFBS1VJQUFBb1JRQUFRQ2tDQUFCS0VRQUFVSW9BQUlCU0JBQUFsQ0lBQUtBVUFRQUFwUWdBQUNoRkFBQkFLUUlBQUVvUkFBQlFpZ0FBZ0ZJRUFBQ1VJZ0FBb0JRQkFBQ2xDQUFBS0VVQUFFQXBBZ0FBU2hFQUFGQ0tBQUNBVWdRQUFKUWlBQUNnRkFFQUFLVUlBQUFvUlFBQVFDa0NBQUJLRVFBQVVJb0FBSUJTQkFBQWxDSUFBS0FVQVFBQXBRZ0FBQ2hGQUFCQUtRSUFBRW9SQUFCUWlnQUFnRklFQUFDVUlnQUFvQlFCQUFDbENBQUFLRVVBQUVBcEFnQUFTaEVBQUZDS0FBQ0FVZ1FBQUpRaUFBQ2dGQUVBQUtVSUFBQW9SUUFBUUNrQ0FBQktFUUFBVUlvQUFJQlNCQUFBbENJQUFLQVVBUUFBcFFnQUFDaEZBQUJBS1FJQUFFb1JBQUJRaWdBQWdGSUVBQUNVSWdBQW9CUUJBQUNsQ0FBQUtFVUFBRUFwQWdBQVNoRUFBRkNLQUFDQVVnUUFBSlFpQUFDZ0ZBRUFBS1VJQUFBb1JRQUFRQ2tDQUFCS0VRQUFVSW9BQUlCU0JBQUFsQ0lBQUtBVUFRQUFwUWdBQUNoRkFBQkFLUUlBQUVvUkFBQlFpZ0FBZ0ZJRUFBQ1VJZ0FBb0JRQkFBQ2xDQUFBS0VVQUFFQXBBZ0FBU2hFQUFGQ0tBQUNBVWdRQUFKUWlBQUNnRkFFQUFLVUlBQUFvUlFBQVFDa0NBQUJLRVFBQVVJb0FBSUJTQkFBQWxDSUFBS0FVQVFBQXBRZ0FBQ2hGQUFCQUtRSUFBRW9SQUFCUWlnQUFnRklFQUFDVUlnQUFvQlFCQUFDbENBQUFLUFcvbUNWeWttKzBwSGNBQUFBQVNVVk9SSzVDWUlJPSIsICJzaXplcyI6ICI1MTJ4NTEyIiwgInR5cGUiOiAiaW1hZ2UvcG5nIiwgInB1cnBvc2UiOiAiYW55IG1hc2thYmxlIn1dfQ==">
+</head>
+<body>
+<div id="verrou" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:999;align-items:center;justify-content:center;flex-direction:column;padding:20px;">
+  <div style="max-width:280px;width:100%;text-align:center;">
+    <h1 style="font-family:'Oswald',sans-serif;font-size:26px;margin:0 0 6px;">TAB</h1>
+    <p style="color:var(--text-muted);font-size:13px;margin:0 0 18px;">Entrez votre code pour continuer</p>
+    <input id="pin-saisie" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="Code" style="text-align:center;font-size:18px;letter-spacing:4px;margin-bottom:10px;" onkeydown="if(event.key==='Enter')verifierPin()">
+    <div class="erreur" id="pin-erreur" style="display:none;">Code incorrect.</div>
+    <button class="primaire" style="width:100%;margin-top:6px;" onclick="verifierPin()">Déverrouiller</button>
+  </div>
+</div>
+<div class="app" id="app-principal">
+  <header class="top">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+      <div><h1>TAB</h1><p>Dossiers clients — véhicules — interventions</p></div>
+      <button class="discret" title="Réglages" onclick="allerReglages()" style="font-size:18px;">⚙</button>
+    </div>
+  </header>
+
+  <div class="fil" id="fil"></div>
+
+  <div id="contenu"></div>
+</div>
+<div id="zone-impression"></div>
+<div id="lightbox" style="display:none;position:fixed;inset:0;background:rgba(30,26,20,0.88);z-index:1000;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:20px;"></div>
+
+<script>
+const CLE = 'tab-data';
+let data = { clients: [], vehicules: [], interventions: [], reglages: { tauxHoraire: 55, margePieces: 0.20, pin: null } };
+let vue = 'clients';
+let clientCourant = null;
+let vehiculeCourant = null;
+
+function genId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function esc(s){ const d=document.createElement('div'); d.textContent = s||''; return d.innerHTML; }
+function formatDate(iso){ if(!iso) return ''; const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; }
+
+async function charger(){
+  try{
+    const val = localStorage.getItem(CLE);
+    if(val) data = JSON.parse(val);
+  } catch(e){ /* pas de données encore */ }
+  if(!data.reglages) data.reglages = { tauxHoraire: 55, margePieces: 0.20, pin: null };
+  if(data.reglages.tauxHoraire === undefined) data.reglages.tauxHoraire = 55;
+  if(data.reglages.margePieces === undefined) data.reglages.margePieces = 0.20;
+  if(data.reglages.pin){
+    document.getElementById('app-principal').style.display = 'none';
+    document.getElementById('verrou').style.display = 'flex';
+  } else {
+    render();
+  }
+}
+function verifierPin(){
+  const saisie = document.getElementById('pin-saisie').value.trim();
+  if(saisie && saisie === data.reglages.pin){
+    document.getElementById('verrou').style.display = 'none';
+    document.getElementById('app-principal').style.display = 'block';
+    document.getElementById('pin-erreur').style.display = 'none';
+    render();
+  } else {
+    document.getElementById('pin-erreur').style.display = 'block';
+  }
+}
+async function sauvegarder(){
+  try{ localStorage.setItem(CLE, JSON.stringify(data)); }
+  catch(e){ console.error('Erreur de sauvegarde (mémoire du téléphone pleine ?)', e); alert('Espace de stockage insuffisant sur ce téléphone. Essayez de supprimer une photo jointe volumineuse.'); }
+}
+async function sauvegarderImg(id, dataUrl){
+  try{ localStorage.setItem('img:'+id, dataUrl); }
+  catch(e){ console.error(e); alert('Impossible d\'enregistrer cette image (espace de stockage insuffisant).'); }
+}
+async function chargerImg(id){
+  try{ return localStorage.getItem('img:'+id); }
+  catch(e){ return null; }
+}
+async function supprimerImg(id){
+  try{ localStorage.removeItem('img:'+id); } catch(e){}
+}
+
+function fichierVersBase64(file){
+  return new Promise((resolve, reject)=>{
+    const r = new FileReader();
+    r.onload = ()=>resolve(r.result);
+    r.onerror = ()=>reject(new Error('lecture échouée'));
+    r.readAsDataURL(file);
+  });
+}
+
+function render(){
+  renderFil();
+  if(vue === 'clients') renderClients();
+  else if(vue === 'vehicules') renderVehicules();
+  else if(vue === 'interventions') renderInterventions();
+  else if(vue === 'reglages') renderReglages();
+}
+function allerReglages(){ vue='reglages'; render(); }
+
+function renderFil(){
+  const fil = document.getElementById('fil');
+  if(vue === 'reglages'){
+    fil.innerHTML = `<button class="lien" onclick="allerClients()">Clients</button><span class="sep">/</span><span class="courant">Réglages</span>`;
+    return;
+  }
+  let html = `<button class="lien" onclick="allerClients()">Clients</button>`;
+  if(vue === 'vehicules' || vue === 'interventions'){
+    const c = data.clients.find(c=>c.id===clientCourant);
+    html += `<span class="sep">/</span>`;
+    html += vue === 'vehicules'
+      ? `<span class="courant">${esc(c?.prenom)} ${esc(c?.nom)}</span>`
+      : `<button class="lien" onclick="allerVehicules('${clientCourant}')">${esc(c?.prenom)} ${esc(c?.nom)}</button>`;
+  }
+  if(vue === 'interventions'){
+    const v = data.vehicules.find(v=>v.id===vehiculeCourant);
+    html += `<span class="sep">/</span><span class="courant">${esc(v?.marque)} ${esc(v?.modele)}</span>`;
+  }
+  fil.innerHTML = html;
+}
+
+function allerClients(){ vue='clients'; clientCourant=null; vehiculeCourant=null; render(); }
+function allerVehicules(id){ vue='vehicules'; clientCourant=id; vehiculeCourant=null; render(); }
+function allerInterventions(id){ vue='interventions'; vehiculeCourant=id; render(); }
+
+function renderReglages(){
+  const cont = document.getElementById('contenu');
+  const r = data.reglages;
+  const pinActif = !!r.pin;
+  cont.innerHTML = `
+    <div class="panneau-header">
+      <div><h2>Réglages</h2><div class="sous">Tarifs et sécurité de l'application</div></div>
+    </div>
+    <div class="formulaire ouvert">
+      <h3>Tarification</h3>
+      <div class="grille">
+        <div class="champ"><label>Taux horaire main d'œuvre (€ TTC)</label><input id="r-taux" type="number" value="${r.tauxHoraire}"></div>
+        <div class="champ"><label>Marge sur les pièces (%)</label><input id="r-marge" type="number" value="${Math.round(r.margePieces*100)}"></div>
+      </div>
+      <div class="erreur" id="r-erreur" style="display:none;"></div>
+      <div class="form-actions">
+        <button class="primaire" onclick="enregistrerReglagesTarifs()">Enregistrer</button>
+      </div>
+    </div>
+    <div class="formulaire ouvert">
+      <h3>Verrouillage de l'application</h3>
+      ${pinActif ? `
+        <p style="font-size:13px;color:var(--text-muted);margin:0 0 12px;">Un code de verrouillage est actif.</p>
+        <div class="form-actions" style="justify-content:flex-start;">
+          <button onclick="ouvrirChangementPin()">Modifier le code</button>
+          <button onclick="supprimerPin()">Désactiver</button>
+        </div>
+        <div id="zone-changement-pin" style="display:none;margin-top:12px;">
+          <div class="grille">
+            <div class="champ"><label>Nouveau code (4 à 8 chiffres)</label><input id="r-nouveau-pin" type="password" inputmode="numeric" maxlength="8"></div>
+            <div class="champ"><label>Confirmer le code</label><input id="r-confirme-pin" type="password" inputmode="numeric" maxlength="8"></div>
+          </div>
+          <div class="erreur" id="r-pin-erreur" style="display:none;"></div>
+          <div class="form-actions">
+            <button class="primaire" onclick="definirPin()">Valider</button>
+          </div>
+        </div>
+      ` : `
+        <p style="font-size:13px;color:var(--text-muted);margin:0 0 12px;">Aucun code n'est actif. Une fois activé, il sera demandé à chaque ouverture de l'application. <strong>Si tu l'oublies, il n'existe aucun moyen de le récupérer</strong> — pense à le noter quelque part en sécurité.</p>
+        <div class="grille">
+          <div class="champ"><label>Nouveau code (4 à 8 chiffres)</label><input id="r-nouveau-pin" type="password" inputmode="numeric" maxlength="8"></div>
+          <div class="champ"><label>Confirmer le code</label><input id="r-confirme-pin" type="password" inputmode="numeric" maxlength="8"></div>
+        </div>
+        <div class="erreur" id="r-pin-erreur" style="display:none;"></div>
+        <div class="form-actions">
+          <button class="primaire" onclick="definirPin()">Activer le verrouillage</button>
+        </div>
+      `}
+    </div>
+  `;
+}
+
+function ouvrirChangementPin(){
+  document.getElementById('zone-changement-pin').style.display = 'block';
+}
+
+async function enregistrerReglagesTarifs(){
+  const taux = parseFloat(document.getElementById('r-taux').value);
+  const marge = parseFloat(document.getElementById('r-marge').value);
+  const err = document.getElementById('r-erreur');
+  if(!(taux > 0) || isNaN(marge) || marge < 0){
+    err.textContent = 'Merci de renseigner un taux horaire et une marge valides.';
+    err.style.display = 'block';
+    return;
+  }
+  data.reglages.tauxHoraire = taux;
+  data.reglages.margePieces = marge / 100;
+  await sauvegarder();
+  alert('Réglages enregistrés.');
+}
+
+async function definirPin(){
+  const nouveau = document.getElementById('r-nouveau-pin').value.trim();
+  const confirme = document.getElementById('r-confirme-pin').value.trim();
+  const err = document.getElementById('r-pin-erreur');
+  if(!/^[0-9]{4,8}$/.test(nouveau)){
+    err.textContent = 'Le code doit contenir entre 4 et 8 chiffres.';
+    err.style.display = 'block';
+    return;
+  }
+  if(nouveau !== confirme){
+    err.textContent = 'Les deux codes ne correspondent pas.';
+    err.style.display = 'block';
+    return;
+  }
+  data.reglages.pin = nouveau;
+  await sauvegarder();
+  renderReglages();
+}
+
+async function supprimerPin(){
+  if(!confirm('Désactiver le verrouillage de l\'application ?')) return;
+  data.reglages.pin = null;
+  await sauvegarder();
+  renderReglages();
+}
+
+function infosVehicule(vehiculeId){
+  const v = data.vehicules.find(v=>v.id===vehiculeId);
+  const c = v ? data.clients.find(c=>c.id===v.clientId) : null;
+  return { v, c };
+}
+
+async function transformerEnIntervention(id){
+  const i = data.interventions.find(x=>x.id===id);
+  if(!i) return;
+  if(!confirm('Transformer ce devis en intervention réalisée ?')) return;
+  i.type = 'intervention';
+  i.statutPaiement = 'non_paye';
+  delete i.statutDevis;
+  delete i.piecesCommandees;
+  await sauvegarder();
+  render();
+}
+
+async function dupliquerFiche(id){
+  const original = data.interventions.find(x=>x.id===id);
+  if(!original) return;
+  const copie = {
+    ...original,
+    id: genId(),
+    date: new Date().toISOString().slice(0,10),
+    facturePhoto: false,
+    controles: [],
+    statutPaiement: original.type === 'intervention' ? 'non_paye' : undefined,
+    piecesCommandees: original.type === 'devis' ? false : undefined
+  };
+  data.interventions.push(copie);
+  await sauvegarder();
+  render();
+  ouvrirEditionIntervention(copie.id);
+}
+
+async function changerStatutDevis(id, statut){
+  const i = data.interventions.find(i=>i.id===id);
+  if(!i) return;
+  i.statutDevis = statut;
+  await sauvegarder();
+  render();
+}
+async function basculerPiecesCommandees(id){
+  const i = data.interventions.find(i=>i.id===id);
+  if(!i) return;
+  i.piecesCommandees = !i.piecesCommandees;
+  await sauvegarder();
+  render();
+}
+async function basculerPaiement(id){
+  const i = data.interventions.find(i=>i.id===id);
+  if(!i) return;
+  i.statutPaiement = i.statutPaiement === 'paye' ? 'non_paye' : 'paye';
+  await sauvegarder();
+  render();
+}
+function totalFiche(i){
+  const mo = parseFloat(i.tarifMO) || 0;
+  const p = parseFloat(i.coutPieces) || 0;
+  return mo + p;
+}
+function totalVehicule(vehiculeId){
+  return data.interventions
+    .filter(i=>i.vehiculeId===vehiculeId && i.type==='intervention')
+    .reduce((s,i)=>s+totalFiche(i), 0);
+}
+function totalClient(clientId){
+  const idsVehicules = data.vehicules.filter(v=>v.clientId===clientId).map(v=>v.id);
+  return data.interventions
+    .filter(i=>idsVehicules.includes(i.vehiculeId) && i.type==='intervention')
+    .reduce((s,i)=>s+totalFiche(i), 0);
+}
+function formatEuros(n){
+  return n.toLocaleString('fr-FR', { minimumFractionDigits: n % 1 === 0 ? 0 : 2, maximumFractionDigits: 2 });
+}
+
+function exporterSauvegarde(){
+  const paquet = { data, images: {} };
+  for(let k=0; k<localStorage.length; k++){
+    const cle = localStorage.key(k);
+    if(cle && cle.startsWith('img:')) paquet.images[cle] = localStorage.getItem(cle);
+  }
+  const blob = new Blob([JSON.stringify(paquet)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const d = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = 'tab-sauvegarde-' + d + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 3000);
+  localStorage.setItem('tab-dernier-export', new Date().toISOString());
+}
+
+function declencherImport(){
+  document.getElementById('import-fichier').click();
+}
+async function importerSauvegarde(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  try{
+    const texte = await file.text();
+    const paquet = JSON.parse(texte);
+    if(!paquet || !paquet.data){ alert('Fichier de sauvegarde invalide.'); return; }
+    const confirmer = confirm('Importer cette sauvegarde va remplacer toutes les données actuelles de l\'application. Continuer ?');
+    if(!confirmer) return;
+    data = paquet.data;
+    await sauvegarder();
+    if(paquet.images){
+      Object.keys(paquet.images).forEach(cle => localStorage.setItem(cle, paquet.images[cle]));
+    }
+    localStorage.setItem('tab-dernier-export', new Date().toISOString());
+    vue = 'clients'; clientCourant = null; vehiculeCourant = null;
+    render();
+    alert('Sauvegarde importée avec succès.');
+  } catch(e){
+    console.error(e);
+    alert('Impossible de lire ce fichier de sauvegarde.');
+  }
+  evt.target.value = '';
+}
+
+/* ---------- CLIENTS ---------- */
+let requeteRecherche = '';
+
+function renderClients(){
+  const cont = document.getElementById('contenu');
+  const clients = [...data.clients].sort((a,b)=>(a.nom+a.prenom).localeCompare(b.nom+b.prenom));
+  const today = new Date().toISOString().slice(0,10);
+
+  const devisAvertir = data.interventions.filter(i=>i.type==='devis' && i.statutDevis==='valide' && !i.piecesCommandees);
+  const impayes = data.interventions.filter(i=>i.type==='intervention' && i.statutPaiement==='non_paye' && totalFiche(i)>0);
+  const debutMois = today.slice(0,7) + '-01';
+  const interventionsMois = data.interventions.filter(i=>i.type==='intervention' && i.date && i.date >= debutMois);
+  const caMois = interventionsMois.reduce((s,i)=>s+totalFiche(i), 0);
+  const prochains = data.interventions
+    .filter(i=>i.date && i.date >= today)
+    .sort((a,b)=>(a.date||'').localeCompare(b.date||''))
+    .slice(0,8);
+
+  let dashboardHtml = '';
+  if(devisAvertir.length){
+    dashboardHtml += `<div class="alerte rouge"><div class="alerte-titre">Pièces à commander — devis validé${devisAvertir.length>1?'s':''}</div>`;
+    devisAvertir.forEach(i=>{
+      const { v, c } = infosVehicule(i.vehiculeId);
+      dashboardHtml += `
+        <div class="alerte-ligne">
+          <span class="desc" onclick="allerInterventions('${i.vehiculeId}')"><b>${esc(i.titre)}</b> — ${esc(c?.prenom)} ${esc(c?.nom)}, ${esc(v?.marque)} ${esc(v?.modele)}</span>
+          <button class="discret commande-btn" onclick="basculerPiecesCommandees('${i.id}')">Marquer commandé</button>
+        </div>`;
+    });
+    dashboardHtml += `</div>`;
+  }
+  if(impayes.length){
+    const totalImpaye = impayes.reduce((s,i)=>s+totalFiche(i),0);
+    dashboardHtml += `<div class="alerte rouge"><div class="alerte-titre">Factures non payées — ${formatEuros(totalImpaye)} € au total</div>`;
+    impayes.forEach(i=>{
+      const { v, c } = infosVehicule(i.vehiculeId);
+      dashboardHtml += `
+        <div class="alerte-ligne">
+          <span class="desc" onclick="allerInterventions('${i.vehiculeId}')"><b>${esc(i.titre)}</b> — ${esc(c?.prenom)} ${esc(c?.nom)}, ${esc(v?.marque)} ${esc(v?.modele)}</span>
+          <button class="discret commande-btn" onclick="basculerPaiement('${i.id}')">Marquer payé</button>
+        </div>`;
+    });
+    dashboardHtml += `</div>`;
+  }
+  if(prochains.length){
+    dashboardHtml += `<div class="alerte"><div class="alerte-titre">Prochains rendez-vous</div>`;
+    prochains.forEach(i=>{
+      const { v, c } = infosVehicule(i.vehiculeId);
+      dashboardHtml += `
+        <div class="alerte-ligne">
+          <span class="desc" onclick="allerInterventions('${i.vehiculeId}')"><b>${esc(i.titre)}</b> — ${esc(c?.prenom)} ${esc(c?.nom)}, ${esc(v?.marque)} ${esc(v?.modele)}</span>
+          <span class="quand">${formatDate(i.date)}</span>
+        </div>`;
+    });
+    dashboardHtml += `</div>`;
+  }
+  if(clients.length){
+    const dernierExport = localStorage.getItem('tab-dernier-export');
+    const joursDepuis = dernierExport ? Math.floor((Date.now() - new Date(dernierExport).getTime()) / 86400000) : null;
+    if(joursDepuis === null || joursDepuis >= 30){
+      dashboardHtml += `<div class="alerte rouge"><div class="alerte-titre">${joursDepuis === null ? "Vous n'avez jamais fait de sauvegarde" : `Dernière sauvegarde il y a ${joursDepuis} jours`}</div>
+        <div class="alerte-ligne" style="border-top:none;">
+          <span class="desc" style="cursor:default;">Pense à exporter tes données régulièrement, en cas de perte du téléphone.</span>
+          <button class="discret commande-btn" onclick="exporterSauvegarde()">Exporter maintenant</button>
+        </div>
+      </div>`;
+    }
+  }
+
+  let html = `
+    <div class="panneau-header">
+      <div>
+        <h2>Dossiers clients</h2>
+        <div class="sous">${clients.length} client${clients.length>1?'s':''}</div>
+        <div class="total-ligne">Ce mois-ci&nbsp;: <b>${interventionsMois.length} intervention${interventionsMois.length>1?'s':''}</b> · <b>${formatEuros(caMois)} €</b> facturés</div>
+      </div>
+      <button class="primaire" onclick="ouvrirFormClient()">+ Nouveau client</button>
+    </div>
+    <div class="barre-outils">
+      <button onclick="exporterSauvegarde()">Exporter la sauvegarde</button>
+      <button onclick="declencherImport()">Importer une sauvegarde</button>
+      <input type="file" id="import-fichier" class="cache" accept="application/json" onchange="importerSauvegarde(event)">
+    </div>
+    <div class="recherche-zone">
+      <input type="text" id="recherche-globale" placeholder="Rechercher un client, une immatriculation, une intervention…" value="${esc(requeteRecherche)}" oninput="rechercherGlobal(this.value)">
+    </div>
+    ${dashboardHtml}
+    <div class="formulaire" id="form-client">
+      <h3 id="form-client-titre">Nouveau client</h3>
+      <div class="grille">
+        <div class="champ"><label>Prénom</label><input id="c-prenom" type="text" placeholder="ex. Julie"></div>
+        <div class="champ"><label>Nom</label><input id="c-nom" type="text" placeholder="ex. Bernard"></div>
+        <div class="champ"><label>Téléphone</label><input id="c-tel" type="tel" placeholder="ex. 06 12 34 56 78"></div>
+        <div class="champ"><label>Email</label><input id="c-email" type="email" placeholder="ex. julie.bernard@mail.com"></div>
+      </div>
+      <div class="erreur" id="c-erreur" style="display:none;"></div>
+      <div class="form-actions">
+        <button onclick="fermerFormClient()">Annuler</button>
+        <button class="primaire" onclick="enregistrerClient()">Enregistrer</button>
+      </div>
+    </div>
+    <div id="zone-resultats"></div>
+  `;
+  cont.innerHTML = html;
+  if(requeteRecherche.trim()){
+    afficherResultatsRecherche(requeteRecherche);
+    return;
+  }
+  const zone = document.getElementById('zone-resultats');
+  if(!clients.length){
+    zone.innerHTML = `<div class="vide">Aucun dossier client pour l'instant.<br>Créez-en un pour commencer.</div>`;
+  } else {
+    let listeHtml = '';
+    clients.forEach(c=>{
+      const nb = data.vehicules.filter(v=>v.clientId===c.id).length;
+      listeHtml += `
+        <div class="dossier" onclick="allerVehicules('${c.id}')">
+          <span class="tab">${esc((c.prenom[0]||'')+(c.nom[0]||'')).toUpperCase()}</span>
+          <div class="info">
+            <div class="titre-d">${esc(c.prenom)} ${esc(c.nom)}</div>
+          </div>
+          <span class="compte">${nb} véhicule${nb>1?'s':''}</span>
+        </div>`;
+    });
+    zone.innerHTML = listeHtml;
+  }
+}
+
+function rechercherGlobal(valeur){
+  requeteRecherche = valeur;
+  if(!valeur.trim()){ renderClients(); return; }
+  afficherResultatsRecherche(valeur);
+}
+
+function afficherResultatsRecherche(valeur){
+  const zone = document.getElementById('zone-resultats');
+  if(!zone) return;
+  const q = valeur.trim().toLowerCase();
+  if(!q){ zone.innerHTML = ''; return; }
+
+  const clientsTrouves = data.clients.filter(c=>
+    (c.prenom+' '+c.nom).toLowerCase().includes(q) ||
+    (c.telephone||'').toLowerCase().includes(q) ||
+    (c.email||'').toLowerCase().includes(q));
+  const vehiculesTrouves = data.vehicules.filter(v=>
+    (v.marque+' '+v.modele).toLowerCase().includes(q) ||
+    (v.immatriculation||'').toLowerCase().includes(q));
+  const interventionsTrouvees = data.interventions.filter(i=>
+    (i.titre||'').toLowerCase().includes(q));
+
+  if(!clientsTrouves.length && !vehiculesTrouves.length && !interventionsTrouvees.length){
+    zone.innerHTML = `<div class="vide">Aucun résultat pour « ${esc(valeur)} ».</div>`;
+    return;
+  }
+
+  let html = '';
+  if(clientsTrouves.length){
+    html += `<div class="resultat-groupe"><div class="resultat-groupe-titre">Clients</div>`;
+    clientsTrouves.forEach(c=>{
+      html += `<div class="dossier" onclick="allerVehicules('${c.id}')">
+        <span class="tab">${esc((c.prenom[0]||'')+(c.nom[0]||'')).toUpperCase()}</span>
+        <div class="info"><div class="titre-d">${esc(c.prenom)} ${esc(c.nom)}</div></div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  if(vehiculesTrouves.length){
+    html += `<div class="resultat-groupe"><div class="resultat-groupe-titre">Véhicules</div>`;
+    vehiculesTrouves.forEach(v=>{
+      const c = data.clients.find(c=>c.id===v.clientId);
+      html += `<div class="dossier" onclick="allerInterventions('${v.id}')">
+        <span class="tab">${esc(v.immatriculation||'—')}</span>
+        <div class="info"><div class="titre-d">${esc(v.marque)} ${esc(v.modele)} — ${esc(c?.prenom)} ${esc(c?.nom)}</div></div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  if(interventionsTrouvees.length){
+    html += `<div class="resultat-groupe"><div class="resultat-groupe-titre">Fiches</div>`;
+    interventionsTrouvees.forEach(i=>{
+      const { v, c } = infosVehicule(i.vehiculeId);
+      html += `<div class="dossier" onclick="allerInterventions('${i.vehiculeId}')">
+        <span class="tab">${formatDate(i.date)}</span>
+        <div class="info"><div class="titre-d">${esc(i.titre)} — ${esc(v?.marque)} ${esc(v?.modele)}, ${esc(c?.prenom)} ${esc(c?.nom)}</div></div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  zone.innerHTML = html;
+}
+
+let clientEnEdition = null;
+function ouvrirFormClient(){
+  clientEnEdition = null;
+  document.getElementById('form-client-titre').textContent = 'Nouveau client';
+  document.getElementById('form-client').classList.add('ouvert');
+}
+function ouvrirEditionClient(id){
+  const c = data.clients.find(c=>c.id===id);
+  if(!c) return;
+  clientEnEdition = id;
+  document.getElementById('form-client-titre').textContent = 'Modifier le client';
+  document.getElementById('c-prenom').value = c.prenom || '';
+  document.getElementById('c-nom').value = c.nom || '';
+  document.getElementById('c-tel').value = c.telephone || '';
+  document.getElementById('c-email').value = c.email || '';
+  document.getElementById('form-client').classList.add('ouvert');
+}
+function fermerFormClient(){
+  document.getElementById('form-client').classList.remove('ouvert');
+  ['c-prenom','c-nom','c-tel','c-email'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('c-erreur').style.display='none';
+  clientEnEdition = null;
+}
+async function enregistrerClient(){
+  const prenom = document.getElementById('c-prenom').value.trim();
+  const nom = document.getElementById('c-nom').value.trim();
+  const telephone = document.getElementById('c-tel').value.trim();
+  const email = document.getElementById('c-email').value.trim();
+  const err = document.getElementById('c-erreur');
+  if(!prenom || !nom){ err.textContent='Merci de renseigner le nom et le prénom.'; err.style.display='block'; return; }
+  if(clientEnEdition){
+    const c = data.clients.find(c=>c.id===clientEnEdition);
+    Object.assign(c, { prenom, nom, telephone, email });
+  } else {
+    data.clients.push({ id: genId(), prenom, nom, telephone, email });
+  }
+  await sauvegarder();
+  fermerFormClient();
+  render();
+}
+
+/* ---------- VEHICULES ---------- */
+let vehiculeEnEdition = null;
+
+function renderVehicules(){
+  const cont = document.getElementById('contenu');
+  const c = data.clients.find(c=>c.id===clientCourant);
+  const vehicules = data.vehicules.filter(v=>v.clientId===clientCourant);
+  const total = totalClient(clientCourant);
+  const coordonnees = [c?.telephone, c?.email].filter(Boolean).join(' · ');
+  let actionsRapides = '';
+  if(c?.telephone){
+    actionsRapides += `<a href="tel:${esc(c.telephone)}"><button>Appeler</button></a>`;
+    actionsRapides += `<a href="sms:${esc(c.telephone)}"><button>SMS</button></a>`;
+  }
+  if(c?.email){
+    actionsRapides += `<a href="mailto:${esc(c.email)}"><button>Email</button></a>`;
+  }
+  let html = `
+    <div class="panneau-header">
+      <div>
+        <h2>${esc(c?.prenom)} ${esc(c?.nom)}</h2>
+        <div class="sous">${vehicules.length} véhicule${vehicules.length>1?'s':''}${coordonnees ? ' — ' + esc(coordonnees) : ''}</div>
+        ${total > 0 ? `<div class="total-ligne">Total facturé&nbsp;: <b>${formatEuros(total)} €</b></div>` : ''}
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button onclick="ouvrirEditionClient('${clientCourant}')">Modifier</button>
+        <button onclick="imprimerReleveClient('${clientCourant}')">Relevé PDF</button>
+        <button class="primaire" onclick="ouvrirFormVehicule()">+ Véhicule</button>
+      </div>
+    </div>
+    ${actionsRapides ? `<div class="barre-outils">${actionsRapides}</div>` : ''}
+    <div class="formulaire" id="form-client">
+      <h3 id="form-client-titre">Modifier le client</h3>
+      <div class="grille">
+        <div class="champ"><label>Prénom</label><input id="c-prenom" type="text"></div>
+        <div class="champ"><label>Nom</label><input id="c-nom" type="text"></div>
+        <div class="champ"><label>Téléphone</label><input id="c-tel" type="tel"></div>
+        <div class="champ"><label>Email</label><input id="c-email" type="email"></div>
+      </div>
+      <div class="erreur" id="c-erreur" style="display:none;"></div>
+      <div class="form-actions">
+        <button onclick="fermerFormClient()">Annuler</button>
+        <button class="primaire" onclick="enregistrerClient()">Enregistrer</button>
+      </div>
+    </div>
+    <div class="formulaire" id="form-vehicule">
+      <h3 id="form-vehicule-titre">Nouveau véhicule</h3>
+      <div class="grille">
+        <div class="champ"><label>Marque</label><input id="v-marque" type="text" placeholder="ex. Mercedes"></div>
+        <div class="champ"><label>Modèle</label><input id="v-modele" type="text" placeholder="ex. 230SL"></div>
+        <div class="champ"><label>Immatriculation</label><input id="v-immat" type="text" placeholder="ex. AB-123-CD"></div>
+        <div class="champ"><label>Prochain contrôle technique</label><input id="v-ct" type="date"></div>
+        <div class="champ"><label>Prochain entretien prévu</label><input id="v-entretien-libelle" type="text" placeholder="ex. Vidange"></div>
+        <div class="champ"><label>Date de l'entretien prévu</label><input id="v-entretien-date" type="date"></div>
+      </div>
+      <div class="erreur" id="v-erreur" style="display:none;"></div>
+      <div class="form-actions">
+        <button onclick="fermerFormVehicule()">Annuler</button>
+        <button class="primaire" onclick="enregistrerVehicule()">Enregistrer</button>
+      </div>
+    </div>
+  `;
+  if(!vehicules.length){
+    html += `<div class="vide">Aucun véhicule pour ce client.<br>Ajoutez-en un pour créer des fiches d'intervention.</div>`;
+  } else {
+    vehicules.forEach(v=>{
+      const nb = data.interventions.filter(i=>i.vehiculeId===v.id).length;
+      const totalV = totalVehicule(v.id);
+      html += `
+        <div class="dossier" onclick="allerInterventions('${v.id}')">
+          <span class="tab">${esc(v.immatriculation || '—')}</span>
+          <div class="info">
+            <div class="titre-d">${esc(v.marque)} ${esc(v.modele)}</div>
+          </div>
+          <span class="compte">${nb} fiche${nb>1?'s':''}${totalV>0?' · '+formatEuros(totalV)+' €':''}</span>
+        </div>`;
+    });
+  }
+  cont.innerHTML = html;
+}
+function ouvrirFormVehicule(){
+  vehiculeEnEdition = null;
+  document.getElementById('form-vehicule-titre').textContent = 'Nouveau véhicule';
+  document.getElementById('form-vehicule').classList.add('ouvert');
+}
+function fermerFormVehicule(){
+  document.getElementById('form-vehicule').classList.remove('ouvert');
+  ['v-marque','v-modele','v-immat','v-ct','v-entretien-libelle','v-entretien-date'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('v-erreur').style.display='none';
+  vehiculeEnEdition = null;
+}
+function ouvrirEditionVehicule(id){
+  const v = data.vehicules.find(v=>v.id===id);
+  if(!v) return;
+  vehiculeEnEdition = id;
+  document.getElementById('form-vehicule-titre').textContent = 'Modifier le véhicule';
+  document.getElementById('v-marque').value = v.marque || '';
+  document.getElementById('v-modele').value = v.modele || '';
+  document.getElementById('v-immat').value = v.immatriculation || '';
+  document.getElementById('v-ct').value = v.prochainCT || '';
+  document.getElementById('v-entretien-libelle').value = v.entretienLibelle || '';
+  document.getElementById('v-entretien-date').value = v.entretienDate || '';
+  document.getElementById('form-vehicule').classList.add('ouvert');
+}
+async function enregistrerVehicule(){
+  const marque = document.getElementById('v-marque').value.trim();
+  const modele = document.getElementById('v-modele').value.trim();
+  const immatriculation = document.getElementById('v-immat').value.trim();
+  const prochainCT = document.getElementById('v-ct').value;
+  const entretienLibelle = document.getElementById('v-entretien-libelle').value.trim();
+  const entretienDate = document.getElementById('v-entretien-date').value;
+  const err = document.getElementById('v-erreur');
+  if(!marque || !modele){ err.textContent='Merci de renseigner au moins la marque et le modèle.'; err.style.display='block'; return; }
+  if(vehiculeEnEdition){
+    const v = data.vehicules.find(v=>v.id===vehiculeEnEdition);
+    Object.assign(v, { marque, modele, immatriculation, prochainCT, entretienLibelle, entretienDate });
+  } else {
+    data.vehicules.push({ id: genId(), clientId: clientCourant, marque, modele, immatriculation, prochainCT, entretienLibelle, entretienDate });
+  }
+  await sauvegarder();
+  fermerFormVehicule();
+  render();
+}
+
+/* ---------- INTERVENTIONS ---------- */
+let piecesJointesTemp = { facture: null, controles: [] };
+let defautsTemp = [];
+let typeSelectionne = 'intervention';
+let interventionEnEdition = null;
+
+function renderInterventions(){
+  const cont = document.getElementById('contenu');
+  const v = data.vehicules.find(v=>v.id===vehiculeCourant);
+  const interventions = data.interventions
+    .filter(i=>i.vehiculeId===vehiculeCourant)
+    .sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+
+  let ctHtml = '';
+  if(v?.prochainCT){
+    const enRetard = v.prochainCT < new Date().toISOString().slice(0,10);
+    ctHtml = `<div class="ct-info${enRetard?' retard':''}">Prochain contrôle technique&nbsp;: <b>${formatDate(v.prochainCT)}</b>${enRetard?' — dépassé':''} <button class="discret" onclick="ouvrirEditionVehicule('${v.id}')">modifier</button></div>`;
+  } else {
+    ctHtml = `<div class="ct-info">Prochain contrôle technique non renseigné <button class="discret" onclick="ouvrirEditionVehicule('${v.id}')">renseigner</button></div>`;
+  }
+  let entretienHtml = '';
+  if(v?.entretienLibelle || v?.entretienDate){
+    const enRetardE = v.entretienDate && v.entretienDate < new Date().toISOString().slice(0,10);
+    entretienHtml = `<div class="ct-info${enRetardE?' retard':''}">${esc(v.entretienLibelle||'Entretien prévu')}&nbsp;: <b>${v.entretienDate ? formatDate(v.entretienDate) : 'date non renseignée'}</b>${enRetardE?' — dépassé':''} <button class="discret" onclick="ouvrirEditionVehicule('${v.id}')">modifier</button></div>`;
+  }
+  const totalV = totalVehicule(vehiculeCourant);
+
+  let html = `
+    <div class="panneau-header">
+      <div>
+        <h2>${esc(v?.marque)} ${esc(v?.modele)}</h2>
+        <div class="sous">${esc(v?.immatriculation||'immatriculation non renseignée')}</div>
+        ${totalV > 0 ? `<div class="total-ligne">Total facturé&nbsp;: <b>${formatEuros(totalV)} €</b></div>` : ''}
+      </div>
+      <button onclick="imprimerReleveVehicule('${vehiculeCourant}')">Relevé PDF</button>
+      <button class="primaire" onclick="ouvrirFormIntervention()">+ Fiche</button>
+    </div>
+    ${ctHtml}
+    ${entretienHtml}
+    <div class="formulaire" id="form-vehicule">
+      <h3 id="form-vehicule-titre">Modifier le véhicule</h3>
+      <div class="grille">
+        <div class="champ"><label>Marque</label><input id="v-marque" type="text"></div>
+        <div class="champ"><label>Modèle</label><input id="v-modele" type="text"></div>
+        <div class="champ"><label>Immatriculation</label><input id="v-immat" type="text"></div>
+        <div class="champ"><label>Prochain contrôle technique</label><input id="v-ct" type="date"></div>
+        <div class="champ"><label>Prochain entretien prévu</label><input id="v-entretien-libelle" type="text" placeholder="ex. Vidange"></div>
+        <div class="champ"><label>Date de l'entretien prévu</label><input id="v-entretien-date" type="date"></div>
+      </div>
+      <div class="erreur" id="v-erreur" style="display:none;"></div>
+      <div class="form-actions">
+        <button onclick="fermerFormVehicule()">Annuler</button>
+        <button class="primaire" onclick="enregistrerVehicule()">Enregistrer</button>
+      </div>
+    </div>
+    <div class="formulaire" id="form-intervention">
+      <h3 id="form-intervention-titre">Nouvelle fiche</h3>
+      <div class="type-select">
+        <div class="type-opt actif" id="type-intervention" onclick="choisirType('intervention')">Intervention réalisée</div>
+        <div class="type-opt" id="type-devis" onclick="choisirType('devis')">Devis</div>
+      </div>
+      <div class="grille trois">
+        <div class="champ"><label>Intitulé</label><input id="i-titre" type="text" placeholder="ex. Remplacement plaquettes avant"></div>
+        <div class="champ"><label>Date</label><input id="i-date" type="date"></div>
+        <div class="champ"><label>Kilométrage</label><input id="i-km" type="number" placeholder="ex. 84320"></div>
+      </div>
+      <div class="champ large" id="champ-statut-devis" style="display:none;margin-bottom:10px;">
+        <label>Statut du devis</label>
+        <div class="statut-select">
+          <div class="statut-opt en_attente actif" onclick="choisirStatutDevis('en_attente')">En attente</div>
+          <div class="statut-opt valide" onclick="choisirStatutDevis('valide')">Validé</div>
+          <div class="statut-opt refuse" onclick="choisirStatutDevis('refuse')">Refusé</div>
+        </div>
+      </div>
+
+      <div class="bloc-titre" style="border-top:none;padding-top:0;" id="i-pieces-label">Pièces remplacées</div>
+      <div id="pieces-lignes"></div>
+      <button class="btn-ajout-ligne" onclick="ajouterLignePiece()">+ Ajouter une pièce</button>
+      <div class="apercu-calcul" id="apercu-pieces" style="margin-top:8px;font-weight:600;"></div>
+      <div class="apercu-calcul" id="apercu-mo"></div>
+
+      <div class="bloc-titre">Défauts constatés sur le véhicule</div>
+      <div id="defauts-lignes"></div>
+      <button class="btn-ajout-ligne" onclick="ajouterLigneDefaut()">+ Ajouter un défaut</button>
+
+      <div class="bloc-titre">Facture des pièces (photo ou scan)</div>
+      <label class="upload-label" for="i-facture">Choisir un fichier</label>
+      <input type="file" id="i-facture" accept="image/*,application/pdf" style="display:none;" onchange="ajouterFacture(event)">
+      <div class="apercus" id="apercu-facture"></div>
+
+      <div class="bloc-titre">Rapport(s) de contrôle technique</div>
+      <label class="upload-label" for="i-ct">Choisir un ou plusieurs fichiers</label>
+      <input type="file" id="i-ct" accept="image/*,application/pdf" multiple style="display:none;" onchange="ajouterCT(event)">
+      <div class="apercus" id="apercu-ct"></div>
+
+
+      <div class="erreur" id="i-erreur" style="display:none;margin-top:10px;"></div>
+      <div class="form-actions">
+        <button onclick="fermerFormIntervention()">Annuler</button>
+        <button class="primaire" onclick="enregistrerIntervention()">Enregistrer</button>
+      </div>
+    </div>
+  `;
+
+  if(!interventions.length){
+    html += `<div class="vide">Aucune fiche enregistrée pour ce véhicule.</div>`;
+    cont.innerHTML = html;
+    return;
+  }
+
+  cont.innerHTML = html;
+  const ficheZone = document.createElement('div');
+  cont.appendChild(ficheZone);
+  interventions.forEach(async (i)=>{
+    const fiche = document.createElement('div');
+    fiche.className = 'fiche';
+    let defautsHtml = '';
+    if(i.defauts && i.defauts.length){
+      defautsHtml = `<div class="bloc-titre">Défauts constatés</div><ul class="defauts-liste">${i.defauts.map(d=>`<li>${esc(d)}</li>`).join('')}</ul>`;
+    }
+    const labelPieces = i.type === 'devis' ? 'Pièces prévues' : 'Pièces remplacées';
+    let piecesHtml = '';
+    if(i.piecesListe && i.piecesListe.length){
+      piecesHtml = `<div class="fiche-pieces"><b>${labelPieces}</b><ul style="list-style:none;margin:0;padding:0;">${i.piecesListe.map(p=>{
+        const details = [];
+        if(p.prixFacture) details.push(`${formatEuros(p.prixFacture)} €`);
+        if(p.heures) details.push(`MO ${p.heures} h (${formatEuros(p.tarifMO)} €)`);
+        return `<li style="padding:3px 0;border-bottom:1px dashed var(--border);">
+          <div style="display:flex;justify-content:space-between;"><span>${esc(p.nom)}${p.ref ? ` <span style="color:var(--text-muted);font-size:11px;">(réf. ${esc(p.ref)})</span>` : ''}</span></div>
+          ${details.length ? `<div style="text-align:right;font-size:12px;color:var(--text-muted);">${details.join(' · ')}</div>` : ''}
+        </li>`;
+      }).join('')}</ul></div>`;
+    } else if(i.pieces){
+      piecesHtml = `<div class="fiche-pieces"><b>${labelPieces}</b>${esc(i.pieces)}</div>`;
+    }
+    let tarifsHtml = '';
+    const tarifs = [];
+    if(i.heuresMO) tarifs.push(`<span>Main d'œuvre&nbsp;: <b>${esc(i.heuresMO)} h → ${formatEuros(i.tarifMO)} €</b></span>`);
+    if(i.prixAchatPieces) tarifs.push(`<span>Pièces&nbsp;: <b>${formatEuros(i.coutPieces)} €</b> (achat ${esc(i.prixAchatPieces)} €)</span>`);
+    const tf = totalFiche(i);
+    if(tf > 0) tarifs.push(`<span class="total">Total&nbsp;: <b>${formatEuros(tf)} €</b></span>`);
+    if(tarifs.length) tarifsHtml = `<div class="fiche-tarifs">${tarifs.join('')}</div>`;
+    let paiementHtml = '';
+    if(i.type === 'intervention' && tf > 0){
+      const paye = i.statutPaiement === 'paye';
+      paiementHtml = `<div class="paiement-toggle"><span class="badge ${paye?'paye':'non_paye'}" style="cursor:pointer;" onclick="basculerPaiement('${i.id}')">${paye?'Payé':'Non payé'}</span></div>`;
+    }
+    let statutHtml = '';
+    if(i.type === 'devis'){
+      const statut = i.statutDevis || 'en_attente';
+      const libelles = { en_attente:'En attente', valide:'Validé', refuse:'Refusé' };
+      statutHtml = `<div class="statut-select">` + Object.keys(libelles).map(s=>
+        `<div class="statut-opt ${s}${s===statut?' actif':''}" onclick="changerStatutDevis('${i.id}','${s}')">${libelles[s]}</div>`
+      ).join('') + `</div>`;
+      if(statut === 'valide'){
+        statutHtml += `<div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="discret commande-btn" onclick="basculerPiecesCommandees('${i.id}')">${i.piecesCommandees ? '✓ Pièces commandées' : 'Marquer pièces commandées'}</button>
+          <button class="discret commande-btn" onclick="transformerEnIntervention('${i.id}')">Transformer en intervention</button>
+        </div>`;
+      }
+    }
+    fiche.innerHTML = `
+      <div class="fiche-actions">
+        <button class="discret" title="Modifier" onclick="ouvrirEditionIntervention('${i.id}')">✎</button>
+        <button class="discret" title="Supprimer">✕</button>
+      </div>
+      <div class="fiche-top">
+        <div class="fiche-titre-ligne">
+          <span class="badge ${i.type === 'devis' ? 'devis' : 'intervention'}">${i.type === 'devis' ? 'Devis' : 'Intervention'}</span>
+          <span class="fiche-titre">${esc(i.titre)}</span>
+        </div>
+        <span class="fiche-date">${formatDate(i.date)}${i.km ? `<span class="km">${esc(i.km)} km</span>` : ''}</span>
+      </div>
+      ${piecesHtml}
+      ${tarifsHtml}
+      ${paiementHtml}
+      ${statutHtml}
+      ${defautsHtml}
+      <div class="bloc-titre" id="pj-titre-${i.id}" style="display:none;">Pièces jointes</div>
+      <div class="pieces-jointes" id="pj-${i.id}"></div>
+      <div class="fiche-actions-bas">
+        <button onclick="dupliquerFiche('${i.id}')">Dupliquer</button>
+        <button class="primaire" onclick="imprimerFiche('${i.id}')">📄 Exporter en PDF</button>
+        ${i.date ? `<button onclick="ouvrirGoogleAgendaParId('${i.id}')">Ajouter à Google Agenda</button>` : ''}
+      </div>
+    `;
+    fiche.querySelector('button[title="Supprimer"]').addEventListener('click', async ()=>{
+      if(i.facturePhoto) await supprimerImg(i.id+':facture');
+      (i.controles||[]).forEach(async (_,idx)=>await supprimerImg(i.id+':ct:'+idx));
+      data.interventions = data.interventions.filter(x=>x.id!==i.id);
+      await sauvegarder();
+      render();
+    });
+    ficheZone.appendChild(fiche);
+    await renderPiecesJointes(i);
+  });
+}
+
+async function renderPiecesJointes(i){
+  const cont = document.getElementById('pj-'+i.id);
+  const titreEl = document.getElementById('pj-titre-'+i.id);
+  if(!cont) return;
+  let any = false;
+  if(i.facturePhoto){
+    const url = await chargerImg(i.id+':facture');
+    if(url){ any = true; cont.appendChild(creerVignette(url, 'Facture')); }
+  }
+  for(let idx=0; idx<(i.controles||[]).length; idx++){
+    const url = await chargerImg(i.id+':ct:'+idx);
+    if(url){ any = true; cont.appendChild(creerVignette(url, 'Contrôle technique')); }
+  }
+  if(any) titreEl.style.display = 'block';
+}
+
+function telechargerFichier(dataUrl, nomFichier){
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = nomFichier;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function ouvrirLightbox(dataUrl){
+  const overlay = document.getElementById('lightbox');
+  overlay.innerHTML = `
+    <img src="${dataUrl}" style="max-width:92vw;max-height:80vh;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.3);">
+    <button class="primaire" onclick="fermerLightbox()">Fermer</button>
+  `;
+  overlay.style.display = 'flex';
+}
+function fermerLightbox(){
+  document.getElementById('lightbox').style.display = 'none';
+  document.getElementById('lightbox').innerHTML = '';
+}
+
+function creerVignette(dataUrl, label){
+  let el;
+  const estImage = dataUrl.startsWith('data:image');
+  if(estImage){
+    el = document.createElement('img');
+    el.className = 'vignette';
+    el.src = dataUrl;
+    el.title = label;
+    el.addEventListener('click', ()=>ouvrirLightbox(dataUrl));
+  } else {
+    el = document.createElement('div');
+    el.className = 'vignette-doc';
+    el.textContent = label + ' (PDF) — télécharger';
+    el.addEventListener('click', ()=>telechargerFichier(dataUrl, label.replace(/\s+/g,'-').toLowerCase() + '.pdf'));
+  }
+  return el;
+}
+
+function choisirType(type){
+  typeSelectionne = type;
+  document.getElementById('type-intervention').classList.toggle('actif', type==='intervention');
+  document.getElementById('type-devis').classList.toggle('actif', type==='devis');
+  document.getElementById('i-pieces-label').textContent = type==='devis' ? 'Pièces prévues' : 'Pièces remplacées';
+  document.getElementById('champ-statut-devis').style.display = type==='devis' ? 'block' : 'none';
+}
+
+let statutDevisSelectionne = 'en_attente';
+function choisirStatutDevis(statut){
+  statutDevisSelectionne = statut;
+  document.querySelectorAll('#champ-statut-devis .statut-opt').forEach(el=>{
+    el.classList.toggle('actif', el.classList.contains(statut));
+  });
+}
+
+function ouvrirFormIntervention(){
+  interventionEnEdition = null;
+  piecesJointesTemp = { facture: null, controles: [] };
+  defautsTemp = [];
+  typeSelectionne = 'intervention';
+  statutDevisSelectionne = 'en_attente';
+  document.getElementById('form-intervention-titre').textContent = 'Nouvelle fiche';
+  document.getElementById('form-intervention').classList.add('ouvert');
+  document.getElementById('i-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('defauts-lignes').innerHTML = '';
+  document.getElementById('pieces-lignes').innerHTML = '';
+  document.getElementById('apercu-facture').innerHTML = '';
+  document.getElementById('apercu-ct').innerHTML = '';
+  document.getElementById('apercu-mo').textContent = '';
+  document.getElementById('apercu-pieces').textContent = '';
+  choisirType('intervention');
+  choisirStatutDevis('en_attente');
+  ajouterLigneDefaut();
+  ajouterLignePiece();
+}
+
+async function ouvrirEditionIntervention(id){
+  const i = data.interventions.find(x=>x.id===id);
+  if(!i) return;
+  interventionEnEdition = id;
+  piecesJointesTemp = { facture: null, controles: [] };
+  document.getElementById('form-intervention-titre').textContent = 'Modifier la fiche';
+  document.getElementById('form-intervention').classList.add('ouvert');
+  document.getElementById('i-titre').value = i.titre || '';
+  document.getElementById('i-date').value = i.date || '';
+  document.getElementById('i-km').value = i.km || '';
+  choisirType(i.type || 'intervention');
+  if(i.type === 'devis') choisirStatutDevis(i.statutDevis || 'en_attente');
+
+  document.getElementById('pieces-lignes').innerHTML = '';
+  if(i.piecesListe && i.piecesListe.length){
+    i.piecesListe.forEach(p=>ajouterLignePiece(p.nom, p.ref, p.prixAchat, p.heures));
+  } else if(i.prixAchatPieces || i.heuresMO){
+    ajouterLignePiece(i.pieces || 'Pièces', '', i.prixAchatPieces, i.heuresMO);
+  } else {
+    ajouterLignePiece();
+  }
+  calculerApercus();
+
+  document.getElementById('defauts-lignes').innerHTML = '';
+  if(i.defauts && i.defauts.length){
+    i.defauts.forEach(d=>{
+      ajouterLigneDefaut();
+      const inputs = document.querySelectorAll('#defauts-lignes input');
+      inputs[inputs.length-1].value = d;
+    });
+  } else {
+    ajouterLigneDefaut();
+  }
+
+  document.getElementById('apercu-facture').innerHTML = '';
+  document.getElementById('apercu-ct').innerHTML = '';
+  if(i.facturePhoto){
+    const url = await chargerImg(id+':facture');
+    if(url){
+      const item = document.createElement('div');
+      item.className = 'apercu-item';
+      item.appendChild(creerVignette(url, 'Facture actuelle'));
+      document.getElementById('apercu-facture').appendChild(item);
+    }
+  }
+  for(let idx=0; idx<(i.controles||[]).length; idx++){
+    const url = await chargerImg(id+':ct:'+idx);
+    if(url){
+      const item = document.createElement('div');
+      item.className = 'apercu-item';
+      item.appendChild(creerVignette(url, 'Contrôle technique actuel'));
+      document.getElementById('apercu-ct').appendChild(item);
+    }
+  }
+}
+
+function fermerFormIntervention(){
+  document.getElementById('form-intervention').classList.remove('ouvert');
+  ['i-titre','i-km'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('pieces-lignes').innerHTML = '';
+  document.getElementById('i-date').value='';
+  document.getElementById('i-erreur').style.display='none';
+  document.getElementById('champ-statut-devis').style.display='none';
+  document.getElementById('apercu-mo').textContent = '';
+  document.getElementById('apercu-pieces').textContent = '';
+  piecesJointesTemp = { facture: null, controles: [] };
+  defautsTemp = [];
+  interventionEnEdition = null;
+}
+
+function arrondi(n){ return Math.round(n*100)/100; }
+
+function ajouterLignePiece(nom, ref, prixAchat, heures){
+  const cont = document.getElementById('pieces-lignes');
+  const carte = document.createElement('div');
+  carte.className = 'piece-carte';
+  carte.innerHTML = `
+    <div class="piece-entete">
+      <input type="text" class="piece-nom" placeholder="Nom de la pièce" value="${nom ? esc(nom) : ''}">
+      <button type="button" class="discret" onclick="this.closest('.piece-carte').remove(); calculerApercus();">✕</button>
+    </div>
+    <div class="piece-champs">
+      <div class="champ"><label>Référence</label><input type="text" class="piece-ref" placeholder="Réf." value="${ref ? esc(ref) : ''}"></div>
+      <div class="champ"><label>Prix d'achat €</label><input type="number" class="piece-prix" placeholder="0" value="${prixAchat ? esc(String(prixAchat)) : ''}" oninput="calculerApercus()"></div>
+      <div class="champ"><label>Main d'œuvre (h)</label><input type="number" step="0.25" class="piece-heures" placeholder="0" value="${heures ? esc(String(heures)) : ''}" oninput="calculerApercus()"></div>
+    </div>
+    <div class="piece-sous-total"></div>
+  `;
+  cont.appendChild(carte);
+  calculerApercus();
+}
+
+function calculerApercus(){
+  let totalAchat = 0, totalFacture = 0, totalHeures = 0, totalMO = 0;
+  document.querySelectorAll('#pieces-lignes .piece-carte').forEach(carte=>{
+    const prix = parseFloat(carte.querySelector('.piece-prix').value);
+    const heures = parseFloat(carte.querySelector('.piece-heures').value);
+    const sousTotal = carte.querySelector('.piece-sous-total');
+    const parties = [];
+    if(prix > 0){
+      const facture = arrondi(prix * (1 + data.reglages.margePieces));
+      parties.push(`Pièce&nbsp;: ${formatEuros(facture)} €`);
+      totalAchat += prix; totalFacture += facture;
+    }
+    if(heures > 0){
+      const tarifLigne = arrondi(heures * data.reglages.tauxHoraire);
+      parties.push(`MO&nbsp;: ${formatEuros(tarifLigne)} €`);
+      totalHeures += heures; totalMO += tarifLigne;
+    }
+    sousTotal.innerHTML = parties.join(' · ');
+  });
+  const apercuPieces = document.getElementById('apercu-pieces');
+  const apercuMO = document.getElementById('apercu-mo');
+  apercuPieces.textContent = totalFacture > 0 ? `Total pièces facturées : ${formatEuros(arrondi(totalFacture))} € (marge ${Math.round(data.reglages.margePieces*100)} %)` : '';
+  apercuMO.textContent = totalMO > 0 ? `Total main d'œuvre : ${totalHeures} h → ${formatEuros(arrondi(totalMO))} €` : '';
+}
+
+function ajouterLigneDefaut(){
+  const cont = document.getElementById('defauts-lignes');
+  const ligne = document.createElement('div');
+  ligne.className = 'defaut-ligne';
+  ligne.innerHTML = `<input type="text" placeholder="ex. Jeu important sur rotule de direction">
+    <button type="button" class="discret" onclick="this.parentElement.remove()">✕</button>`;
+  cont.appendChild(ligne);
+}
+
+async function ajouterFacture(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  const url = await fichierVersBase64(file);
+  piecesJointesTemp.facture = url;
+  const cont = document.getElementById('apercu-facture');
+  cont.innerHTML = '';
+  const item = document.createElement('div');
+  item.className = 'apercu-item';
+  item.appendChild(creerVignette(url, 'Facture'));
+  const retirer = document.createElement('button');
+  retirer.className = 'retirer'; retirer.textContent = '✕';
+  retirer.onclick = ()=>{ piecesJointesTemp.facture = null; cont.innerHTML=''; };
+  item.appendChild(retirer);
+  cont.appendChild(item);
+}
+
+async function ajouterCT(evt){
+  const files = Array.from(evt.target.files);
+  const cont = document.getElementById('apercu-ct');
+  for(const file of files){
+    const url = await fichierVersBase64(file);
+    const idx = piecesJointesTemp.controles.length;
+    piecesJointesTemp.controles.push(url);
+    const item = document.createElement('div');
+    item.className = 'apercu-item';
+    item.appendChild(creerVignette(url, 'Contrôle technique'));
+    const retirer = document.createElement('button');
+    retirer.className = 'retirer'; retirer.textContent = '✕';
+    retirer.onclick = ()=>{ piecesJointesTemp.controles[idx] = null; item.remove(); };
+    item.appendChild(retirer);
+    cont.appendChild(item);
+  }
+}
+
+function sautDePageSiNecessaire(doc, y){
+  if(y > 275){ doc.addPage(); return 20; }
+  return y;
+}
+
+function imprimerReleveVehicule(vehiculeId){
+  const { v, c } = infosVehicule(vehiculeId);
+  const interventions = data.interventions
+    .filter(i=>i.vehiculeId===vehiculeId && i.type==='intervention')
+    .sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  if(!interventions.length){
+    alert('Aucune intervention facturée pour ce véhicule pour le moment.');
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 20;
+  doc.setFont('helvetica','bold'); doc.setFontSize(16);
+  doc.text("Relevé d'entretien", 14, y); y += 6;
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(148,138,121);
+  doc.text(`Édité le ${formatDate(new Date().toISOString().slice(0,10))}`, 14, y); y += 10;
+  doc.setTextColor(43,38,31); doc.setFontSize(11);
+  doc.text(`Client : ${c?.prenom||''} ${c?.nom||''}`, 14, y); y += 7;
+  doc.text(`Véhicule : ${v?.marque||''} ${v?.modele||''}${v?.immatriculation ? ' — '+v.immatriculation : ''}`, 14, y); y += 10;
+  doc.setFont('helvetica','bold'); doc.setFontSize(10);
+  doc.text('Date', 14, y); doc.text('Intervention', 45, y); doc.text('Montant', 196, y, { align: 'right' });
+  y += 3; doc.setDrawColor(231,222,205); doc.line(14, y, 196, y); y += 6;
+  doc.setFont('helvetica','normal');
+  interventions.forEach(i=>{
+    y = sautDePageSiNecessaire(doc, y);
+    doc.text(formatDate(i.date), 14, y);
+    const titreLignes = doc.splitTextToSize(i.titre||'', 130);
+    doc.text(titreLignes, 45, y);
+    doc.text(`${formatEuros(totalFiche(i))} €`, 196, y, { align: 'right' });
+    y += Math.max(titreLignes.length,1)*6 + 2;
+  });
+  y += 4; doc.setDrawColor(231,222,205); doc.line(14, y, 196, y); y += 9;
+  doc.setFont('helvetica','bold'); doc.setFontSize(13);
+  doc.text(`Total : ${formatEuros(totalVehicule(vehiculeId))} €`, 196, y, { align: 'right' });
+  doc.save(`releve-${(v?.marque||'')}-${(v?.modele||'')}.pdf`.replace(/\s+/g,'-').toLowerCase());
+}
+
+function imprimerReleveClient(clientId){
+  const c = data.clients.find(c=>c.id===clientId);
+  const vehicules = data.vehicules.filter(v=>v.clientId===clientId);
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 20;
+  doc.setFont('helvetica','bold'); doc.setFontSize(16);
+  doc.text("Relevé d'entretien", 14, y); y += 6;
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(148,138,121);
+  doc.text(`Édité le ${formatDate(new Date().toISOString().slice(0,10))}`, 14, y); y += 10;
+  doc.setTextColor(43,38,31); doc.setFontSize(11);
+  doc.text(`Client : ${c?.prenom||''} ${c?.nom||''}`, 14, y); y += 10;
+
+  let uneSection = false;
+  vehicules.forEach(v=>{
+    const interventions = data.interventions
+      .filter(i=>i.vehiculeId===v.id && i.type==='intervention')
+      .sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    if(!interventions.length) return;
+    uneSection = true;
+    y = sautDePageSiNecessaire(doc, y);
+    doc.setFont('helvetica','bold'); doc.setFontSize(12);
+    doc.text(`${v.marque} ${v.modele}${v.immatriculation ? ' — '+v.immatriculation : ''}`, 14, y); y += 7;
+    doc.setFontSize(10);
+    doc.text('Date', 14, y); doc.text('Intervention', 45, y); doc.text('Montant', 196, y, { align: 'right' });
+    y += 3; doc.setDrawColor(231,222,205); doc.line(14, y, 196, y); y += 6;
+    doc.setFont('helvetica','normal');
+    interventions.forEach(i=>{
+      y = sautDePageSiNecessaire(doc, y);
+      doc.text(formatDate(i.date), 14, y);
+      const titreLignes = doc.splitTextToSize(i.titre||'', 130);
+      doc.text(titreLignes, 45, y);
+      doc.text(`${formatEuros(totalFiche(i))} €`, 196, y, { align: 'right' });
+      y += Math.max(titreLignes.length,1)*6 + 2;
+    });
+    doc.setFont('helvetica','bold');
+    doc.text(`Sous-total : ${formatEuros(totalVehicule(v.id))} €`, 196, y, { align: 'right' });
+    y += 12;
+  });
+
+  if(!uneSection){
+    alert('Aucune intervention facturée pour ce client pour le moment.');
+    return;
+  }
+
+  y = sautDePageSiNecessaire(doc, y);
+  doc.setFontSize(14);
+  doc.text(`Total général : ${formatEuros(totalClient(clientId))} €`, 196, y, { align: 'right' });
+  doc.save(`releve-${(c?.prenom||'')}-${(c?.nom||'')}.pdf`.replace(/\s+/g,'-').toLowerCase());
+}
+
+function ouvrirGoogleAgendaParId(id){
+  const i = data.interventions.find(x=>x.id===id);
+  if(!i) return;
+  const { v, c } = infosVehicule(i.vehiculeId);
+  ouvrirGoogleAgenda(i, c, v);
+}
+
+function ouvrirGoogleAgenda(intervention, client, vehicule){
+  const debut = dateVersICS(intervention.date, 0);
+  const fin = dateVersICS(intervention.date, 1);
+  const resume = `${intervention.type === 'devis' ? 'Devis' : 'Intervention'} — ${intervention.titre}`;
+  const description = `${vehicule ? vehicule.marque + ' ' + vehicule.modele : ''}${vehicule?.immatriculation ? ' (' + vehicule.immatriculation + ')' : ''}${client ? ' — client : ' + client.prenom + ' ' + client.nom : ''}`;
+  const url = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
+    + '&text=' + encodeURIComponent(resume)
+    + '&dates=' + debut + '/' + fin
+    + '&details=' + encodeURIComponent(description);
+  window.open(url, '_blank');
+}
+
+function imprimerFiche(id){
+  const i = data.interventions.find(x=>x.id===id);
+  if(!i) return;
+  const { v, c } = infosVehicule(i.vehiculeId);
+  const labelPieces = i.type === 'devis' ? 'Pièces prévues' : 'Pièces remplacées';
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 20;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(16);
+  doc.text(i.type==='devis' ? 'Devis' : "Fiche d'intervention", 14, y);
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(148,138,121);
+  doc.text(formatDate(i.date), 196, y, { align: 'right' });
+  y += 6; doc.setDrawColor(231,222,205); doc.line(14, y, 196, y); y += 9;
+
+  doc.setTextColor(43,38,31); doc.setFontSize(11);
+  doc.text(`Client : ${c?.prenom||''} ${c?.nom||''}`, 14, y); y += 7;
+  doc.text(`Véhicule : ${v?.marque||''} ${v?.modele||''}${v?.immatriculation ? ' — '+v.immatriculation : ''}`, 14, y); y += 7;
+  if(i.km){ doc.text(`Kilométrage : ${i.km} km`, 14, y); y += 7; }
+  y += 3;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(13);
+  doc.text(i.titre || '', 14, y); y += 8;
+  doc.setFont('helvetica','normal'); doc.setFontSize(11);
+
+  if(i.piecesListe && i.piecesListe.length){
+    doc.setFont('helvetica','bold');
+    doc.text(labelPieces + ' :', 14, y); y += 6;
+    doc.setFont('helvetica','normal');
+    i.piecesListe.forEach(p=>{
+      y = sautDePageSiNecessaire(doc, y);
+      const nomAffiche = p.ref ? `${p.nom} (réf. ${p.ref})` : p.nom;
+      doc.text(`• ${nomAffiche}`, 18, y);
+      if(p.prixFacture) doc.text(`${formatEuros(p.prixFacture)} €`, 196, y, { align: 'right' });
+      y += 6;
+      if(p.heures){
+        doc.setFontSize(9); doc.setTextColor(148,138,121);
+        doc.text(`Main d'œuvre : ${p.heures} h (${formatEuros(p.tarifMO)} €)`, 22, y);
+        doc.setFontSize(11); doc.setTextColor(43,38,31);
+        y += 6;
+      }
+    });
+    y += 4;
+  } else if(i.pieces){
+    const lignes = doc.splitTextToSize(`${labelPieces} : ${i.pieces}`, 180);
+    doc.text(lignes, 14, y); y += lignes.length*6 + 5;
+  }
+
+  if(i.defauts && i.defauts.length){
+    doc.setFont('helvetica','bold');
+    doc.text('Défauts constatés :', 14, y); y += 6;
+    doc.setFont('helvetica','normal');
+    i.defauts.forEach(d=>{
+      y = sautDePageSiNecessaire(doc, y);
+      const lignes = doc.splitTextToSize('• ' + d, 175);
+      doc.text(lignes, 18, y); y += lignes.length*6;
+    });
+    y += 4;
+  }
+
+  if(i.heuresMO || i.prixAchatPieces){
+    y = sautDePageSiNecessaire(doc, y);
+    doc.setDrawColor(231,222,205); doc.line(14, y, 196, y); y += 9;
+    doc.setFontSize(11);
+    if(i.heuresMO){
+      doc.text(`Main d'œuvre (${i.heuresMO} h)`, 14, y);
+      doc.text(`${formatEuros(i.tarifMO)} €`, 196, y, { align: 'right' }); y += 7;
+    }
+    if(i.prixAchatPieces){
+      doc.text('Pièces', 14, y);
+      doc.text(`${formatEuros(i.coutPieces)} €`, 196, y, { align: 'right' }); y += 7;
+    }
+    doc.setFont('helvetica','bold');
+    doc.text('Total', 14, y);
+    doc.text(`${formatEuros(totalFiche(i))} €`, 196, y, { align: 'right' });
+  }
+
+  const nomBase = (i.titre||'fiche').replace(/[^a-z0-9]+/gi,'-').toLowerCase();
+  doc.save(`${i.type==='devis'?'devis':'intervention'}-${nomBase}.pdf`);
+}
+
+function icsEscape(str){
+  return String(str||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');
+}
+function dateVersICS(iso, decalageJours){
+  const d = new Date(iso + 'T00:00:00');
+  d.setDate(d.getDate() + (decalageJours||0));
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const j = String(d.getDate()).padStart(2,'0');
+  return `${y}${m}${j}`;
+}
+function creerEtTelechargerICS(intervention, client, vehicule){
+  const debut = dateVersICS(intervention.date, 0);
+  const fin = dateVersICS(intervention.date, 1);
+  const maintenant = new Date().toISOString().replace(/[-:]/g,'').split('.')[0] + 'Z';
+  const resume = `${intervention.type === 'devis' ? 'Devis' : 'Intervention'} — ${intervention.titre}`;
+  const description = `${vehicule ? vehicule.marque + ' ' + vehicule.modele : ''}${vehicule?.immatriculation ? ' (' + vehicule.immatriculation + ')' : ''}${client ? ' — client : ' + client.prenom + ' ' + client.nom : ''}`;
+  const ics = [
+    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//TAB//FR','CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT',
+    'UID:' + intervention.id + '@tab-app',
+    'DTSTAMP:' + maintenant,
+    'DTSTART;VALUE=DATE:' + debut,
+    'DTEND;VALUE=DATE:' + fin,
+    'SUMMARY:' + icsEscape(resume),
+    'DESCRIPTION:' + icsEscape(description),
+    'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:Rappel','TRIGGER:-P1D','END:VALARM',
+    'END:VEVENT','END:VCALENDAR'
+  ].join('\r\n');
+  const blob = new Blob([ics], { type: 'text/calendar' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'rdv-' + intervention.id + '.ics';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 3000);
+}
+
+async function enregistrerIntervention(){
+  const titre = document.getElementById('i-titre').value.trim();
+  const date = document.getElementById('i-date').value;
+  const km = document.getElementById('i-km').value.trim();
+
+  const piecesListe = Array.from(document.querySelectorAll('#pieces-lignes .piece-carte'))
+    .map(carte=>{
+      const nom = carte.querySelector('.piece-nom').value.trim();
+      const ref = carte.querySelector('.piece-ref').value.trim();
+      const prixAchat = parseFloat(carte.querySelector('.piece-prix').value);
+      const heures = parseFloat(carte.querySelector('.piece-heures').value);
+      if(!nom && !(prixAchat > 0) && !(heures > 0)) return null;
+      const prixFacture = prixAchat > 0 ? arrondi(prixAchat * (1 + data.reglages.margePieces)) : 0;
+      const tarifMOligne = heures > 0 ? arrondi(heures * data.reglages.tauxHoraire) : 0;
+      return {
+        nom: nom || 'Pièce', ref,
+        prixAchat: prixAchat > 0 ? prixAchat : 0, prixFacture,
+        heures: heures > 0 ? heures : 0, tarifMO: tarifMOligne
+      };
+    })
+    .filter(Boolean);
+  const prixAchatPieces = piecesListe.length ? arrondi(piecesListe.reduce((s,p)=>s+p.prixAchat,0)) : '';
+  const coutPieces = piecesListe.length ? arrondi(piecesListe.reduce((s,p)=>s+p.prixFacture,0)) : '';
+  const heuresMO = piecesListe.length ? arrondi(piecesListe.reduce((s,p)=>s+p.heures,0)) : '';
+  const tarifMO = piecesListe.length ? arrondi(piecesListe.reduce((s,p)=>s+p.tarifMO,0)) : '';
+
+  const err = document.getElementById('i-erreur');
+  if(!titre || !date){ err.textContent='Merci de renseigner au moins l\'intitulé et la date.'; err.style.display='block'; return; }
+
+  const defauts = Array.from(document.querySelectorAll('#defauts-lignes input'))
+    .map(inp=>inp.value.trim()).filter(Boolean);
+
+  const id = interventionEnEdition || genId();
+  const controlesValides = piecesJointesTemp.controles.filter(Boolean);
+
+  if(interventionEnEdition){
+    const existante = data.interventions.find(x=>x.id===interventionEnEdition);
+    const nbControlesAvant = (existante.controles||[]).length;
+    Object.assign(existante, {
+      type: typeSelectionne, titre, date, km,
+      piecesListe, heuresMO, prixAchatPieces, tarifMO, coutPieces,
+      statutDevis: typeSelectionne==='devis' ? statutDevisSelectionne : undefined,
+      defauts
+    });
+    delete existante.pieces;
+    if(piecesJointesTemp.facture){
+      await sauvegarderImg(id+':facture', piecesJointesTemp.facture);
+      existante.facturePhoto = true;
+    }
+    for(let idx=0; idx<controlesValides.length; idx++){
+      await sauvegarderImg(id+':ct:'+(nbControlesAvant+idx), controlesValides[idx]);
+    }
+    if(controlesValides.length){
+      existante.controles = [...(existante.controles||[]), ...controlesValides.map(()=>true)];
+    }
+    await sauvegarder();
+    fermerFormIntervention();
+    render();
+    return;
+  }
+
+  const nouvelleIntervention = {
+    id, vehiculeId: vehiculeCourant, type: typeSelectionne, titre, date, km,
+    piecesListe, heuresMO, prixAchatPieces, tarifMO, coutPieces,
+    statutDevis: typeSelectionne==='devis' ? statutDevisSelectionne : undefined,
+    statutPaiement: typeSelectionne==='intervention' ? 'non_paye' : undefined,
+    piecesCommandees: false,
+    defauts,
+    facturePhoto: !!piecesJointesTemp.facture,
+    controles: controlesValides.map(()=>true)
+  };
+  data.interventions.push(nouvelleIntervention);
+
+  if(piecesJointesTemp.facture) await sauvegarderImg(id+':facture', piecesJointesTemp.facture);
+  for(let idx=0; idx<controlesValides.length; idx++){
+    await sauvegarderImg(id+':ct:'+idx, controlesValides[idx]);
+  }
+
+  await sauvegarder();
+  const { v, c } = infosVehicule(vehiculeCourant);
+  creerEtTelechargerICS(nouvelleIntervention, c, v);
+  fermerFormIntervention();
+  render();
+}
+
+charger();
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
