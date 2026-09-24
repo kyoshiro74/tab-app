@@ -1,0 +1,3613 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TAB">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#F2F1ED" id="meta-theme-color">
+<title>TAB — Dossiers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#EFEEE8; --surface:#FFFFFF; --surface-2:#F5F3EC;
+    --accent:#0F6B7C; --accent-vif:#1487A0; --steel:#6E8891;
+    --money:#2E7D53; --warning:#B8791E;
+    --text:#1C1A16; --text-muted:#635E52; --danger:#B4402A; --success:#2E7D53; --border:#CFC8B4;
+    --rayon-s:8px; --rayon-m:11px; --rayon-l:16px;
+  }
+  body.sombre{
+    --bg:#12171B; --surface:#1E262B; --surface-2:#252F35;
+    --accent:#3FB8CE; --accent-vif:#5AD0E5; --steel:#82A0AA;
+    --money:#4FCB86; --warning:#E8B95E;
+    --text:#F8FAFB; --text-muted:#9AA7AD; --danger:#EC9A82; --success:#4FCB86; --border:#3A454C;
+  }
+  body.contraste-eleve{ --text:#000000; --text-muted:#2E2C28; --border:#8A8478; }
+  body.contraste-eleve.sombre{ --text:#FFFFFF; --text-muted:#DCDFE1; --border:#7A848A; }
+  body.contraste-eleve .fiche, body.contraste-eleve .dossier, body.contraste-eleve .stat-carte, body.contraste-eleve .formulaire{ border-width:2px; }
+  *{box-sizing:border-box;}
+  ::selection{background:var(--accent);color:#FFFFFF;}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:var(--rayon-s);}
+  input:focus, textarea:focus, select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);}
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:var(--rayon-m);}
+  ::-webkit-scrollbar-thumb:hover{background:var(--steel);}
+  body{margin:0;background:radial-gradient(ellipse 900px 600px at 15% -5%, color-mix(in srgb, var(--accent) 7%, transparent) 0%, transparent 60%), radial-gradient(ellipse 700px 500px at 100% 20%, color-mix(in srgb, var(--money) 5%, transparent) 0%, transparent 55%), var(--bg);background-attachment:fixed;color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;line-height:1.5;transition:background-color .35s ease,color .35s ease;scrollbar-color:var(--border) transparent;}
+  .app{max-width:900px;margin:0 auto;padding:26px 18px 84px;}
+  @media (min-width:1100px){
+    .app{max-width:1040px;}
+    .stats-periodes{grid-template-columns:repeat(4,1fr);}
+  }
+  header.top{position:sticky;top:0;z-index:50;background:color-mix(in srgb, var(--bg) 85%, transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:14px 0;margin:-26px -18px 18px;padding-left:18px;padding-right:18px;}
+  header.top h1{font-family:'Oswald',sans-serif;font-weight:700;font-size:24px;margin:0;letter-spacing:.2px;}
+  header.top p{margin:2px 0 0;color:var(--text-muted);font-size:12.5px;letter-spacing:.1px;}
+  #contenu{animation:apparitionContenu .18s ease;}
+  @keyframes apparitionContenu{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes logoSplash{0%,100%{transform:scale(1) rotate(0deg);}50%{transform:scale(1.08) rotate(-3deg);}}
+  @keyframes texteSplash{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+
+  .fil{display:flex;flex-wrap:wrap;align-items:center;gap:7px;font-size:12.5px;color:var(--text-muted);margin-bottom:18px;font-family:'Oswald',sans-serif;letter-spacing:.2px;}
+  .fil span.sep{color:var(--border);font-size:15px;}
+  .fil button.lien{background:none;border:none;color:var(--text-muted);font-family:'Oswald',sans-serif;font-size:12.5px;cursor:pointer;padding:0;text-decoration:none;}
+  .fil button.lien:hover{color:var(--accent);text-decoration:underline;text-underline-offset:2px;}
+  .fil .courant{color:var(--text);font-weight:600;}
+
+  .panneau-header{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
+  .panneau-header h2{font-family:'Oswald',sans-serif;font-size:21px;margin:0;font-weight:700;letter-spacing:.1px;}
+  .panneau-header .sous{color:var(--text-muted);font-size:12px;margin-top:2px;}
+  .carte-rappel{display:flex;align-items:center;gap:11px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--rayon-m);padding:11px 12px;margin-bottom:10px;}
+  .carte-rappel-icone{font-size:20px;flex-shrink:0;}
+  .carte-rappel-texte{flex:1;font-size:12.5px;color:var(--text-muted);}
+  .carte-rappel-titre{font-family:'Oswald',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--text);font-weight:600;margin-bottom:1px;}
+  .carte-rappel.retard{border-color:var(--danger);background:rgba(168,66,47,0.08);}
+  .carte-rappel.retard .carte-rappel-texte{color:var(--danger);}
+  .carte-rappel button.discret{padding:2px 4px;}
+  #bandeau-hors-ligne{background:var(--warning);color:#fff;font-size:12px;font-weight:600;text-align:center;padding:7px;border-radius:var(--rayon-s);margin-bottom:12px;}
+
+  .alerte{border-left:3px solid var(--accent);border-radius:var(--rayon-s);background:var(--surface-2);padding:11px 13px;margin-bottom:10px;}
+  .alerte.rouge{border-left-color:var(--danger);}
+  .alerte-titre{font-family:'Oswald',sans-serif;font-size:12.5px;font-weight:600;letter-spacing:.3px;color:var(--text);margin-bottom:8px;}
+  .alerte-ligne{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid var(--border);font-size:12.5px;}
+  .alerte-ligne:first-of-type{border-top:none;}
+  .alerte-ligne .desc{color:var(--text);cursor:pointer;}
+  .alerte-ligne .desc b{color:var(--accent);font-weight:600;}
+  .alerte-ligne .desc:hover{text-decoration:underline;}
+  .alerte-ligne .quand{color:var(--text-muted);white-space:nowrap;margin-left:8px;}
+
+  .statut-select{display:inline-flex;gap:5px;flex-wrap:wrap;margin:6px 0;}
+  .statut-opt{font-family:'Oswald',sans-serif;font-size:10.5px;font-weight:600;letter-spacing:.3px;padding:3px 9px;border-radius:var(--rayon-s);border:1px solid var(--border);cursor:pointer;color:var(--text-muted);background:linear-gradient(180deg,var(--surface) 0%,var(--surface-2) 100%);box-shadow:0 1px 0 rgba(40,35,28,0.12);transition:all .12s ease;}
+  .statut-opt.actif{transform:translateY(1px);box-shadow:inset 0 1px 3px rgba(40,35,28,0.24);}
+  .statut-opt.actif.en_attente{border-color:var(--warning);color:#8C6624;background:rgba(184,134,58,0.16);}
+  .statut-opt.actif.valide{border-color:var(--success);color:#2E5E44;background:rgba(63,122,92,0.16);}
+  .statut-opt.actif.refuse{border-color:var(--danger);color:#8C3D2F;background:rgba(181,79,63,0.16);}
+  .commande-btn{font-size:11px;padding:4px 9px;margin-top:6px;}
+
+  .recherche-zone{margin-bottom:16px;position:relative;}
+  .recherche-zone::before{content:"🔍";position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;opacity:.5;pointer-events:none;}
+  .recherche-zone input{font-size:14px;padding-left:34px;}
+  .resultat-groupe{margin-bottom:14px;}
+  .resultat-groupe-titre{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;}
+
+  .badge.paye{background:rgba(63,122,92,0.16);color:#2E5E44;}
+  .badge.non_paye{background:rgba(181,79,63,0.16);color:#8C3D2F;}
+  .paiement-toggle{margin:6px 0;}
+
+  .total-ligne{font-size:12.5px;color:var(--text-muted);margin-top:2px;font-variant-numeric:tabular-nums;}
+  .total-ligne b{color:var(--money);font-weight:600;}
+  .fiche-tarifs .total{color:var(--money);font-weight:600;}
+
+  .barre-outils{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .barre-outils button{font-size:12px;padding:7px 12px;}
+  input[type="file"].cache{display:none;}
+
+  .pastille-cloche{position:absolute;top:-6px;right:-6px;background:var(--danger);color:#fff;border-radius:50%;min-width:18px;height:18px;font-size:10.5px;line-height:18px;text-align:center;font-family:'Inter',sans-serif;font-weight:600;padding:0 2px;animation:pulseAlerte 2s ease-in-out infinite;}
+  @keyframes pulseAlerte{0%,100%{box-shadow:0 0 0 0 rgba(168,66,47,0.5);}50%{box-shadow:0 0 0 5px rgba(168,66,47,0);}}
+  .champ-erreur-shake{animation:secousseChamp .35s ease;}
+  @keyframes secousseChamp{0%,100%{transform:translateX(0);}20%{transform:translateX(-5px);}40%{transform:translateX(4px);}60%{transform:translateX(-3px);}80%{transform:translateX(2px);}}
+  .dossier, .fiche, .stat-carte{animation:apparitionCascade .3s ease backwards;}
+  @keyframes apparitionCascade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  .dossier:nth-child(1),.fiche:nth-child(1){animation-delay:0s;}
+  .dossier:nth-child(2),.fiche:nth-child(2){animation-delay:.03s;}
+  .dossier:nth-child(3),.fiche:nth-child(3){animation-delay:.06s;}
+  .dossier:nth-child(4),.fiche:nth-child(4){animation-delay:.09s;}
+  .dossier:nth-child(5),.fiche:nth-child(5){animation-delay:.12s;}
+  .dossier:nth-child(n+6),.fiche:nth-child(n+6){animation-delay:.15s;}
+  #bouton-haut{position:fixed;bottom:76px;left:20px;width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);box-shadow:0 4px 12px rgba(0,0,0,0.15);display:none;align-items:center;justify-content:center;font-size:16px;color:var(--text-muted);z-index:59;cursor:pointer;}
+  .vague-ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,0.5);transform:scale(0);animation:animationRipple .5s ease-out;pointer-events:none;}
+  @keyframes animationRipple{to{transform:scale(2.2);opacity:0;}}
+
+  .fab{position:fixed;bottom:76px;right:20px;width:56px;height:56px;border-radius:50%;background:linear-gradient(165deg,var(--accent-vif) 0%,var(--accent) 100%);color:#FFFFFF;font-size:28px;font-weight:300;border:none;box-shadow:0 6px 16px rgba(8,63,74,0.4),0 3px 8px rgba(8,63,74,0.28);z-index:60;align-items:center;justify-content:center;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease;line-height:1;padding:0;}
+  .fab:hover{transform:scale(1.06);box-shadow:0 8px 20px rgba(8,63,74,0.45),0 4px 10px rgba(8,63,74,0.3);}
+  .fab:active{transform:scale(0.94);}
+
+  .nav-bas{position:fixed;bottom:0;left:0;right:0;display:flex;background:color-mix(in srgb, var(--surface) 90%, transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--border);z-index:55;padding-bottom:env(safe-area-inset-bottom, 0);}
+  .nav-bas-item{flex:1;background:none;border:none;box-shadow:none;border-radius:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 4px 8px;font-family:'Inter',sans-serif;font-size:10px;font-weight:600;color:var(--text-muted);transition:color .12s ease;}
+  .nav-bas-item:active{transform:none;box-shadow:none;}
+  .nav-bas-item span:first-child{font-size:19px;}
+  .nav-bas-item.actif{color:var(--accent);}
+
+  .calendrier-entete{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:14px;}
+  .calendrier-jours-noms{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:10.5px;color:var(--text-muted);font-weight:600;margin-bottom:4px;}
+  .calendrier-grille{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:16px;}
+  .jour-vide{aspect-ratio:1;}
+  .jour-cal{aspect-ratio:1;border:1px solid var(--border);border-radius:var(--rayon-s);background:var(--surface);color:var(--text);font-size:12px;font-family:'Inter',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:2px;box-shadow:none;position:relative;}
+  .calendrier-grille > :nth-child(7n+6):not(.selectionne), .calendrier-grille > :nth-child(7n):not(.selectionne){background:var(--surface-2);}
+  .jour-cal.charge-1{background:color-mix(in srgb, var(--money) 10%, var(--surface));}
+  .jour-cal.charge-2{background:color-mix(in srgb, var(--money) 22%, var(--surface));}
+  .jour-cal.charge-3{background:color-mix(in srgb, var(--money) 38%, var(--surface));}
+  .jour-cal.auj{border-color:var(--accent);border-width:2px;font-weight:700;}
+  .jour-cal.selectionne{background:var(--accent);color:#fff;}
+  .jour-cal-pastille{background:var(--money);color:#fff;border-radius:50%;min-width:14px;height:14px;font-size:9px;line-height:14px;padding:0 2px;}
+  .jour-cal.selectionne .jour-cal-pastille{background:#fff;color:var(--accent);}
+  #panneau-notifs{margin-bottom:14px;animation:apparitionPanneau .18s ease;background:color-mix(in srgb, var(--surface) 92%, transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:var(--rayon-m);padding:12px;box-shadow:0 10px 28px rgba(0,0,0,0.1);max-height:60vh;overflow-y:auto;}
+  @keyframes apparitionPanneau{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
+
+  .stats-periodes{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px;}
+  @media (min-width:700px){.stats-periodes{grid-template-columns:repeat(4,1fr);}}
+  .stat-carte{position:relative;overflow:hidden;background:linear-gradient(165deg,var(--surface) 0%,var(--surface-2) 100%);border:1px solid var(--border);border-radius:var(--rayon-m);padding:13px 14px;box-shadow:0 2px 0 rgba(40,35,28,0.10),0 3px 8px rgba(40,35,28,0.12);transition:transform .15s ease,box-shadow .15s ease;}
+  .stat-carte::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--money));}
+  .stat-carte:hover{transform:translateY(-2px);box-shadow:0 4px 0 rgba(40,35,28,0.10),0 6px 14px rgba(40,35,28,0.18);}
+  .stat-titre{font-family:'Oswald',sans-serif;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted);margin-bottom:4px;}
+  .stat-nb{font-size:11px;color:var(--text-muted);}
+  .stat-montant{font-family:'Oswald',sans-serif;font-size:19px;font-weight:600;color:var(--money);margin-top:2px;font-variant-numeric:tabular-nums;}
+  .stat-marge{font-size:11.5px;color:var(--text-muted);margin-top:1px;}
+  .stat-tendance{font-size:10.5px;color:var(--text-muted);margin-top:5px;padding-top:5px;border-top:1px dashed var(--border);font-weight:600;}
+
+  .fiche-actions-bas{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+  .fiche-actions-bas button{font-size:11.5px;padding:6px 10px;}
+  .conteneur-menu-fiche{position:relative;}
+  .menu-fiche{position:absolute;bottom:calc(100% + 6px);right:0;background:color-mix(in srgb, var(--surface) 92%, transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:var(--rayon-m);box-shadow:0 10px 26px rgba(0,0,0,0.16);padding:6px;z-index:20;min-width:190px;flex-direction:column;gap:2px;animation:ouvertureFormulaire .15s ease;}
+  .menu-fiche button{text-align:left;background:none;box-shadow:none;border:none;padding:9px 10px;font-size:12.5px;color:var(--text);border-radius:var(--rayon-s);}
+  .menu-fiche button:hover{background:var(--surface-2);}
+  .menu-fiche button:active{transform:none;}
+
+  #zone-impression{display:none;}
+
+  #zone-toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:2000;display:flex;flex-direction:column;gap:8px;align-items:center;width:calc(100% - 32px);max-width:420px;pointer-events:none;}
+  .toast{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:var(--rayon-m);padding:12px 16px;box-shadow:0 8px 24px rgba(0,0,0,0.18);font-size:13px;color:var(--text);line-height:1.4;animation:toastEntree .22s ease, toastSortie .25s ease 3.2s forwards;pointer-events:auto;width:100%;display:flex;align-items:center;gap:8px;}
+  .coche-succes{display:inline-flex;color:var(--money);flex-shrink:0;animation:popCoche .35s ease;}
+  @keyframes popCoche{0%{transform:scale(0);}60%{transform:scale(1.3);}100%{transform:scale(1);}}
+  .toast.succes{border-left-color:var(--money);}
+  .toast.erreur{border-left-color:var(--danger);}
+  @keyframes toastEntree{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes toastSortie{to{opacity:0;transform:translateY(-8px);}}
+
+  .boite-confirm{background:var(--surface);border-radius:var(--rayon-l);padding:22px;max-width:360px;width:100%;box-shadow:0 16px 40px rgba(0,0,0,0.22);animation:toastEntree .18s ease;}
+  .boite-confirm p{font-size:14px;color:var(--text);margin:0 0 20px;line-height:1.5;}
+  .boite-confirm .form-actions{margin-top:0;}
+
+  button{font-family:'Oswald',sans-serif;font-weight:500;letter-spacing:.2px;border-radius:var(--rayon-s);border:1px solid var(--border);background:linear-gradient(180deg,var(--surface) 0%,var(--surface-2) 100%);color:var(--text);padding:10px 16px;cursor:pointer;font-size:13px;box-shadow:0 2px 0 rgba(40,35,28,0.14),0 1px 3px rgba(40,35,28,0.12);transition:all .12s ease;}
+  button:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;filter:grayscale(.3);}
+  @media (hover:hover){ button:not(:disabled):hover{cursor:pointer;} a:hover{cursor:pointer;} }
+  button:active{transform:translateY(1px);box-shadow:0 0 0 rgba(62,54,44,0),inset 0 1px 3px rgba(40,35,28,0.20);}
+  button.primaire{background:linear-gradient(180deg,var(--accent-vif) 0%,var(--accent) 100%);border-color:#083F4A;color:#FFFFFF;box-shadow:0 2px 0 rgba(8,63,74,0.35),0 2px 5px rgba(8,63,74,0.18),0 0 16px color-mix(in srgb, var(--accent) 28%, transparent);}
+  button.primaire:hover{background:linear-gradient(180deg,var(--accent-vif) 0%,var(--accent) 100%);filter:brightness(1.08);}
+  button.primaire:active{box-shadow:inset 0 1px 4px rgba(8,63,74,0.35);}
+  button.secondaire{background:transparent;box-shadow:none;color:var(--text-muted);border-color:var(--border);}
+  button.secondaire:hover{color:var(--accent);border-color:var(--accent);}
+  button.danger-sub{background:transparent;box-shadow:none;color:var(--danger);border-color:rgba(181,79,63,0.35);}
+  button.danger-sub:hover{background:rgba(181,79,63,0.08);}
+  button.discret{background:none;border:none;color:var(--text-muted);padding:4px 6px;font-family:'Inter',sans-serif;font-size:12px;box-shadow:none;}
+  button.discret:active{box-shadow:none;transform:none;}
+  button.discret:hover{color:var(--danger);}
+
+  input, textarea, select{background:var(--surface-2);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;border-radius:var(--rayon-s);padding:9px 10px;width:100%;}
+  input[type="checkbox"]{width:auto;padding:0;background:none;border:none;}
+  input::placeholder, textarea::placeholder{color:var(--text-muted);opacity:.85;}
+  input[type="number"]{-moz-appearance:textfield;}
+  input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  input:focus, textarea:focus, select:focus{outline:none;border-color:var(--accent);background:var(--surface);}
+  textarea{resize:vertical;min-height:56px;}
+
+  .dossier{display:flex;align-items:center;gap:12px;background:linear-gradient(180deg,var(--surface) 0%,var(--surface-2) 100%);border:1px solid var(--border);border-radius:var(--rayon-m);padding:13px 14px;margin-bottom:9px;cursor:pointer;box-shadow:0 3px 0 rgba(40,35,28,0.10),0 2px 6px rgba(40,35,28,0.14);transition:all .12s ease;width:100%;text-align:left;font-family:'Inter',sans-serif;}
+  body.mode-compact .dossier{padding:8px 12px;margin-bottom:5px;}
+  body.mode-compact .fiche{padding:10px 14px 9px;margin-bottom:9px;}
+  body.mode-compact .stat-carte{padding:9px 10px;}
+  body.mode-compact .avatar-client, body.mode-compact .dossier .tab{width:26px;height:26px;min-width:26px;font-size:11px;}
+  body.mode-compact .dossier .sous-info{display:none;}
+  .dossier:hover{box-shadow:0 4px 0 rgba(40,35,28,0.12),0 4px 12px rgba(40,35,28,0.20);transform:translateY(-1px);}
+  .dossier:active{box-shadow:inset 0 2px 4px rgba(40,35,28,0.22);transform:translateY(2px);}
+  .dossier .tab{font-family:'Oswald',sans-serif;font-weight:600;font-size:12px;background:var(--accent);color:#FFF8F0;border-radius:var(--rayon-s);padding:4px 8px;white-space:nowrap;}
+  .avatar-client{font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;color:#FFF8F0;border-radius:50%;width:34px;height:34px;min-width:34px;display:flex;align-items:center;justify-content:center;white-space:nowrap;}
+  .pastille-marque{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle;flex-shrink:0;}
+  .lettre-groupe{font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;color:var(--text-muted);letter-spacing:1.5px;margin:16px 2px 6px;padding-bottom:4px;border-bottom:1px solid var(--border);}
+  .lettre-groupe:first-child{margin-top:0;}
+  .dossier .info{flex:1;min-width:0;}
+  .dossier .titre-d{font-size:14px;color:var(--text);}
+  .dossier .sous-info{font-size:11px;color:var(--text-muted);margin-top:1px;}
+  .dossier .compte{font-size:11px;color:var(--text-muted);white-space:nowrap;}
+
+  .vide{border:1px dashed var(--border);border-radius:var(--rayon-m);padding:36px 18px;text-align:center;color:var(--text-muted);font-size:13px;margin-bottom:14px;}
+  .vide::before{content:var(--icone-vide,"📂");display:block;font-size:26px;margin-bottom:8px;opacity:.5;}
+
+  .formulaire{background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--rayon-m);padding:16px;margin-bottom:18px;display:none;}
+  .formulaire.ouvert{display:block;animation:ouvertureFormulaire .2s ease;}
+  @keyframes ouvertureFormulaire{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+  .formulaire h3{font-family:'Oswald',sans-serif;font-size:13px;margin:0 0 12px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);}
+  .grille{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+  .grille.trois{grid-template-columns:1fr 1fr 1fr;}
+  @media (max-width:520px){.grille, .grille.trois{grid-template-columns:1fr 1fr;}}
+  @media (max-width:400px){.grille, .grille.trois{grid-template-columns:1fr;}}
+  .champ{display:flex;flex-direction:column;gap:5px;}
+  .champ label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;}
+  .champ.large{grid-column:1/-1;}
+  .champ-titre-grand{font-size:17px;padding:13px 14px;font-weight:500;}
+  .champ .apercu-calcul{font-size:12px;color:var(--money);margin-top:2px;}
+  .form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px;}
+  .erreur{color:var(--danger);font-size:12px;margin:-4px 0 8px;}
+
+  .type-select{display:flex;gap:8px;margin-bottom:12px;}
+  .type-opt{flex:1;border:1px solid var(--border);border-radius:var(--rayon-s);padding:9px;text-align:center;cursor:pointer;font-family:'Oswald',sans-serif;font-size:12.5px;letter-spacing:.3px;color:var(--text-muted);background:linear-gradient(180deg,var(--surface) 0%,var(--surface-2) 100%);box-shadow:0 2px 0 rgba(40,35,28,0.12),0 1px 2px rgba(40,35,28,0.10);transition:all .12s ease;}
+  .type-opt.actif{border-color:var(--accent);color:#083F4A;background:linear-gradient(180deg,rgba(15,107,124,0.16) 0%,rgba(15,107,124,0.09) 100%);box-shadow:inset 0 2px 4px rgba(8,63,74,0.16);transform:translateY(1px);}
+
+  .defaut-ligne{display:flex;gap:6px;margin-bottom:6px;}
+  .defaut-ligne input{flex:1;}
+  .btn-ajout-ligne{align-self:flex-start;font-size:12px;padding:6px 10px;margin-top:2px;}
+
+  .piece-carte{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--rayon-s);padding:10px 10px 8px;margin-bottom:8px;}
+  .piece-carte .piece-entete{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .piece-carte .piece-nom{flex:1;}
+  .piece-champs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+  @media (max-width:480px){.piece-champs{grid-template-columns:1fr 1fr;}}
+  .piece-champs .champ label{font-size:10px;}
+  .piece-sous-total{text-align:right;font-size:11.5px;color:var(--money);margin-top:6px;}
+  .piece-marge-select{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+  .marge-mini-opt{flex:1 1 calc(50% - 3px);min-width:80px;font-family:'Inter',sans-serif;font-size:10.5px;font-weight:600;padding:5px 6px;border-radius:var(--rayon-s);border:1px solid var(--border);background:var(--surface);color:var(--text-muted);box-shadow:none;transition:all .12s ease;}
+  .marge-mini-opt[data-marge="prestataire"].actif{border-color:var(--steel);color:var(--steel);background:rgba(124,146,154,0.14);}
+  .marge-mini-opt[data-marge="depense_perso"].actif{border-color:var(--danger);color:var(--danger);background:rgba(168,66,47,0.1);}
+
+  .carte-diag{background:var(--surface);border:1px solid var(--border);border-radius:var(--rayon-m);padding:12px 14px;margin-bottom:10px;}
+  .carte-diag-titre{font-family:'Oswald',sans-serif;font-weight:600;font-size:13.5px;color:var(--text);}
+  .statut-diag-opt{flex:1 1 calc(25% - 5px);min-width:70px;font-family:'Inter',sans-serif;font-size:10.5px;font-weight:600;padding:6px 4px;border-radius:var(--rayon-s);border:1px solid var(--border);background:var(--surface);color:var(--text-muted);box-shadow:none;transition:all .12s ease;}
+  .statut-diag-opt.actif-ok{border-color:var(--money);color:#fff;background:var(--money);}
+  .statut-diag-opt.actif-a_prevoir{border-color:var(--warning);color:#fff;background:var(--warning);}
+  .statut-diag-opt.actif-urgent{border-color:var(--danger);color:#fff;background:var(--danger);}
+  .statut-diag-opt.actif-na{border-color:var(--steel);color:#fff;background:var(--steel);}
+  .marge-mini-opt.actif{border-color:var(--money);color:var(--money);background:rgba(63,106,79,0.1);box-shadow:inset 0 1px 2px rgba(40,35,28,0.1);}
+
+  .fiche{position:relative;background:linear-gradient(170deg,var(--surface) 0%,var(--surface) 70%,var(--surface-2) 150%);border:1px solid var(--border);border-radius:var(--rayon-m);padding:15px 17px 13px;margin-bottom:15px;box-shadow:0 2px 0 rgba(40,35,28,0.08),0 3px 10px rgba(40,35,28,0.10);transition:box-shadow .15s ease,transform .15s ease;}
+  .fiche:hover{box-shadow:0 3px 0 rgba(40,35,28,0.09),0 6px 18px rgba(40,35,28,0.14);transform:translateY(-1px);}
+  .fiche::before{content:"";position:absolute;top:0;left:16px;right:16px;height:1px;background-image:radial-gradient(circle,var(--surface-2) 1.5px,transparent 1.5px);background-size:8px 1px;}
+  .fiche-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px;}
+  .fiche-titre-ligne{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .badge{font-family:'Oswald',sans-serif;font-size:10.5px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;padding:3px 8px;border-radius:var(--rayon-s);transition:all .12s ease;border:none;box-shadow:none;}
+  .paiement-toggle .badge{box-shadow:0 2px 0 rgba(40,35,28,0.12);}
+  .paiement-toggle .badge:active{box-shadow:inset 0 1px 3px rgba(40,35,28,0.26);transform:translateY(1px);}
+  .badge.intervention{background:rgba(15,107,124,0.14);color:#083F4A;}
+  .badge.devis{background:rgba(147,167,173,0.16);color:#5F767D;}
+  .fiche-devis{border-left:3px solid var(--steel);}
+  .fiche-intervention{border-left:3px solid var(--accent);}
+  .titre-refuse{text-decoration:line-through;color:var(--text-muted);}
+  .fiche-titre{font-family:'Oswald',sans-serif;font-weight:600;font-size:15px;color:var(--text);}
+  .vignette-couverture{width:38px;height:38px;border-radius:var(--rayon-s);object-fit:cover;border:1px solid var(--border);flex-shrink:0;cursor:pointer;}
+  .fiche-date{font-size:12px;color:var(--text-muted);white-space:nowrap;text-align:right;}
+  .fiche-date-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+  .bouton-icone{font-family:'Inter',sans-serif;font-size:14px;line-height:1;padding:8px 11px;min-height:36px;border-radius:var(--rayon-s);border:1px solid var(--border);background:linear-gradient(180deg,var(--surface) 0%,var(--surface-2) 100%);color:var(--text-muted);box-shadow:0 2px 0 rgba(40,35,28,0.12),0 1px 2px rgba(40,35,28,0.10);transition:all .12s ease;cursor:pointer;}
+  .bouton-icone:hover{color:var(--accent);border-color:var(--accent);}
+  .bouton-icone:active{box-shadow:inset 0 1px 3px rgba(40,35,28,0.22);transform:translateY(1px);}
+  .bouton-icone.danger:hover{color:var(--danger);border-color:var(--danger);}
+  .fiche-date .km{display:block;color:var(--text-muted);}
+  .fiche-pieces{font-size:13px;line-height:1.5;margin:4px 0 10px;color:var(--text);}
+  .fiche-pieces b{color:var(--text-muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:3px;}
+
+  .fiche-tarifs{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--text-muted);margin:8px 0;}
+  .fiche-tarifs b{color:var(--text);font-weight:500;}
+
+  .bloc-titre{font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.6px;font-weight:700;margin:10px 0 6px;border-top:1px solid var(--border);padding-top:9px;}
+  .defauts-liste{list-style:none;margin:0;padding:0;font-size:13px;}
+  .checklist-fiche{display:flex;flex-direction:column;gap:6px;}
+  .checklist-item{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;}
+  .checklist-item input[type="checkbox"]{width:18px;height:18px;flex-shrink:0;accent-color:var(--accent);cursor:pointer;}
+  .defauts-liste li{padding:3px 0 3px 14px;position:relative;}
+  .defauts-liste li::before{content:"—";position:absolute;left:0;color:var(--danger);}
+
+  .pieces-jointes{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
+  .vignette{width:64px;height:64px;border-radius:var(--rayon-s);border:1px solid var(--border);object-fit:cover;cursor:pointer;background:var(--surface-2);box-shadow:0 2px 0 rgba(40,35,28,0.12),0 2px 5px rgba(40,35,28,0.16);transition:all .12s ease;animation:apparitionVignette .2s ease;}
+  .vignette:hover{transform:scale(1.05);}
+  @keyframes apparitionVignette{from{opacity:0;transform:scale(.92);}to{opacity:1;transform:scale(1);}}
+  .vignette:active{box-shadow:inset 0 2px 4px rgba(40,35,28,0.26);transform:translateY(1px);}
+  .vignette-doc{width:64px;height:64px;border-radius:var(--rayon-s);border:1px solid var(--border);background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-muted);text-align:center;cursor:pointer;box-shadow:0 2px 0 rgba(40,35,28,0.12),0 2px 5px rgba(40,35,28,0.16);transition:all .12s ease;}
+  .vignette-doc:active{box-shadow:inset 0 2px 4px rgba(40,35,28,0.26);transform:translateY(1px);}
+
+  .fiche-actions{position:absolute;top:11px;right:11px;}
+  .upload-label{display:inline-block;font-size:12px;padding:8px 12px;border:1px dashed var(--border);border-radius:var(--rayon-s);color:var(--text-muted);cursor:pointer;text-align:center;transition:all .12s ease;}
+  .upload-label:hover{border-color:var(--accent);color:var(--accent);}
+  .upload-label:active{transform:translateY(1px);}
+  .apercus{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+  .apercu-item{position:relative;}
+  .apercu-item .retirer{position:absolute;top:-6px;right:-6px;background:var(--danger);color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;line-height:16px;text-align:center;cursor:pointer;border:none;padding:0;}
+  @media print{
+    header.top, .nav-bas, #bouton-fab, #bouton-haut, #bandeau-hors-ligne, .fiche-actions-bas, .bouton-icone, #panneau-notifs, .fil{display:none !important;}
+    body{background:#fff;}
+    .fiche, .dossier, .stat-carte{box-shadow:none;border:1px solid #ccc;break-inside:avoid;}
+  }
+</style>
+<link rel="manifest" href="manifest.json">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+<div id="splash" style="position:fixed;inset:0;background:var(--bg);z-index:1500;display:flex;align-items:center;justify-content:center;transition:opacity .3s ease;">
+  <div style="text-align:center;">
+    <div style="width:64px;height:64px;border-radius:var(--rayon-l);background:linear-gradient(165deg,var(--accent-vif) 0%,var(--accent) 100%);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;box-shadow:0 8px 20px rgba(8,63,74,0.3);animation:logoSplash 1.1s ease infinite;">
+      <span style="font-family:'Oswald',sans-serif;font-size:26px;font-weight:700;color:#fff;">T</span>
+    </div>
+    <div style="font-family:'Oswald',sans-serif;font-size:15px;letter-spacing:2px;color:var(--text-muted);animation:texteSplash .6s ease .15s backwards;">TAB</div>
+  </div>
+</div>
+<div id="verrou" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:999;align-items:center;justify-content:center;flex-direction:column;padding:20px;">
+  <div style="max-width:280px;width:100%;text-align:center;">
+    <div style="width:52px;height:52px;border-radius:50%;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 14px;">🔒</div>
+    <h1 style="font-family:'Oswald',sans-serif;font-size:26px;margin:0 0 6px;">TAB</h1>
+    <p style="color:var(--text-muted);font-size:13px;margin:0 0 18px;">Entrez votre code pour continuer</p>
+    <input id="pin-saisie" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="Code" style="text-align:center;font-size:18px;letter-spacing:4px;margin-bottom:10px;" onkeydown="if(event.key==='Enter')verifierPin()">
+    <div class="erreur" id="pin-erreur" style="display:none;">Code incorrect.</div>
+    <button class="primaire" style="width:100%;margin-top:6px;" onclick="verifierPin()">Déverrouiller</button>
+  </div>
+</div>
+<div class="app" id="app-principal">
+  <header class="top">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+      <div><h1>TAB</h1><p>Dossiers clients — véhicules — interventions</p></div>
+      <div style="display:flex;gap:4px;">
+        <button class="discret" title="Mode sombre" id="bouton-theme" onclick="basculerTheme()" style="font-size:18px;">🌙</button>
+      </div>
+    </div>
+  </header>
+
+  <div id="bandeau-hors-ligne" style="display:none;"></div>
+  <div class="fil" id="fil"></div>
+
+  <div id="contenu"></div>
+</div>
+<button id="bouton-fab" class="fab" onclick="actionFAB()" title="Ajouter" style="display:none;">+</button>
+<button id="bouton-haut" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Remonter en haut">↑</button>
+<nav class="nav-bas" id="nav-bas" style="display:none;">
+  <button class="nav-bas-item" data-vue="clients" onclick="allerClients()"><span>🏠</span><span>Accueil</span></button>
+  <button class="nav-bas-item" data-vue="calendrier" onclick="allerCalendrier()"><span>📅</span><span>Planning</span></button>
+  <button class="nav-bas-item" data-vue="filtres" onclick="allerFiltres()"><span>📋</span><span>Vue d'ensemble</span></button>
+  <button class="nav-bas-item" data-vue="reglages" onclick="allerReglages()"><span>⚙</span><span>Réglages</span></button>
+</nav>
+<div id="zone-impression"></div>
+<div id="lightbox" style="display:none;position:fixed;inset:0;background:rgba(20,18,14,0.7);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:1000;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:20px;"></div>
+<div id="zone-confirm" style="display:none;position:fixed;inset:0;background:rgba(20,18,14,0.35);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:1100;align-items:center;justify-content:center;padding:20px;"></div>
+<div id="zone-toast"></div>
+
+<script>
+const CLE = 'tab-data';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDdFLSVCLiqTTvDg8A3eXTUhIOEH0TzYA4",
+  authDomain: "tab-garage.firebaseapp.com",
+  projectId: "tab-garage",
+  storageBucket: "tab-garage.firebasestorage.app",
+  messagingSenderId: "469529015",
+  appId: "1:469529015:web:567282402d7a9975b5b832"
+};
+let firebaseDb = null;
+try{
+  firebase.initializeApp(firebaseConfig);
+  firebaseDb = firebase.firestore();
+} catch(e){ console.error('Firebase indisponible', e); }
+
+function fusionnerListe(listeLocale, listeDistante){
+  const map = new Map();
+  (listeDistante||[]).forEach(item=>map.set(item.id, item));
+  (listeLocale||[]).forEach(item=>{
+    const existant = map.get(item.id);
+    if(!existant || (item._maj||0) >= (existant._maj||0)) map.set(item.id, item);
+  });
+  return Array.from(map.values());
+}
+function fusionnerDonnees(local, distant){
+  if(!distant) return local;
+  if(!local) return distant;
+  return {
+    clients: fusionnerListe(local.clients, distant.clients),
+    vehicules: fusionnerListe(local.vehicules, distant.vehicules),
+    interventions: fusionnerListe(local.interventions, distant.interventions),
+    reglages: (local.dernierMaj||0) >= (distant.dernierMaj||0) ? (local.reglages||{}) : (distant.reglages||{}),
+    dernierMaj: Math.max(local.dernierMaj||0, distant.dernierMaj||0)
+  };
+}
+
+function refGarage(code){ return firebaseDb.collection('garages').doc(code); }
+function refCollection(type, code){ return refGarage(code).collection(type); }
+
+let dernierEtatSynchro = null;
+function figerEtatSynchro(){
+  dernierEtatSynchro = {
+    clients: JSON.parse(JSON.stringify(data.clients||[])),
+    vehicules: JSON.parse(JSON.stringify(data.vehicules||[])),
+    interventions: JSON.parse(JSON.stringify(data.interventions||[]))
+  };
+}
+
+async function recupererToutDepuisFirebase(code){
+  if(!firebaseDb) return null;
+  try{
+    const [clientsSnap, vehiculesSnap, interventionsSnap, garageDoc] = await Promise.all([
+      refCollection('clients', code).get(),
+      refCollection('vehicules', code).get(),
+      refCollection('interventions', code).get(),
+      refGarage(code).get()
+    ]);
+    localStorage.removeItem('tab-sync-erreur');
+    const meta = garageDoc.exists ? garageDoc.data() : {};
+    let clients = clientsSnap.docs.map(d=>d.data());
+    let vehicules = vehiculesSnap.docs.map(d=>d.data());
+    let interventions = interventionsSnap.docs.map(d=>d.data());
+    let migre = false;
+    /* Migration transparente depuis l'ancien format (toutes les données dans un seul document) */
+    if(!clients.length && !vehicules.length && !interventions.length && Array.isArray(meta.clients)){
+      clients = meta.clients || [];
+      vehicules = meta.vehicules || [];
+      interventions = meta.interventions || [];
+      migre = clients.length > 0 || vehicules.length > 0 || interventions.length > 0;
+    }
+    return { clients, vehicules, interventions, reglages: meta.reglages, dernierMaj: meta.dernierMaj || 0, migre };
+  } catch(e){
+    console.error('Erreur de lecture Firebase', e);
+    localStorage.setItem('tab-sync-erreur', (e && e.message) || String(e));
+    return null;
+  }
+}
+
+/* Envoie uniquement les clients/véhicules/fiches qui ont changé depuis la dernière synchronisation,
+   au lieu de tout le dossier d'un coup — plus rapide, moins de données, et une suppression reste une vraie suppression. */
+async function synchroniserVersFirebase(){
+  const code = localStorage.getItem('tab-code-sync');
+  if(!code || !firebaseDb) return;
+  try{
+    const avant = dernierEtatSynchro || { clients: [], vehicules: [], interventions: [] };
+    let batch = firebaseDb.batch();
+    let nbOperations = 0;
+    const limiterBatch = async ()=>{
+      if(nbOperations >= 450){
+        await batch.commit();
+        batch = firebaseDb.batch();
+        nbOperations = 0;
+      }
+    };
+    for(const type of ['clients','vehicules','interventions']){
+      const col = refCollection(type, code);
+      const actuels = data[type] || [];
+      const idsAvant = new Map((avant[type]||[]).map(x=>[x.id, x]));
+      const idsActuels = new Set(actuels.map(x=>x.id));
+      for(const item of actuels){
+        const ancien = idsAvant.get(item.id);
+        if(!ancien || JSON.stringify(ancien) !== JSON.stringify(item)){
+          await limiterBatch();
+          batch.set(col.doc(item.id), item);
+          nbOperations++;
+        }
+      }
+      for(const [id] of idsAvant){
+        if(!idsActuels.has(id)){
+          await limiterBatch();
+          batch.delete(col.doc(id));
+          nbOperations++;
+        }
+      }
+    }
+    batch.set(refGarage(code), { reglages: data.reglages, dernierMaj: data.dernierMaj }, { merge: true });
+    nbOperations++;
+    if(nbOperations > 0) await batch.commit();
+    figerEtatSynchro();
+    localStorage.setItem('tab-sync-derniere-reussite', new Date().toISOString());
+    localStorage.removeItem('tab-sync-erreur');
+    const derniereHisto = parseInt(localStorage.getItem('tab-derniere-historique')||'0');
+    if(Date.now() - derniereHisto > 15*60*1000){
+      enregistrerHistorique(code);
+      localStorage.setItem('tab-derniere-historique', String(Date.now()));
+    }
+  } catch(e){
+    console.error('Erreur de synchronisation', e);
+    localStorage.setItem('tab-sync-erreur', (e && e.message) || String(e));
+  }
+}
+
+async function enregistrerHistorique(code){
+  if(!firebaseDb) return;
+  try{
+    const horodatage = Date.now();
+    await refGarage(code).collection('historique').doc(String(horodatage)).set({
+      clients: data.clients, vehicules: data.vehicules, interventions: data.interventions,
+      reglages: data.reglages, _horodatage: horodatage
+    });
+    const snap = await refGarage(code).collection('historique').orderBy('_horodatage','desc').get();
+    if(snap.size > 5){
+      const aSupprimer = snap.docs.slice(5);
+      for(const d of aSupprimer) await d.ref.delete();
+    }
+  } catch(e){ console.error('Erreur historique', e); }
+}
+
+async function listerHistorique(){
+  const code = localStorage.getItem('tab-code-sync');
+  if(!code || !firebaseDb) return [];
+  try{
+    const snap = await refGarage(code).collection('historique').orderBy('_horodatage','desc').get();
+    return snap.docs.map(d=>d.data());
+  } catch(e){ console.error(e); return []; }
+}
+
+async function chargerEtAfficherHistorique(){
+  const zone = document.getElementById('zone-historique');
+  zone.innerHTML = '<p style="font-size:12px;color:var(--text-muted);">Chargement...</p>';
+  const liste = await listerHistorique();
+  if(!liste.length){
+    zone.innerHTML = '<p style="font-size:12px;color:var(--text-muted);">Aucun historique disponible pour le moment (il se remplit progressivement au fil des synchronisations).</p>';
+    return;
+  }
+  zone.innerHTML = liste.map(v=>{
+    const dateStr = new Date(v._horodatage).toLocaleString('fr-FR');
+    return `<div class="alerte-ligne"><span class="desc" style="cursor:default;">${esc(dateStr)} — ${(v.clients||[]).length} client(s), ${(v.interventions||[]).length} fiche(s)</span><button class="discret commande-btn" onclick="restaurerHistorique(${v._horodatage})">Restaurer</button></div>`;
+  }).join('');
+}
+
+async function restaurerHistorique(horodatage){
+  if(!(await confirmerAction('Restaurer cette version va remplacer toutes les données actuelles, sur cet appareil et pour tous les appareils synchronisés. Continuer ?'))) return;
+  const code = localStorage.getItem('tab-code-sync');
+  if(!code || !firebaseDb) return;
+  try{
+    const doc = await refGarage(code).collection('historique').doc(String(horodatage)).get();
+    if(!doc.exists){ afficherToast('Version introuvable.', 'erreur'); return; }
+    const version = doc.data();
+    delete version._horodatage;
+    figerEtatSynchro();
+    data = { clients: version.clients||[], vehicules: version.vehicules||[], interventions: version.interventions||[], reglages: version.reglages||data.reglages, dernierMaj: Date.now() };
+    try{ localStorage.setItem(CLE, JSON.stringify(data)); } catch(e){}
+    await synchroniserVersFirebase();
+    render();
+    afficherToast('Version restaurée avec succès.', 'succes');
+  } catch(e){
+    console.error(e);
+    afficherToast('Erreur lors de la restauration.', 'erreur');
+  }
+}
+
+let annulateursEcoute = [];
+function demarrerEcouteSynchro(code){
+  if(!firebaseDb || !code) return;
+  arreterEcouteSynchro();
+  ['clients','vehicules','interventions'].forEach(type=>{
+    const annuler = refCollection(type, code).onSnapshot(snap=>{
+      if(snap.metadata.hasPendingWrites) return;
+      let changement = false;
+      snap.docChanges().forEach(ch=>{
+        const item = ch.doc.data();
+        const liste = data[type];
+        const idx = liste.findIndex(x=>x.id===item.id);
+        if(ch.type === 'removed'){
+          if(idx !== -1){ liste.splice(idx,1); changement = true; }
+        } else if(idx === -1){
+          liste.push(item); changement = true;
+        } else if(JSON.stringify(liste[idx]) !== JSON.stringify(item)){
+          liste[idx] = item; changement = true;
+        }
+      });
+      if(changement){
+        try{ localStorage.setItem(CLE, JSON.stringify(data)); } catch(e){}
+        if(dernierEtatSynchro) dernierEtatSynchro[type] = JSON.parse(JSON.stringify(data[type]));
+        if(document.getElementById('verrou').style.display !== 'flex') render();
+      }
+    }, err=>console.error('Erreur d\'écoute Firebase', err));
+    annulateursEcoute.push(annuler);
+  });
+}
+function arreterEcouteSynchro(){
+  annulateursEcoute.forEach(a=>a());
+  annulateursEcoute = [];
+}
+
+let data = { clients: [], vehicules: [], interventions: [], reglages: { tauxHoraire: 55, margePieces: 0.20, pin: null } };
+let vue = 'clients';
+let clientCourant = null;
+let vehiculeCourant = null;
+
+function genId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function esc(s){ const d=document.createElement('div'); d.textContent = s||''; return d.innerHTML; }
+
+window.addEventListener('scroll', ()=>{
+  const bouton = document.getElementById('bouton-haut');
+  if(!bouton) return;
+  bouton.style.display = window.scrollY > 400 ? 'flex' : 'none';
+});
+
+document.addEventListener('click', (e)=>{
+  const bouton = e.target.closest('button');
+  if(!bouton || bouton.disabled) return;
+  const rect = bouton.getBoundingClientRect();
+  const vague = document.createElement('span');
+  const taille = Math.max(rect.width, rect.height);
+  vague.className = 'vague-ripple';
+  vague.style.width = vague.style.height = taille + 'px';
+  vague.style.left = (e.clientX - rect.left - taille/2) + 'px';
+  vague.style.top = (e.clientY - rect.top - taille/2) + 'px';
+  if(getComputedStyle(bouton).position === 'static') bouton.style.position = 'relative';
+  bouton.style.overflow = 'hidden';
+  bouton.appendChild(vague);
+  setTimeout(()=>vague.remove(), 500);
+});
+
+function secouerChamp(id){
+  const champ = document.getElementById(id);
+  if(!champ) return;
+  champ.classList.remove('champ-erreur-shake');
+  void champ.offsetWidth;
+  champ.classList.add('champ-erreur-shake');
+  champ.style.borderColor = 'var(--danger)';
+}
+
+function afficherToast(message, type){
+  const zone = document.getElementById('zone-toast');
+  while(zone.children.length >= 3){ zone.removeChild(zone.firstChild); }
+  const toast = document.createElement('div');
+  toast.className = 'toast' + (type ? ' '+type : '');
+  if(type === 'succes'){
+    toast.innerHTML = `<span class="coche-succes"><svg viewBox="0 0 24 24" width="15" height="15"><path d="M4 12l5 5L20 6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>${esc(message)}`;
+  } else {
+    toast.textContent = message;
+  }
+  zone.appendChild(toast);
+  setTimeout(()=>toast.remove(), 3500);
+}
+
+function confirmerAction(message){
+  return new Promise(resolve=>{
+    const zone = document.getElementById('zone-confirm');
+    zone.innerHTML = `
+      <div class="boite-confirm">
+        <p>${esc(message)}</p>
+        <div class="form-actions">
+          <button id="confirm-annuler">Annuler</button>
+          <button class="danger-sub" id="confirm-valider">Confirmer</button>
+        </div>
+      </div>
+    `;
+    zone.style.display = 'flex';
+    document.getElementById('confirm-annuler').onclick = ()=>{ zone.style.display='none'; resolve(false); };
+    document.getElementById('confirm-valider').onclick = ()=>{ zone.style.display='none'; resolve(true); };
+  });
+}
+
+function confirmerAvecSaisie(message, texteAttendu){
+  return new Promise(resolve=>{
+    const zone = document.getElementById('zone-confirm');
+    zone.innerHTML = `
+      <div class="boite-confirm">
+        <p>${esc(message)}</p>
+        <p style="font-size:12.5px;color:var(--text-muted);margin:-12px 0 10px;">Pour confirmer, tape exactement <b>${esc(texteAttendu)}</b> ci-dessous&nbsp;:</p>
+        <input type="text" id="confirm-saisie" placeholder="${esc(texteAttendu)}" style="margin-bottom:14px;">
+        <div class="form-actions">
+          <button id="confirm-annuler">Annuler</button>
+          <button class="danger-sub" id="confirm-valider">Supprimer définitivement</button>
+        </div>
+      </div>
+    `;
+    zone.style.display = 'flex';
+    const champ = document.getElementById('confirm-saisie');
+    champ.focus();
+    document.getElementById('confirm-annuler').onclick = ()=>{ zone.style.display='none'; resolve(false); };
+    document.getElementById('confirm-valider').onclick = ()=>{
+      if(champ.value.trim() !== texteAttendu){
+        afficherToast('Le texte saisi ne correspond pas exactement.', 'erreur');
+        return;
+      }
+      zone.style.display='none'; resolve(true);
+    };
+  });
+}
+
+const PALETTE_AVATARS = ['#5A7EA8','#7A8C5C','#A87B5A','#8C6BA8','#5CA88C','#A85C7B','#6B90A8','#A8905C'];
+function couleurAvatar(texte){
+  const s = (texte||'?');
+  let hash = 0;
+  for(let i=0;i<s.length;i++) hash = s.charCodeAt(i) + ((hash<<5)-hash);
+  return PALETTE_AVATARS[Math.abs(hash) % PALETTE_AVATARS.length];
+}
+const PALETTE_MARQUES = {
+  'mercedes':'#5A7A8C', 'bmw':'#4A6FA5', 'audi':'#8C4A4A', 'volkswagen':'#4A6B95', 'vw':'#4A6B95',
+  'peugeot':'#4A7A6B', 'renault':'#A55A4A', 'citroen':'#6B5A95', 'citroën':'#6B5A95',
+  'toyota':'#A5824A', 'nissan':'#5A5A95', 'ford':'#4A5A95', 'opel':'#8C8C4A',
+  'fiat':'#A54A5A', 'seat':'#A5824A', 'skoda':'#4A8C6B', 'hyundai':'#4A6B8C',
+  'kia':'#8C4A6B', 'dacia':'#6B7A4A', 'volvo':'#4A5A6B', 'mini':'#8C6B4A'
+};
+function couleurMarque(marque){
+  const m = (marque||'').trim().toLowerCase();
+  if(PALETTE_MARQUES[m]) return PALETTE_MARQUES[m];
+  let hash = 0;
+  for(let i=0;i<m.length;i++) hash = m.charCodeAt(i) + ((hash<<5)-hash);
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 32%, 42%)`;
+}
+function formatDate(iso){ if(!iso) return ''; const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; }
+
+const MODELE_DIAGNOSTIC_DEFAUT = [
+  { categorie: 'Véhicule sur sol', items: [
+    'Centralisation', 'Plaques d\'immatriculation', 'Fuites moteur / boîte', 'Visuel train roulant',
+    'Transmission', 'Échappement', 'Courroie de distribution', 'Courroie accessoire'
+  ]},
+  { categorie: 'Véhicule hors sol', items: [
+    'État pneumatiques', 'État roue de secours', 'Klaxon', 'Éclairage', 'Niveau huile',
+    'Niveau liquide de refroidissement', 'Niveau lave-glace', 'Niveau et état liquide de frein',
+    'Pression pneus', 'Batterie', 'Jeu dans les trains roulants', 'Roulements', 'Freinage',
+    'Amortisseurs', 'Voyant tableau de bord', 'Essuie-glace AV / AR', 'Course frein à main', 'Embrayage'
+  ]},
+  { categorie: 'Carrosserie et contrôle', items: [
+    'Visuel carrosserie', 'Rénovation des phares', 'Validité contrôle technique', 'Visuel vitrage'
+  ]}
+];
+function obtenirModeleDiagnostic(){
+  return (data.reglages.modeleDiagnostic && data.reglages.modeleDiagnostic.length) ? data.reglages.modeleDiagnostic : MODELE_DIAGNOSTIC_DEFAUT;
+}
+function cleItemDiag(categorie, item){
+  return (categorie + '::' + item).toLowerCase().replace(/[^a-z0-9]+/g,'-');
+}
+function tempsRelatif(iso){
+  if(!iso) return '';
+  const jours = Math.floor((Date.now() - new Date(iso+'T00:00:00').getTime()) / 86400000);
+  if(jours < 0) return formatDate(iso) + ' (à venir)';
+  if(jours === 0) return "aujourd'hui";
+  if(jours === 1) return 'hier';
+  if(jours < 30) return `il y a ${jours} jours`;
+  const mois = Math.floor(jours/30);
+  if(mois < 12) return `il y a ${mois} mois`;
+  const ans = Math.floor(mois/12);
+  return `il y a ${ans} an${ans>1?'s':''}`;
+}
+
+function appliquerTheme(){
+  const sombre = localStorage.getItem('tab-theme') === 'sombre';
+  document.body.classList.toggle('sombre', sombre);
+  const bouton = document.getElementById('bouton-theme');
+  if(bouton) bouton.textContent = sombre ? '☀️' : '🌙';
+  const metaTheme = document.getElementById('meta-theme-color');
+  if(metaTheme) metaTheme.setAttribute('content', sombre ? '#181D21' : '#F2F1ED');
+  appliquerAccentPerso();
+}
+function basculerTheme(){
+  const actuel = localStorage.getItem('tab-theme') === 'sombre';
+  localStorage.setItem('tab-theme', actuel ? 'clair' : 'sombre');
+  appliquerTheme();
+}
+
+const PALETTE_ACCENTS = [
+  { nom: 'Ardoise', clair: '#254E5F', sombre: '#6BAEC2' },
+  { nom: 'Terracotta', clair: '#8C4A34', sombre: '#D98F72' },
+  { nom: 'Prune', clair: '#5A3B66', sombre: '#B892C4' },
+  { nom: 'Forêt', clair: '#3D5C2E', sombre: '#8FBF75' },
+  { nom: 'Ardoise foncé', clair: '#3A4A5C', sombre: '#8FA6BF' }
+];
+function appliquerModeCompact(){
+  document.body.classList.toggle('mode-compact', localStorage.getItem('tab-mode-compact') === 'oui');
+}
+async function basculerModeCompact(){
+  const actif = localStorage.getItem('tab-mode-compact') === 'oui';
+  localStorage.setItem('tab-mode-compact', actif ? 'non' : 'oui');
+  appliquerModeCompact();
+  renderReglages();
+}
+
+function appliquerAccentPerso(){
+  const idx = parseInt(localStorage.getItem('tab-accent-choisi')||'0');
+  const choix = PALETTE_ACCENTS[idx] || PALETTE_ACCENTS[0];
+  const sombre = document.body.classList.contains('sombre');
+  document.documentElement.style.setProperty('--accent', sombre ? choix.sombre : choix.clair);
+}
+async function choisirAccent(idx){
+  localStorage.setItem('tab-accent-choisi', String(idx));
+  appliquerAccentPerso();
+  renderReglages();
+}
+
+function appliquerTailleTexte(){
+  const taille = localStorage.getItem('tab-taille-texte') || 'normal';
+  const echelles = { petit: '0.9', normal: '1', grand: '1.18' };
+  document.body.style.zoom = echelles[taille] || '1';
+}
+async function choisirTailleTexte(taille){
+  localStorage.setItem('tab-taille-texte', taille);
+  appliquerTailleTexte();
+  renderReglages();
+}
+
+function appliquerContrasteEleve(){
+  const actif = localStorage.getItem('tab-contraste-eleve') === 'oui';
+  document.body.classList.toggle('contraste-eleve', actif);
+}
+async function basculerContrasteEleve(){
+  const actif = localStorage.getItem('tab-contraste-eleve') === 'oui';
+  localStorage.setItem('tab-contraste-eleve', actif ? 'non' : 'oui');
+  appliquerContrasteEleve();
+  renderReglages();
+}
+
+async function charger(){
+  appliquerTheme();
+  appliquerTailleTexte();
+  appliquerContrasteEleve();
+  appliquerModeCompact();
+  mettreAJourBandeauConnexion();
+  try{
+    const val = localStorage.getItem(CLE);
+    if(val) data = JSON.parse(val);
+  } catch(e){ /* pas de données encore */ }
+  if(!data.reglages) data.reglages = { tauxHoraire: 55, margePieces: 0.20, pin: null };
+  if(data.reglages.tauxHoraire === undefined) data.reglages.tauxHoraire = 55;
+  if(data.reglages.margePieces === undefined) data.reglages.margePieces = 0.20;
+
+  const splash = document.getElementById('splash');
+  if(splash){
+    setTimeout(()=>{
+      splash.style.opacity = '0';
+      setTimeout(()=>splash.remove(), 300);
+    }, 400);
+  }
+
+  const codeSync = localStorage.getItem('tab-code-sync');
+  if(codeSync){
+    const distant = await recupererToutDepuisFirebase(codeSync);
+    if(distant){
+      dernierEtatSynchro = distant.migre ? { clients: [], vehicules: [], interventions: [] } : { clients: distant.clients, vehicules: distant.vehicules, interventions: distant.interventions };
+      const fusion = fusionnerDonnees(data, distant);
+      const localModifie = JSON.stringify(fusion) !== JSON.stringify(data);
+      data = fusion;
+      try{ localStorage.setItem(CLE, JSON.stringify(data)); } catch(e){}
+      if(localModifie) synchroniserVersFirebase();
+      else figerEtatSynchro();
+    }
+    demarrerEcouteSynchro(codeSync);
+  }
+
+  if(data.reglages.pin){
+    document.getElementById('app-principal').style.display = 'none';
+    document.getElementById('verrou').style.display = 'flex';
+  } else {
+    render();
+    verifierRappelPieces();
+    verifierSauvegardeAuto();
+  }
+}
+function verifierSauvegardeAuto(){
+  if(data.reglages.sauvegardeAutoActive === false) return;
+  if(!data.clients.length && !data.vehicules.length) return;
+  const dernier = localStorage.getItem('tab-dernier-export');
+  const jours = dernier ? Math.floor((Date.now() - new Date(dernier).getTime()) / 86400000) : null;
+  if(jours === null || jours >= 7){
+    exporterSauvegarde();
+  }
+}
+function verifierRappelPieces(){
+  if(!data.reglages.rappelsActifs) return;
+  if(!('Notification' in window) || Notification.permission !== 'granted') return;
+  const aujourdhui = new Date().toISOString().slice(0,10);
+  if(localStorage.getItem('tab-dernier-rappel-pieces') === aujourdhui) return;
+  const enAttente = data.interventions.filter(i=>i.type==='devis' && i.statutDevis==='valide' && !i.piecesCommandees);
+  if(!enAttente.length) return;
+  try{
+    new Notification('TAB — Pièces à commander', {
+      body: `${enAttente.length} devis validé${enAttente.length>1?'s':''} en attente de commande de pièces.`
+    });
+  } catch(e){}
+  localStorage.setItem('tab-dernier-rappel-pieces', aujourdhui);
+}
+function verifierPin(){
+  const saisie = document.getElementById('pin-saisie').value.trim();
+  if(saisie && saisie === data.reglages.pin){
+    document.getElementById('verrou').style.display = 'none';
+    document.getElementById('app-principal').style.display = 'block';
+    document.getElementById('pin-erreur').style.display = 'none';
+    render();
+  } else {
+    document.getElementById('pin-erreur').style.display = 'block';
+  }
+}
+let minuteurSynchro = null;
+function mettreAJourBandeauConnexion(){
+  const bandeau = document.getElementById('bandeau-hors-ligne');
+  if(!bandeau) return;
+  if(!navigator.onLine){
+    bandeau.style.display = 'block';
+    bandeau.textContent = '📡 Hors connexion — les modifications seront envoyées dès le retour du réseau.';
+  } else if(localStorage.getItem('tab-code-sync') && minuteurSynchro){
+    bandeau.style.display = 'block';
+    bandeau.textContent = '⏳ Synchronisation en attente...';
+  } else {
+    bandeau.style.display = 'none';
+  }
+}
+window.addEventListener('online', ()=>{ mettreAJourBandeauConnexion(); synchroniserVersFirebase(); });
+window.addEventListener('offline', mettreAJourBandeauConnexion);
+
+async function sauvegarder(){
+  data.dernierMaj = Date.now();
+  try{ localStorage.setItem(CLE, JSON.stringify(data)); }
+  catch(e){ console.error('Erreur de sauvegarde (mémoire du téléphone pleine ?)', e); afficherToast('Espace de stockage insuffisant sur ce téléphone. Essayez de supprimer une photo jointe volumineuse.', 'erreur'); }
+  clearTimeout(minuteurSynchro);
+  minuteurSynchro = setTimeout(()=>{ minuteurSynchro = null; synchroniserVersFirebase(); mettreAJourBandeauConnexion(); }, 600);
+  mettreAJourBandeauConnexion();
+}
+async function sauvegarderImg(id, dataUrl){
+  try{ localStorage.setItem('img:'+id, dataUrl); }
+  catch(e){ console.error(e); afficherToast('Impossible d\'enregistrer cette image (espace de stockage insuffisant).', 'erreur'); }
+}
+async function chargerImg(id){
+  try{ return localStorage.getItem('img:'+id); }
+  catch(e){ return null; }
+}
+async function supprimerImg(id){
+  try{ localStorage.removeItem('img:'+id); } catch(e){}
+}
+
+function fichierVersBase64(file){
+  return new Promise((resolve, reject)=>{
+    const r = new FileReader();
+    r.onload = ()=>resolve(r.result);
+    r.onerror = ()=>reject(new Error('lecture échouée'));
+    r.readAsDataURL(file);
+  });
+}
+
+function render(){
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  renderFil();
+  if(vue === 'clients') { renderClients(); animerCompteurs(); }
+  else if(vue === 'vehicules') renderVehicules();
+  else if(vue === 'interventions') renderInterventions();
+  else if(vue === 'reglages') renderReglages();
+  else if(vue === 'filtres') renderFiltres();
+  else if(vue === 'calendrier') renderCalendrier();
+  else if(vue === 'diagnostic') renderDiagnostic();
+  mettreAJourFAB();
+}
+function mettreAJourFAB(){
+  const navBas = document.getElementById('nav-bas');
+  if(navBas) navBas.style.display = 'flex';
+  const fab = document.getElementById('bouton-fab');
+  if(fab){
+    const pagesAvecFAB = { clients:'Nouveau client', vehicules:'Nouveau véhicule', interventions:'Nouvelle fiche' };
+    if(pagesAvecFAB[vue]){
+      fab.style.display = 'flex';
+      fab.title = pagesAvecFAB[vue];
+    } else {
+      fab.style.display = 'none';
+    }
+  }
+  const vueActiveNav = (vue === 'vehicules' || vue === 'interventions') ? 'clients' : vue;
+  document.querySelectorAll('.nav-bas-item').forEach(item=>{
+    item.classList.toggle('actif', item.dataset.vue === vueActiveNav);
+  });
+}
+function actionFAB(){
+  if(vue === 'clients') ouvrirFormClient();
+  else if(vue === 'vehicules') ouvrirFormVehicule();
+  else if(vue === 'interventions') ouvrirFormIntervention();
+}
+function allerReglages(){ vue='reglages'; render(); }
+function allerFiltres(){ vue='filtres'; render(); }
+function allerCalendrier(){ vue='calendrier'; render(); }
+let diagnosticFicheId = null;
+function ouvrirDiagnostic(interventionId){ vue='diagnostic'; diagnosticFicheId = interventionId; render(); }
+
+function renderFil(){
+  const fil = document.getElementById('fil');
+  if(vue === 'reglages'){
+    fil.innerHTML = `<button class="lien" onclick="allerClients()">Clients</button><span class="sep">›</span><span class="courant">Réglages</span>`;
+    return;
+  }
+  if(vue === 'filtres'){
+    fil.innerHTML = `<button class="lien" onclick="allerClients()">Clients</button><span class="sep">›</span><span class="courant">Vue d'ensemble</span>`;
+    return;
+  }
+  if(vue === 'calendrier'){
+    fil.innerHTML = `<button class="lien" onclick="allerClients()">Clients</button><span class="sep">›</span><span class="courant">Planning</span>`;
+    return;
+  }
+  if(vue === 'diagnostic'){
+    const i = data.interventions.find(x=>x.id===diagnosticFicheId);
+    const { v, c } = i ? infosVehicule(i.vehiculeId) : {};
+    fil.innerHTML = `<button class="lien" onclick="allerClients()">Clients</button><span class="sep">›</span><button class="lien" onclick="allerVehicules('${c?.id||''}')">${esc(c?.prenom)} ${esc(c?.nom)}</button><span class="sep">›</span><button class="lien" onclick="allerInterventions('${v?.id||''}')">${esc(v?.marque)} ${esc(v?.modele)}</button><span class="sep">›</span><span class="courant">Diagnostic</span>`;
+    return;
+  }
+  let html = `<button class="lien" onclick="allerClients()">Clients</button>`;
+  if(vue === 'vehicules' || vue === 'interventions'){
+    const c = data.clients.find(c=>c.id===clientCourant);
+    html += `<span class="sep">›</span>`;
+    html += vue === 'vehicules'
+      ? `<span class="courant">${esc(c?.prenom)} ${esc(c?.nom)}</span>`
+      : `<button class="lien" onclick="allerVehicules('${clientCourant}')">${esc(c?.prenom)} ${esc(c?.nom)}</button>`;
+  }
+  if(vue === 'interventions'){
+    const v = data.vehicules.find(v=>v.id===vehiculeCourant);
+    html += `<span class="sep">›</span><span class="courant">${esc(v?.marque)} ${esc(v?.modele)}</span>`;
+  }
+  fil.innerHTML = html;
+}
+
+function allerClients(){ vue='clients'; clientCourant=null; vehiculeCourant=null; render(); }
+function allerVehicules(id){ vue='vehicules'; clientCourant=id; vehiculeCourant=null; render(); }
+function allerInterventions(id){ vue='interventions'; vehiculeCourant=id; render(); }
+
+function renderReglages(){
+  const cont = document.getElementById('contenu');
+  const r = data.reglages;
+  const pinActif = !!r.pin;
+  cont.innerHTML = `
+    <div class="panneau-header">
+      <div><h2>Réglages</h2><div class="sous">Tarifs et sécurité de l'application</div></div>
+    </div>
+    <div class="formulaire ouvert">
+      <h3>💶 Tarification</h3>
+      <div class="grille trois">
+        <div class="champ"><label>Taux horaire main d'œuvre (€ TTC)</label><input id="r-taux" type="number" value="${r.tauxHoraire}"></div>
+        <div class="champ"><label>Marge sur les pièces (%)</label><input id="r-marge" type="number" value="${Math.round(r.margePieces*100)}"></div>
+        <div class="champ"><label>Durée de validité des devis (jours)</label><input id="r-duree-devis" type="number" value="${r.dureeValiditeDevis || 30}"></div>
+      </div>
+      <div class="erreur" id="r-erreur" style="display:none;"></div>
+      <div class="form-actions">
+        <button class="primaire" onclick="enregistrerReglagesTarifs()">Enregistrer</button>
+      </div>
+    </div>
+    <div class="formulaire ouvert">
+      <h3>🔔 Rappels de pièces à commander</h3>
+      <p style="font-size:13px;color:var(--text-muted);margin:0 0 12px;">Quand activé, une notification s'affiche à l'ouverture de l'appli (une fois par jour maximum) s'il reste des devis validés dont les pièces ne sont pas encore commandées. <strong>Point important</strong> : ce rappel ne peut apparaître que lorsque tu ouvres l'application — un vrai rappel envoyé même appli fermée demanderait un serveur dédié, ce que cette appli n'a pas.</p>
+      <div class="form-actions" style="justify-content:flex-start;">
+        <button class="primaire" onclick="activerRappelsPieces()">${r.rappelsActifs ? '✓ Rappels activés' : 'Activer les rappels'}</button>
+        ${r.rappelsActifs ? `<button onclick="desactiverRappelsPieces()">Désactiver</button>` : ''}
+      </div>
+    </div>
+    <div class="formulaire ouvert">
+      <h3>🎨 Affichage et accessibilité</h3>
+      <p style="font-size:13px;color:var(--text-muted);margin:0 0 8px;">Couleur d'accent</p>
+      <div style="display:flex;gap:10px;margin-bottom:14px;">
+        ${PALETTE_ACCENTS.map((c,idx)=>`<button type="button" title="${esc(c.nom)}" onclick="choisirAccent(${idx})" style="width:32px;height:32px;border-radius:50%;background:${document.body.classList.contains('sombre')?c.sombre:c.clair};border:2px solid ${(parseInt(localStorage.getItem('tab-accent-choisi')||'0'))===idx?'var(--text)':'transparent'};padding:0;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></button>`).join('')}
+      </div>
+      <p style="font-size:13px;color:var(--text-muted);margin:0 0 8px;">Taille du texte</p>
+      <div class="type-select" style="margin-bottom:14px;">
+        <button type="button" class="type-opt ${(localStorage.getItem('tab-taille-texte')||'normal')==='petit'?'actif':''}" onclick="choisirTailleTexte('petit')">Petit</button>
+        <button type="button" class="type-opt ${(localStorage.getItem('tab-taille-texte')||'normal')==='normal'?'actif':''}" onclick="choisirTailleTexte('normal')">Normal</button>
+        <button type="button" class="type-opt ${(localStorage.getItem('tab-taille-texte')||'normal')==='grand'?'actif':''}" onclick="choisirTailleTexte('grand')">Grand</button>
+      </div>
+      <p style="font-size:13px;color:var(--text-muted);margin:0 0 8px;">Pour une lisibilité maximale en plein soleil, au-delà du contraste déjà renforcé par défaut.</p>
+      <button class="primaire" onclick="basculerContrasteEleve()">${localStorage.getItem('tab-contraste-eleve')==='oui' ? '✓ Contraste renforcé activé' : 'Activer le contraste renforcé'}</button>
+      <p style="font-size:13px;color:var(--text-muted);margin:14px 0 8px;">Affiche plus de fiches à l'écran, avec moins de détails visibles.</p>
+      <button class="primaire" onclick="basculerModeCompact()">${localStorage.getItem('tab-mode-compact')==='oui' ? '✓ Mode compact activé' : 'Activer le mode compact'}</button>
+    </div>
+    <div class="formulaire ouvert">
+      <h3>💾 Sauvegarde automatique</h3>
+      <p style="font-size:13px;color:var(--text-muted);margin:0 0 12px;">Un fichier de sauvegarde est téléchargé automatiquement à l'ouverture de l'appli, une fois par semaine maximum — en plus de l'export manuel déjà disponible sur la page d'accueil.</p>
+      <div class="form-actions" style="justify-content:flex-start;">
+        <button class="primaire" onclick="basculerSauvegardeAuto()">${r.sauvegardeAutoActive === false ? 'Activer la sauvegarde automatique' : '✓ Sauvegarde automatique activée'}</button>
+      </div>
+    </div>
+    <div class="formulaire ouvert">
+      <h3>🔄 Synchronisation multi-appareils</h3>
+      ${(() => {
+        const codeActuel = localStorage.getItem('tab-code-sync');
+        if(codeActuel){
+          const erreurSync = localStorage.getItem('tab-sync-erreur');
+          const derniereSync = localStorage.getItem('tab-sync-derniere-reussite');
+          let etatHtml = '';
+          if(erreurSync){
+            etatHtml = `<p style="font-size:12px;color:var(--danger);margin:0 0 12px;">⚠ Dernière tentative en échec&nbsp;: ${esc(erreurSync)}</p>`;
+          } else if(derniereSync){
+            etatHtml = `<p style="font-size:12px;color:var(--success);margin:0 0 12px;">✓ Dernière synchronisation réussie ${tempsRelatif(derniereSync.slice(0,10))}</p>`;
+          }
+          return `
+            <p style="font-size:13px;color:var(--text-muted);margin:0 0 12px;">Synchronisation active avec le code <strong>${esc(codeActuel)}</strong> — les changements de l'autre appareil arrivent automatiquement, sans rien à faire. Les photos et PDF joints restent uniquement sur cet appareil — seules les fiches, clients et véhicules sont partagés.</p>
+            ${etatHtml}
+            <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px;">Le bouton ci-dessous reste utile uniquement si l'appli a été longtemps hors connexion.</p>
+            <div class="form-actions" style="justify-content:flex-start;">
+              <button class="primaire" onclick="synchroniserMaintenant()">Synchroniser maintenant</button>
+              <button onclick="desactiverSynchronisation()">🔌 Désactiver sur cet appareil</button>
+            </div>
+            <div class="bloc-titre">Historique des versions</div>
+            <p style="font-size:12px;color:var(--text-muted);margin:0 0 10px;">Les 5 dernières versions synchronisées sont conservées — utile pour revenir en arrière en cas de souci.</p>
+            <button onclick="chargerEtAfficherHistorique()">🕘 Voir l'historique</button>
+            <div id="zone-historique" style="margin-top:10px;"></div>
+          `;
+        }
+        return `
+          <p style="font-size:13px;color:var(--text-muted);margin:0 0 12px;">Choisis un code unique (comme un mot de passe) et utilise le même sur ton ordinateur pour partager les mêmes dossiers clients entre tes appareils. <strong>Les photos et PDF joints ne sont pas synchronisés</strong> pour le moment, uniquement les fiches, clients et véhicules.</p>
+          <div class="champ"><label>Code de synchronisation</label><input id="r-code-sync" type="text" placeholder="ex. novaworkshop-var-2026"></div>
+          <div class="erreur" id="r-sync-erreur" style="display:none;"></div>
+          <div class="form-actions">
+            <button class="primaire" onclick="activerSynchronisation()">Activer / rejoindre</button>
+          </div>
+        `;
+      })()}
+    </div>
+    <div class="formulaire ouvert">
+      <h3>🛠️ Interventions courantes</h3>
+      <p style="font-size:13px;color:var(--text-muted);margin:0 0 12px;">Enregistre ici tes prestations habituelles avec leur temps de main d'œuvre type — elles seront suggérées automatiquement quand tu écris l'intitulé d'une fiche.</p>
+      <div id="catalogue-lignes"></div>
+      <button class="btn-ajout-ligne" onclick="ajouterLigneCatalogue()">+ Ajouter une intervention courante</button>
+      <div class="form-actions" style="margin-top:12px;">
+        <button class="primaire" onclick="enregistrerCatalogue()">✓ Enregistrer</button>
+      </div>
+    </div>
+    <div class="formulaire ouvert">
+      <h3>✅ Checklist de restitution</h3>
+      <p style="font-size:13px;color:var(--text-muted);margin:0 0 12px;">Liste de vérifications à cocher avant de rendre le véhicule au client — elle apparaîtra sur chaque fiche d'intervention.</p>
+      <div id="checklist-lignes"></div>
+      <button class="btn-ajout-ligne" onclick="ajouterLigneChecklist()">+ Ajouter un point de contrôle</button>
+      <div class="form-actions" style="margin-top:12px;">
+        <button class="primaire" onclick="enregistrerChecklist()">✓ Enregistrer</button>
+      </div>
+    </div>
+    <div class="formulaire ouvert">
+      <h3>🔍 Modèle de diagnostic visuel</h3>
+      <p style="font-size:13px;color:var(--text-muted);margin:0 0 12px;">Personnalise les catégories et points de contrôle du diagnostic visuel (bouton "🔍 Diagnostic" sur chaque fiche).</p>
+      <div id="diag-categories"></div>
+      <button class="btn-ajout-ligne" onclick="ajouterCategorieDiag()">+ Ajouter une catégorie</button>
+      <div class="form-actions" style="margin-top:12px;">
+        <button class="primaire" onclick="enregistrerModeleDiagnostic()">✓ Enregistrer le modèle</button>
+        <button class="secondaire" onclick="reinitialiserModeleDiagnostic()">↺ Réinitialiser au modèle par défaut</button>
+      </div>
+    </div>
+    <div class="formulaire ouvert">
+      <h3>🔒 Verrouillage de l'application</h3>
+      ${pinActif ? `
+        <p style="font-size:13px;color:var(--text-muted);margin:0 0 12px;">Un code de verrouillage est actif.</p>
+        <div class="form-actions" style="justify-content:flex-start;">
+          <button onclick="ouvrirChangementPin()">Modifier le code</button>
+          <button onclick="supprimerPin()">Désactiver</button>
+        </div>
+        <div id="zone-changement-pin" style="display:none;margin-top:12px;">
+          <div class="grille">
+            <div class="champ"><label>Nouveau code (4 à 8 chiffres)</label><input id="r-nouveau-pin" type="password" inputmode="numeric" maxlength="8"></div>
+            <div class="champ"><label>Confirmer le code</label><input id="r-confirme-pin" type="password" inputmode="numeric" maxlength="8"></div>
+          </div>
+          <div class="erreur" id="r-pin-erreur" style="display:none;"></div>
+          <div class="form-actions">
+            <button class="primaire" onclick="definirPin()">Valider</button>
+          </div>
+        </div>
+      ` : `
+        <p style="font-size:13px;color:var(--text-muted);margin:0 0 12px;">Aucun code n'est actif. Une fois activé, il sera demandé à chaque ouverture de l'application. <strong>Si tu l'oublies, il n'existe aucun moyen de le récupérer</strong> — pense à le noter quelque part en sécurité.</p>
+        <div class="grille">
+          <div class="champ"><label>Nouveau code (4 à 8 chiffres)</label><input id="r-nouveau-pin" type="password" inputmode="numeric" maxlength="8"></div>
+          <div class="champ"><label>Confirmer le code</label><input id="r-confirme-pin" type="password" inputmode="numeric" maxlength="8"></div>
+        </div>
+        <div class="erreur" id="r-pin-erreur" style="display:none;"></div>
+        <div class="form-actions">
+          <button class="primaire" onclick="definirPin()">Activer le verrouillage</button>
+        </div>
+      `}
+    </div>
+    <p style="text-align:center;font-size:11px;color:var(--text-muted);margin-top:24px;letter-spacing:.3px;">TAB — version 2026.9</p>
+  `;
+  document.getElementById('catalogue-lignes').innerHTML = '';
+  const catalogue = data.reglages.catalogue || [];
+  if(catalogue.length){
+    catalogue.forEach(entree=>ajouterLigneCatalogue(entree.nom, entree.heures));
+  } else {
+    ajouterLigneCatalogue();
+  }
+  document.getElementById('checklist-lignes').innerHTML = '';
+  const checklist = data.reglages.checklist || ['Niveaux vérifiés', 'Essai routier effectué', 'Intérieur/extérieur propre'];
+  checklist.forEach(libelle=>ajouterLigneChecklist(libelle));
+  document.getElementById('diag-categories').innerHTML = '';
+  obtenirModeleDiagnostic().forEach(sec=>ajouterCategorieDiag(sec.categorie, sec.items));
+}
+
+function ouvrirChangementPin(){
+  document.getElementById('zone-changement-pin').style.display = 'block';
+}
+
+async function enregistrerReglagesTarifs(){
+  const taux = parseFloat(document.getElementById('r-taux').value);
+  const marge = parseFloat(document.getElementById('r-marge').value);
+  const dureeDevis = parseInt(document.getElementById('r-duree-devis').value);
+  const err = document.getElementById('r-erreur');
+  if(!(taux > 0) || isNaN(marge) || marge < 0){
+    err.textContent = 'Merci de renseigner un taux horaire et une marge valides.';
+    err.style.display = 'block';
+    return;
+  }
+  data.reglages.tauxHoraire = taux;
+  data.reglages.margePieces = marge / 100;
+  data.reglages.dureeValiditeDevis = dureeDevis > 0 ? dureeDevis : 30;
+  await sauvegarder();
+  afficherToast('Réglages enregistrés.', 'succes');
+}
+
+async function definirPin(){
+  const nouveau = document.getElementById('r-nouveau-pin').value.trim();
+  const confirme = document.getElementById('r-confirme-pin').value.trim();
+  const err = document.getElementById('r-pin-erreur');
+  if(!/^[0-9]{4,8}$/.test(nouveau)){
+    err.textContent = 'Le code doit contenir entre 4 et 8 chiffres.';
+    err.style.display = 'block';
+    return;
+  }
+  if(nouveau !== confirme){
+    err.textContent = 'Les deux codes ne correspondent pas.';
+    err.style.display = 'block';
+    return;
+  }
+  data.reglages.pin = nouveau;
+  await sauvegarder();
+  renderReglages();
+}
+
+async function supprimerPin(){
+  if(!(await confirmerAction('Désactiver le verrouillage de l\'application ?'))) return;
+  data.reglages.pin = null;
+  await sauvegarder();
+  renderReglages();
+}
+
+function ajouterLigneCatalogue(nom, heures){
+  const cont = document.getElementById('catalogue-lignes');
+  const ligne = document.createElement('div');
+  ligne.className = 'defaut-ligne';
+  ligne.innerHTML = `
+    <input type="text" class="catalogue-nom" placeholder="ex. Vidange" value="${nom ? esc(nom) : ''}" style="flex:2;">
+    <input type="number" step="0.25" class="catalogue-heures" placeholder="Heures" value="${heures ? esc(String(heures)) : ''}" style="flex:1;">
+    <button type="button" class="discret" onclick="this.parentElement.remove()">✕</button>
+  `;
+  cont.appendChild(ligne);
+}
+
+async function enregistrerCatalogue(){
+  const catalogue = Array.from(document.querySelectorAll('#catalogue-lignes > div'))
+    .map(ligne=>{
+      const nom = ligne.querySelector('.catalogue-nom').value.trim();
+      const heures = parseFloat(ligne.querySelector('.catalogue-heures').value);
+      if(!nom) return null;
+      return { nom, heures: heures > 0 ? heures : null };
+    })
+    .filter(Boolean);
+  data.reglages.catalogue = catalogue;
+  await sauvegarder();
+  afficherToast('Interventions courantes enregistrées.', 'succes');
+}
+
+function ajouterLigneChecklist(libelle){
+  const cont = document.getElementById('checklist-lignes');
+  const ligne = document.createElement('div');
+  ligne.className = 'defaut-ligne';
+  ligne.innerHTML = `
+    <input type="text" class="checklist-libelle" placeholder="ex. Pression des pneus vérifiée" value="${libelle ? esc(libelle) : ''}">
+    <button type="button" class="discret" onclick="this.parentElement.remove()">✕</button>
+  `;
+  cont.appendChild(ligne);
+}
+
+async function enregistrerChecklist(){
+  const checklist = Array.from(document.querySelectorAll('#checklist-lignes > div'))
+    .map(ligne=>ligne.querySelector('.checklist-libelle').value.trim())
+    .filter(Boolean);
+  data.reglages.checklist = checklist;
+  await sauvegarder();
+  afficherToast('Checklist de restitution enregistrée.', 'succes');
+}
+
+function ajouterCategorieDiag(nom, items){
+  const cont = document.getElementById('diag-categories');
+  const carte = document.createElement('div');
+  carte.className = 'carte-diag';
+  carte.dataset.categorie = '1';
+  carte.innerHTML = `
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input type="text" class="diag-cat-nom" placeholder="Nom de la catégorie" value="${nom ? esc(nom) : ''}" style="font-weight:600;">
+      <button type="button" class="discret" title="Supprimer la catégorie" onclick="this.closest('[data-categorie]').remove()">🗑</button>
+    </div>
+    <div class="diag-cat-items" style="margin-top:8px;"></div>
+    <button type="button" class="btn-ajout-ligne" style="margin-top:6px;font-size:11.5px;padding:6px 10px;" onclick="ajouterItemDiag(this)">+ Ajouter un point</button>
+  `;
+  cont.appendChild(carte);
+  const conteneurItems = carte.querySelector('.diag-cat-items');
+  if(items && items.length){
+    items.forEach(item=>ajouterItemDiagDansConteneur(conteneurItems, item));
+  } else {
+    ajouterItemDiagDansConteneur(conteneurItems, '');
+  }
+}
+
+function ajouterItemDiag(bouton){
+  const conteneurItems = bouton.closest('.carte-diag').querySelector('.diag-cat-items');
+  ajouterItemDiagDansConteneur(conteneurItems, '');
+}
+
+function ajouterItemDiagDansConteneur(conteneurItems, valeur){
+  const ligne = document.createElement('div');
+  ligne.className = 'defaut-ligne';
+  ligne.innerHTML = `
+    <input type="text" class="diag-item-nom" placeholder="ex. Niveau huile" value="${valeur ? esc(valeur) : ''}">
+    <button type="button" class="discret" onclick="this.parentElement.remove()">✕</button>
+  `;
+  conteneurItems.appendChild(ligne);
+}
+
+async function enregistrerModeleDiagnostic(){
+  const modele = Array.from(document.querySelectorAll('#diag-categories > [data-categorie]'))
+    .map(carte=>{
+      const categorie = carte.querySelector('.diag-cat-nom').value.trim();
+      const items = Array.from(carte.querySelectorAll('.diag-item-nom'))
+        .map(inp=>inp.value.trim())
+        .filter(Boolean);
+      if(!categorie || !items.length) return null;
+      return { categorie, items };
+    })
+    .filter(Boolean);
+  if(!modele.length){
+    afficherToast('Ajoute au moins une catégorie avec un point de contrôle.', 'erreur');
+    return;
+  }
+  data.reglages.modeleDiagnostic = modele;
+  await sauvegarder();
+  afficherToast('Modèle de diagnostic enregistré.', 'succes');
+}
+
+async function reinitialiserModeleDiagnostic(){
+  if(!(await confirmerAction('Réinitialiser le modèle de diagnostic aux catégories et points par défaut ? Tes modifications personnalisées seront perdues.'))) return;
+  data.reglages.modeleDiagnostic = null;
+  await sauvegarder();
+  renderReglages();
+  afficherToast('Modèle de diagnostic réinitialisé.', 'succes');
+}
+
+async function activerRappelsPieces(){
+  if(!('Notification' in window)){
+    afficherToast('Les notifications ne sont pas prises en charge sur cet appareil.', 'erreur');
+    return;
+  }
+  const permission = await Notification.requestPermission();
+  if(permission !== 'granted'){
+    afficherToast('Autorisation refusée — impossible d\'activer les rappels sans ta permission.', 'erreur');
+    return;
+  }
+  data.reglages.rappelsActifs = true;
+  await sauvegarder();
+  renderReglages();
+}
+
+async function desactiverRappelsPieces(){
+  data.reglages.rappelsActifs = false;
+  await sauvegarder();
+  renderReglages();
+}
+
+async function basculerSauvegardeAuto(){
+  data.reglages.sauvegardeAutoActive = !(data.reglages.sauvegardeAutoActive !== false);
+  await sauvegarder();
+  renderReglages();
+}
+
+async function activerSynchronisation(){
+  const code = document.getElementById('r-code-sync').value.trim().toLowerCase().replace(/\s+/g,'-');
+  const err = document.getElementById('r-sync-erreur');
+  if(code.length < 6){
+    err.textContent = 'Choisis un code d\'au moins 6 caractères, unique pour toi (ex. le nom de ton garage + une année).';
+    err.style.display = 'block';
+    return;
+  }
+  if(!firebaseDb){
+    err.textContent = 'La connexion au service de synchronisation a échoué. Vérifie ta connexion internet.';
+    err.style.display = 'block';
+    return;
+  }
+  const distant = await recupererToutDepuisFirebase(code);
+  if(distant){
+    const confirmer = await confirmerAction('Des données existent déjà pour ce code. Fusionner avec les données de cet appareil (rien ne sera perdu des deux côtés) ?');
+    if(!confirmer) return;
+    dernierEtatSynchro = distant.migre ? { clients: [], vehicules: [], interventions: [] } : { clients: distant.clients, vehicules: distant.vehicules, interventions: distant.interventions };
+    data = fusionnerDonnees(data, distant);
+    localStorage.setItem(CLE, JSON.stringify(data));
+    localStorage.setItem('tab-code-sync', code);
+    await sauvegarder();
+  } else {
+    const confirmer = await confirmerAction('Aucune donnée trouvée pour ce code. Créer un nouvel espace de synchronisation avec les données actuelles de cet appareil ?');
+    if(!confirmer) return;
+    dernierEtatSynchro = { clients: [], vehicules: [], interventions: [] };
+    localStorage.setItem('tab-code-sync', code);
+    await sauvegarder();
+  }
+  renderReglages();
+  render();
+  demarrerEcouteSynchro(code);
+  afficherToast('Synchronisation activée — les mises à jour arriveront automatiquement.', 'succes');
+}
+
+async function desactiverSynchronisation(){
+  if(!(await confirmerAction('Désactiver la synchronisation sur cet appareil ? Tes données restent sur ce téléphone mais ne seront plus mises à jour avec les autres appareils.'))) return;
+  localStorage.removeItem('tab-code-sync');
+  arreterEcouteSynchro();
+  dernierEtatSynchro = null;
+  renderReglages();
+}
+
+async function synchroniserMaintenant(){
+  const code = localStorage.getItem('tab-code-sync');
+  if(!code){ afficherToast('Aucun code de synchronisation actif.', 'erreur'); return; }
+  const distant = await recupererToutDepuisFirebase(code);
+  if(!distant){ afficherToast('Impossible de joindre le service de synchronisation.', 'erreur'); return; }
+  const fusion = fusionnerDonnees(data, distant);
+  const change = JSON.stringify(fusion) !== JSON.stringify(data);
+  dernierEtatSynchro = distant.migre ? { clients: [], vehicules: [], interventions: [] } : { clients: distant.clients, vehicules: distant.vehicules, interventions: distant.interventions };
+  data = fusion;
+  try{ localStorage.setItem(CLE, JSON.stringify(data)); } catch(e){}
+  await synchroniserVersFirebase();
+  render();
+  afficherToast(change ? 'Données fusionnées avec l\'autre appareil.' : 'Cet appareil était déjà à jour.', 'succes');
+}
+
+document.addEventListener('visibilitychange', async ()=>{
+  if(document.visibilityState !== 'visible'){
+    if(minuteurSynchro){
+      clearTimeout(minuteurSynchro);
+      minuteurSynchro = null;
+      synchroniserVersFirebase();
+    }
+    return;
+  }
+  const code = localStorage.getItem('tab-code-sync');
+  if(!code || document.getElementById('verrou').style.display === 'flex') return;
+  const distant = await recupererToutDepuisFirebase(code);
+  if(!distant) return;
+  const fusion = fusionnerDonnees(data, distant);
+  const change = JSON.stringify(fusion) !== JSON.stringify(data);
+  if(!change) return;
+  dernierEtatSynchro = distant.migre ? { clients: [], vehicules: [], interventions: [] } : { clients: distant.clients, vehicules: distant.vehicules, interventions: distant.interventions };
+  data = fusion;
+  try{ localStorage.setItem(CLE, JSON.stringify(data)); } catch(e){}
+  render();
+  synchroniserVersFirebase();
+});
+
+function basculerMenuFiche(id){
+  const menu = document.getElementById('menu-fiche-'+id);
+  if(!menu) return;
+  const ouvert = menu.style.display === 'flex';
+  document.querySelectorAll('.menu-fiche').forEach(m=>m.style.display='none');
+  menu.style.display = ouvert ? 'none' : 'flex';
+}
+document.addEventListener('click', (e)=>{
+  if(e.target.closest('.conteneur-menu-fiche')) return;
+  document.querySelectorAll('.menu-fiche').forEach(m=>m.style.display='none');
+});
+
+function basculerPanneauNotifs(){
+  const p = document.getElementById('panneau-notifs');
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+
+let calendrierMoisAffiche = null;
+let calendrierJourSelectionne = null;
+
+const LIBELLES_STATUT_DIAG = { ok: 'OK', a_prevoir: 'À prévoir', urgent: 'Urgent', na: 'N/A' };
+const COULEURS_STATUT_DIAG = { ok: 'var(--money)', a_prevoir: 'var(--warning)', urgent: 'var(--danger)', na: 'var(--steel)' };
+
+function renderDiagnostic(){
+  const cont = document.getElementById('contenu');
+  const i = data.interventions.find(x=>x.id===diagnosticFicheId);
+  if(!i){ cont.innerHTML = `<div class="vide">Fiche introuvable.</div>`; return; }
+  if(!i.diagnostic) i.diagnostic = {};
+  const { v, c } = infosVehicule(i.vehiculeId);
+  const modele = obtenirModeleDiagnostic();
+
+  const compte = { ok:0, a_prevoir:0, urgent:0, na:0 };
+  modele.forEach(sec=>sec.items.forEach(item=>{
+    const cle = cleItemDiag(sec.categorie, item);
+    const s = i.diagnostic[cle] && i.diagnostic[cle].statut;
+    if(s) compte[s]++;
+  }));
+
+  let html = `
+    <div class="panneau-header">
+      <div><h2>Diagnostic visuel</h2><div class="sous">${esc(i.titre)} — ${esc(v?.marque)} ${esc(v?.modele)}</div></div>
+    </div>
+    <div class="stats-periodes" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px;">
+      <div class="stat-carte" style="text-align:center;"><div class="stat-titre" style="color:var(--money);">OK</div><div class="stat-montant" style="color:var(--money);">${compte.ok}</div></div>
+      <div class="stat-carte" style="text-align:center;"><div class="stat-titre" style="color:var(--warning);">À prévoir</div><div class="stat-montant" style="color:var(--warning);">${compte.a_prevoir}</div></div>
+      <div class="stat-carte" style="text-align:center;"><div class="stat-titre" style="color:var(--danger);">Urgent</div><div class="stat-montant" style="color:var(--danger);">${compte.urgent}</div></div>
+      <div class="stat-carte" style="text-align:center;"><div class="stat-titre" style="color:var(--steel);">N/A</div><div class="stat-montant" style="color:var(--steel);">${compte.na}</div></div>
+    </div>
+  `;
+
+  modele.forEach(sec=>{
+    html += `<div class="bloc-titre" style="text-transform:uppercase;">${esc(sec.categorie)}</div>`;
+    sec.items.forEach(item=>{
+      const cle = cleItemDiag(sec.categorie, item);
+      const entree = i.diagnostic[cle] || {};
+      const nbPhotos = entree.nbPhotos || 0;
+      html += `
+        <div class="carte-diag">
+          <div class="carte-diag-titre">${esc(item)}</div>
+          <div class="piece-marge-select" style="margin-top:6px;">
+            ${['ok','a_prevoir','urgent','na'].map(s=>`<button type="button" class="statut-diag-opt ${entree.statut===s?'actif-'+s:''}" onclick="basculerStatutDiag('${i.id}','${cle}','${s}')">${LIBELLES_STATUT_DIAG[s]}</button>`).join('')}
+          </div>
+          <input type="text" placeholder="Remarque" value="${entree.remarque?esc(entree.remarque):''}" style="margin-top:8px;font-size:12.5px;" onchange="sauvegarderRemarqueDiag('${i.id}','${cle}',this.value)">
+          <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;">
+            <label class="upload-label" style="margin:0;font-size:11.5px;padding:7px 10px;" for="diag-photo-${cle}">📷 Ajouter une photo</label>
+            <input type="file" id="diag-photo-${cle}" accept="image/*" multiple style="display:none;" onchange="ajouterPhotoDiag(event,'${i.id}','${cle}')">
+            <div class="apercus" id="diag-vignettes-${cle}" style="margin:0;"></div>
+          </div>
+        </div>
+      `;
+    });
+  });
+
+  html += `
+    <div class="bloc-titre">Commentaires généraux</div>
+    <textarea rows="3" placeholder="Commentaires généraux sur l'état du véhicule" onchange="sauvegarderCommentaireDiag('${i.id}', this.value)">${i.diagnosticCommentaire ? esc(i.diagnosticCommentaire) : ''}</textarea>
+    <div class="form-actions" style="margin-top:16px;">
+      <button class="primaire" onclick="imprimerDiagnostic('${i.id}')">📄 Générer le PDF diagnostic</button>
+    </div>
+  `;
+
+  cont.innerHTML = html;
+  modele.forEach(sec=>sec.items.forEach(item=>{
+    const cle = cleItemDiag(sec.categorie, item);
+    afficherVignettesDiag(i, cle);
+  }));
+}
+
+async function basculerStatutDiag(interventionId, cle, statut){
+  const i = data.interventions.find(x=>x.id===interventionId);
+  if(!i) return;
+  if(!i.diagnostic) i.diagnostic = {};
+  if(!i.diagnostic[cle]) i.diagnostic[cle] = {};
+  i.diagnostic[cle].statut = i.diagnostic[cle].statut === statut ? null : statut;
+  i._maj = Date.now();
+  await sauvegarder();
+  renderDiagnostic();
+}
+
+async function sauvegarderRemarqueDiag(interventionId, cle, valeur){
+  const i = data.interventions.find(x=>x.id===interventionId);
+  if(!i) return;
+  if(!i.diagnostic) i.diagnostic = {};
+  if(!i.diagnostic[cle]) i.diagnostic[cle] = {};
+  i.diagnostic[cle].remarque = valeur.trim();
+  i._maj = Date.now();
+  await sauvegarder();
+}
+
+async function sauvegarderCommentaireDiag(interventionId, valeur){
+  const i = data.interventions.find(x=>x.id===interventionId);
+  if(!i) return;
+  i.diagnosticCommentaire = valeur.trim();
+  i._maj = Date.now();
+  await sauvegarder();
+}
+
+async function ajouterPhotoDiag(evt, interventionId, cle){
+  const i = data.interventions.find(x=>x.id===interventionId);
+  if(!i) return;
+  if(!i.diagnostic) i.diagnostic = {};
+  if(!i.diagnostic[cle]) i.diagnostic[cle] = {};
+  const debut = i.diagnostic[cle].nbPhotos || 0;
+  const fichiers = Array.from(evt.target.files);
+  for(let idx=0; idx<fichiers.length; idx++){
+    const url = await fichierVersBase64(fichiers[idx]);
+    await sauvegarderImg(interventionId+':diag:'+cle+':'+(debut+idx), url);
+  }
+  i.diagnostic[cle].nbPhotos = debut + fichiers.length;
+  i._maj = Date.now();
+  await sauvegarder();
+  afficherVignettesDiag(i, cle);
+}
+
+async function afficherVignettesDiag(i, cle){
+  const cont = document.getElementById('diag-vignettes-'+cle);
+  if(!cont) return;
+  cont.innerHTML = '';
+  const entree = i.diagnostic && i.diagnostic[cle];
+  const nb = entree ? (entree.nbPhotos||0) : 0;
+  for(let idx=0; idx<nb; idx++){
+    const url = await chargerImg(i.id+':diag:'+cle+':'+idx);
+    if(url) cont.appendChild(creerVignette(url, 'Photo diagnostic'));
+  }
+}
+
+function renderCalendrier(){
+  const cont = document.getElementById('contenu');
+  const aujourdhui = new Date().toISOString().slice(0,10);
+  if(!calendrierMoisAffiche) calendrierMoisAffiche = aujourdhui.slice(0,7);
+  if(!calendrierJourSelectionne) calendrierJourSelectionne = aujourdhui;
+
+  const [an, mois] = calendrierMoisAffiche.split('-').map(Number);
+  const premierJourMois = new Date(an, mois-1, 1);
+  const nbJoursMois = new Date(an, mois, 0).getDate();
+  const decalage = (premierJourMois.getDay() + 6) % 7; // lundi = 0
+
+  const parJour = {};
+  data.interventions.forEach(i=>{
+    if(!i.date) return;
+    if(!parJour[i.date]) parJour[i.date] = [];
+    parJour[i.date].push(i);
+  });
+
+  const nomMois = premierJourMois.toLocaleDateString('fr-FR', { month:'long', year:'numeric' });
+
+  let grille = '';
+  for(let i=0; i<decalage; i++) grille += `<div class="jour-vide"></div>`;
+  for(let j=1; j<=nbJoursMois; j++){
+    const iso = `${an}-${String(mois).padStart(2,'0')}-${String(j).padStart(2,'0')}`;
+    const nb = (parJour[iso]||[]).length;
+    const classeCharge = nb >= 5 ? ' charge-3' : nb >= 3 ? ' charge-2' : nb >= 1 ? ' charge-1' : '';
+    const estAuj = iso === aujourdhui;
+    const estSelectionne = iso === calendrierJourSelectionne;
+    grille += `<button type="button" class="jour-cal${classeCharge}${estAuj?' auj':''}${estSelectionne?' selectionne':''}" onclick="selectionnerJourCalendrier('${iso}')">
+      <span>${j}</span>${nb ? `<span class="jour-cal-pastille">${nb}</span>` : ''}
+    </button>`;
+  }
+
+  const rdvJour = (parJour[calendrierJourSelectionne]||[]).sort((a,b)=>(a.titre||'').localeCompare(b.titre||''));
+  const dateAffichee = new Date(calendrierJourSelectionne+'T00:00:00').toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
+
+  cont.innerHTML = `
+    <div class="panneau-header">
+      <div><h2>Planning</h2><div class="sous">Rendez-vous et fiches programmées</div></div>
+    </div>
+    <div class="calendrier-entete">
+      <button class="discret" onclick="changerMoisCalendrier(-1)">◀</button>
+      <span style="text-transform:capitalize;font-family:'Oswald',sans-serif;font-weight:600;">${nomMois}</span>
+      <button class="discret" onclick="changerMoisCalendrier(1)">▶</button>
+    </div>
+    <div class="calendrier-jours-noms">
+      <span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span>
+    </div>
+    <div class="calendrier-grille">${grille}</div>
+    <div class="bloc-titre" style="text-transform:capitalize;">${calendrierJourSelectionne===aujourdhui ? "Aujourd'hui" : dateAffichee}</div>
+    ${rdvJour.length ? rdvJour.map(i=>{
+      const { v, c } = infosVehicule(i.vehiculeId);
+      return `<button type="button" class="dossier" onclick="allerInterventions('${i.vehiculeId}')">
+        <span class="tab">${i.type==='devis'?'Devis':'Interv.'}</span>
+        <div class="info">
+          <div class="titre-d">${esc(i.titre)}</div>
+          <div class="sous-info">${esc(c?.prenom)} ${esc(c?.nom)} — ${esc(v?.marque)} ${esc(v?.modele)}</div>
+        </div>
+        <span class="compte">${formatEuros(totalFiche(i))} €</span>
+      </button>`;
+    }).join('') : '<div class="vide" style="--icone-vide:\'☕\';">Rien de prévu ce jour-là.</div>'}
+  `;
+}
+
+function changerMoisCalendrier(delta){
+  const [an, mois] = calendrierMoisAffiche.split('-').map(Number);
+  const d = new Date(an, mois-1+delta, 1);
+  calendrierMoisAffiche = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  renderCalendrier();
+}
+function selectionnerJourCalendrier(iso){
+  calendrierJourSelectionne = iso;
+  renderCalendrier();
+}
+
+function sparkline(valeurs, largeur, hauteur){
+  largeur = largeur || 100; hauteur = hauteur || 24;
+  const max = Math.max(...valeurs, 1);
+  const pas = largeur / Math.max(valeurs.length - 1, 1);
+  const points = valeurs.map((v,i)=>`${(i*pas).toFixed(1)},${(hauteur - (v/max)*hauteur*0.9 - 1).toFixed(1)}`).join(' ');
+  return `<svg width="${largeur}" height="${hauteur}" viewBox="0 0 ${largeur} ${hauteur}" style="display:block;overflow:visible;">
+    <polyline points="${points}" fill="none" stroke="var(--money)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+function jaugeCirculaire(pct, taille){
+  taille = taille || 48;
+  const rayon = (taille/2) - 4;
+  const circonference = 2 * Math.PI * rayon;
+  const decalage = circonference * (1 - Math.max(0,Math.min(100,pct))/100);
+  return `<div style="position:relative;width:${taille}px;height:${taille}px;flex-shrink:0;">
+    <svg width="${taille}" height="${taille}" viewBox="0 0 ${taille} ${taille}" style="transform:rotate(-90deg);">
+      <circle cx="${taille/2}" cy="${taille/2}" r="${rayon}" fill="none" stroke="var(--border)" stroke-width="4"/>
+      <circle cx="${taille/2}" cy="${taille/2}" r="${rayon}" fill="none" stroke="var(--money)" stroke-width="4" stroke-linecap="round" stroke-dasharray="${circonference}" stroke-dashoffset="${decalage}" style="transition:stroke-dashoffset .6s ease;"/>
+    </svg>
+    <span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;color:var(--text);">${pct}%</span>
+  </div>`;
+}
+
+function renderFiltres(){
+  const cont = document.getElementById('contenu');
+  const devisEnAttente = data.interventions.filter(i=>i.type==='devis' && (i.statutDevis||'en_attente')==='en_attente');
+  const impayees = data.interventions.filter(i=>i.type==='intervention' && i.statutPaiement==='non_paye' && totalFiche(i)>0);
+  const piecesACommander = data.interventions.filter(i=>i.type==='devis' && i.statutDevis==='valide' && !i.piecesCommandees);
+
+  const devisEnCours = data.interventions.filter(i=>i.type==='devis');
+  const devisConvertis = data.interventions.filter(i=>i.type==='intervention' && i.futDevis).length;
+  const totalDevisEmis = devisEnCours.length + devisConvertis;
+  const tauxConversion = totalDevisEmis > 0 ? Math.round((devisConvertis / totalDevisEmis) * 100) : null;
+
+  function ligne(i, montantOverride){
+    const { v, c } = infosVehicule(i.vehiculeId);
+    const montant = montantOverride !== undefined ? montantOverride : totalFiche(i);
+    return `<button type="button" class="dossier" onclick="allerInterventions('${i.vehiculeId}')">
+      <span class="tab">${formatDate(i.date)}</span>
+      <div class="info">
+        <div class="titre-d">${esc(i.titre)}</div>
+        <div class="sous-info">${esc(c?.prenom)} ${esc(c?.nom)} — ${esc(v?.marque)} ${esc(v?.modele)}</div>
+      </div>
+      <span class="compte">${formatEuros(montant)} €</span>
+    </button>`;
+  }
+
+  cont.innerHTML = `
+    <div class="panneau-header">
+      <div><h2>Vue d'ensemble</h2><div class="sous">Tous clients confondus</div></div>
+    </div>
+    ${tauxConversion !== null ? `<div class="carte-rappel"><span class="carte-rappel-icone">📊</span><div class="carte-rappel-texte"><div class="carte-rappel-titre">Taux de conversion devis → intervention</div><div>${devisConvertis} devis transformé${devisConvertis>1?'s':''} sur ${totalDevisEmis} émis</div></div>${jaugeCirculaire(tauxConversion)}</div>` : ''}
+    <div class="bloc-titre" style="border-top:none;padding-top:0;">Devis en attente de réponse (${devisEnAttente.length})</div>
+    ${devisEnAttente.length ? devisEnAttente.map(i=>ligne(i)).join('') : '<div class="vide" style="--icone-vide:\'📋\';">Aucun devis en attente.</div>'}
+    <div class="bloc-titre">Factures impayées (${impayees.length})</div>
+    ${impayees.length ? impayees.map(i=>ligne(i, arrondi(totalFiche(i)-(i.acompte||0)))).join('') : '<div class="vide" style="--icone-vide:\'💶\';">Aucune facture impayée.</div>'}
+    <div class="bloc-titre">Devis validés — pièces à commander (${piecesACommander.length})</div>
+    ${piecesACommander.length ? piecesACommander.map(i=>ligne(i)).join('') : '<div class="vide" style="--icone-vide:\'📦\';">Rien à commander pour le moment.</div>'}
+  `;
+}
+
+function infosVehicule(vehiculeId){
+  const v = data.vehicules.find(v=>v.id===vehiculeId);
+  const c = v ? data.clients.find(c=>c.id===v.clientId) : null;
+  return { v, c };
+}
+
+async function transformerEnIntervention(id){
+  const i = data.interventions.find(x=>x.id===id);
+  if(!i) return;
+  if(!(await confirmerAction('Transformer ce devis en intervention réalisée ?'))) return;
+  i.type = 'intervention';
+  i.statutPaiement = 'non_paye';
+  i.futDevis = true;
+  i._maj = Date.now();
+  delete i.statutDevis;
+  delete i.piecesCommandees;
+  await sauvegarder();
+  render();
+}
+
+async function dupliquerFiche(id){
+  const original = data.interventions.find(x=>x.id===id);
+  if(!original) return;
+  const copie = {
+    ...original,
+    id: genId(),
+    date: new Date().toISOString().slice(0,10),
+    facturePhoto: false,
+    controles: [],
+    factures: [],
+    acompte: 0,
+    statutPaiement: original.type === 'intervention' ? 'non_paye' : null,
+    piecesCommandees: original.type === 'devis' ? false : null,
+    _maj: Date.now()
+  };
+  data.interventions.push(copie);
+  await sauvegarder();
+  render();
+  ouvrirEditionIntervention(copie.id);
+}
+
+async function supprimerVehicule(id){
+  const v = data.vehicules.find(v=>v.id===id);
+  if(!v) return;
+  const interventionsAssociees = data.interventions.filter(i=>i.vehiculeId===id);
+  if(!(await confirmerAction(`Supprimer définitivement "${v.marque} ${v.modele}" et ${interventionsAssociees.length} fiche(s) associée(s) ? Cette action est irréversible.`))) return;
+  for(const i of interventionsAssociees){
+    if(i.facturePhoto) await supprimerImg(i.id+':facture');
+    for(let idx=0; idx<(i.factures||[]).length; idx++) await supprimerImg(i.id+':facture:'+idx);
+    for(let idx=0; idx<(i.controles||[]).length; idx++) await supprimerImg(i.id+':ct:'+idx);
+  }
+  data.interventions = data.interventions.filter(i=>i.vehiculeId!==id);
+  data.vehicules = data.vehicules.filter(x=>x.id!==id);
+  await sauvegarder();
+  allerVehicules(v.clientId);
+}
+
+async function supprimerClient(id){
+  const c = data.clients.find(c=>c.id===id);
+  if(!c) return;
+  const vehiculesAssocies = data.vehicules.filter(v=>v.clientId===id);
+  const idsVehicules = vehiculesAssocies.map(v=>v.id);
+  const nbFiches = data.interventions.filter(i=>idsVehicules.includes(i.vehiculeId)).length;
+  const nomComplet = `${c.prenom} ${c.nom}`;
+  if(!(await confirmerAvecSaisie(`Supprimer définitivement le dossier de "${nomComplet}", ${vehiculesAssocies.length} véhicule(s) et ${nbFiches} fiche(s) ? Cette action est irréversible.`, nomComplet))) return;
+  for(const v of vehiculesAssocies){
+    const interventionsAssociees = data.interventions.filter(i=>i.vehiculeId===v.id);
+    for(const i of interventionsAssociees){
+      if(i.facturePhoto) await supprimerImg(i.id+':facture');
+      for(let idx=0; idx<(i.factures||[]).length; idx++) await supprimerImg(i.id+':facture:'+idx);
+      for(let idx=0; idx<(i.controles||[]).length; idx++) await supprimerImg(i.id+':ct:'+idx);
+    }
+  }
+  data.interventions = data.interventions.filter(i=>!idsVehicules.includes(i.vehiculeId));
+  data.vehicules = data.vehicules.filter(v=>v.clientId!==id);
+  data.clients = data.clients.filter(x=>x.id!==id);
+  await sauvegarder();
+  allerClients();
+}
+
+async function changerStatutDevis(id, statut){
+  const i = data.interventions.find(i=>i.id===id);
+  if(!i) return;
+  i.statutDevis = statut;
+  i._maj = Date.now();
+  await sauvegarder();
+  render();
+}
+async function basculerPiecesCommandees(id){
+  const i = data.interventions.find(i=>i.id===id);
+  if(!i) return;
+  i.piecesCommandees = !i.piecesCommandees;
+  i._maj = Date.now();
+  await sauvegarder();
+  render();
+}
+async function basculerPaiement(id){
+  const i = data.interventions.find(i=>i.id===id);
+  if(!i) return;
+  i.statutPaiement = i.statutPaiement === 'paye' ? 'non_paye' : 'paye';
+  i._maj = Date.now();
+  await sauvegarder();
+  render();
+}
+async function basculerChecklistItem(id, coche, idx){
+  const i = data.interventions.find(i=>i.id===id);
+  const libelle = (data.reglages.checklist||[])[idx];
+  if(!i || libelle === undefined) return;
+  if(!i.checklist) i.checklist = {};
+  i.checklist[libelle] = coche;
+  i._maj = Date.now();
+  await sauvegarder();
+}
+function totalFiche(i){
+  const mo = parseFloat(i.tarifMO) || 0;
+  const p = parseFloat(i.coutPieces) || 0;
+  return mo + p;
+}
+function montantCA(i){
+  return arrondi(totalFiche(i) - (parseFloat(i.montantHorsCA)||0) - (parseFloat(i.depensePerso)||0));
+}
+function achatPourMargeCA(i){
+  return i.achatPiecesCA !== undefined ? (parseFloat(i.achatPiecesCA)||0) : (parseFloat(i.prixAchatPieces)||0);
+}
+function margeCA(i){
+  return arrondi(montantCA(i) - achatPourMargeCA(i));
+}
+function totalVehicule(vehiculeId){
+  return data.interventions
+    .filter(i=>i.vehiculeId===vehiculeId && i.type==='intervention')
+    .reduce((s,i)=>s+totalFiche(i), 0);
+}
+function totalClient(clientId){
+  const idsVehicules = data.vehicules.filter(v=>v.clientId===clientId).map(v=>v.id);
+  return data.interventions
+    .filter(i=>idsVehicules.includes(i.vehiculeId) && i.type==='intervention')
+    .reduce((s,i)=>s+totalFiche(i), 0);
+}
+function formatEuros(n){
+  return n.toLocaleString('fr-FR', { minimumFractionDigits: n % 1 === 0 ? 0 : 2, maximumFractionDigits: 2 });
+}
+
+function exporterSauvegarde(){
+  const paquet = { data, images: {} };
+  for(let k=0; k<localStorage.length; k++){
+    const cle = localStorage.key(k);
+    if(cle && cle.startsWith('img:')) paquet.images[cle] = localStorage.getItem(cle);
+  }
+  const blob = new Blob([JSON.stringify(paquet)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const d = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = 'tab-sauvegarde-' + d + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 3000);
+  localStorage.setItem('tab-dernier-export', new Date().toISOString());
+}
+
+function declencherImport(){
+  document.getElementById('import-fichier').click();
+}
+async function importerSauvegarde(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  try{
+    const texte = await file.text();
+    const paquet = JSON.parse(texte);
+    if(!paquet || !paquet.data){ afficherToast('Fichier de sauvegarde invalide.', 'erreur'); return; }
+    const confirmer = await confirmerAction('Importer cette sauvegarde va remplacer toutes les données actuelles de l\'application. Continuer ?');
+    if(!confirmer) return;
+    data = paquet.data;
+    await sauvegarder();
+    if(paquet.images){
+      Object.keys(paquet.images).forEach(cle => localStorage.setItem(cle, paquet.images[cle]));
+    }
+    localStorage.setItem('tab-dernier-export', new Date().toISOString());
+    vue = 'clients'; clientCourant = null; vehiculeCourant = null;
+    render();
+    afficherToast('Sauvegarde importée avec succès.', 'succes');
+  } catch(e){
+    console.error(e);
+    afficherToast('Impossible de lire ce fichier de sauvegarde.', 'erreur');
+  }
+  evt.target.value = '';
+}
+
+/* ---------- CLIENTS ---------- */
+let requeteRecherche = '';
+
+function animerCompteurs(){
+  document.querySelectorAll('.compteur').forEach(el=>{
+    const cible = parseFloat(el.dataset.valeur) || 0;
+    const duree = 600;
+    const debut = performance.now();
+    function etape(maintenant){
+      const progres = Math.min((maintenant - debut) / duree, 1);
+      const valeur = cible * (1 - Math.pow(1 - progres, 3));
+      el.textContent = formatEuros(arrondi(valeur)) + ' €';
+      if(progres < 1) requestAnimationFrame(etape);
+      else el.textContent = formatEuros(cible) + ' €';
+    }
+    requestAnimationFrame(etape);
+  });
+}
+
+function renderClients(){
+  const cont = document.getElementById('contenu');
+  const clients = [...data.clients].sort((a,b)=>(a.nom+a.prenom).localeCompare(b.nom+b.prenom));
+  const today = new Date().toISOString().slice(0,10);
+
+  const devisAvertir = data.interventions.filter(i=>i.type==='devis' && i.statutDevis==='valide' && !i.piecesCommandees);
+  const impayes = data.interventions.filter(i=>i.type==='intervention' && i.statutPaiement==='non_paye' && totalFiche(i)>0);
+  const debutJour = today;
+  const debutMois = today.slice(0,7) + '-01';
+  const debutAnnee = today.slice(0,4) + '-01-01';
+
+  function totauxPeriode(depuis){
+    const liste = data.interventions.filter(i=>i.type==='intervention' && i.date && i.date >= depuis);
+    const total = liste.reduce((s,i)=>s+montantCA(i), 0);
+    const achat = liste.reduce((s,i)=>s+achatPourMargeCA(i), 0);
+    return { nb: liste.length, total: arrondi(total), marge: arrondi(total - achat) };
+  }
+  const statsJour = totauxPeriode(debutJour);
+  const statsMois = totauxPeriode(debutMois);
+  const statsAnnee = totauxPeriode(debutAnnee);
+
+  const valeurs30j = [];
+  for(let d=29; d>=0; d--){
+    const dt = new Date(); dt.setDate(dt.getDate()-d);
+    const iso = dt.toISOString().slice(0,10);
+    const total = data.interventions.filter(i=>i.type==='intervention' && i.date===iso).reduce((s,i)=>s+montantCA(i),0);
+    valeurs30j.push(total);
+  }
+
+  const dateAuj = new Date(today+'T00:00:00');
+  const debutMoisPrecedent = new Date(dateAuj.getFullYear(), dateAuj.getMonth()-1, 1).toISOString().slice(0,10);
+  const finMoisPrecedent = new Date(dateAuj.getFullYear(), dateAuj.getMonth(), 0).toISOString().slice(0,10);
+  const totalMoisPrecedent = arrondi(data.interventions
+    .filter(i=>i.type==='intervention' && i.date && i.date >= debutMoisPrecedent && i.date <= finMoisPrecedent)
+    .reduce((s,i)=>s+montantCA(i), 0));
+  let tendanceMois = '';
+  if(totalMoisPrecedent > 0){
+    const variation = Math.round(((statsMois.total - totalMoisPrecedent) / totalMoisPrecedent) * 100);
+    tendanceMois = variation >= 0
+      ? `<span style="color:var(--money);">▲ ${variation}%</span> vs mois dernier`
+      : `<span style="color:var(--danger);">▼ ${Math.abs(variation)}%</span> vs mois dernier`;
+  } else if(statsMois.total > 0){
+    tendanceMois = `<span style="color:var(--money);">▲ nouveau</span> vs mois dernier`;
+  }
+
+  const devisValidesEnAttente = data.interventions.filter(i=>i.type==='devis' && i.statutDevis==='valide');
+  const potentielTotal = arrondi(devisValidesEnAttente.reduce((s,i)=>s+montantCA(i), 0));
+  const potentielAchat = devisValidesEnAttente.reduce((s,i)=>s+achatPourMargeCA(i), 0);
+  const potentielMarge = arrondi(potentielTotal - potentielAchat);
+
+  const devisAAncienner = data.interventions.filter(i=>{
+    if(i.type !== 'devis' || (i.statutDevis||'en_attente') !== 'en_attente' || !i.date) return false;
+    const jours = Math.floor((Date.now() - new Date(i.date+'T00:00:00').getTime()) / 86400000);
+    return jours >= 7;
+  });
+
+  const dureeValiditeDevis = data.reglages.dureeValiditeDevis || 30;
+  const devisExpires = data.interventions.filter(i=>{
+    if(i.type !== 'devis' || (i.statutDevis||'en_attente') !== 'en_attente' || !i.date) return false;
+    const jours = Math.floor((Date.now() - new Date(i.date+'T00:00:00').getTime()) / 86400000);
+    return jours >= dureeValiditeDevis;
+  });
+
+  const vehiculesSansNouvelles = data.vehicules.filter(v=>{
+    const interventionsV = data.interventions.filter(i=>i.vehiculeId===v.id && i.date).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    if(!interventionsV.length) return false;
+    const jours = Math.floor((Date.now() - new Date(interventionsV[0].date+'T00:00:00').getTime()) / 86400000);
+    return jours >= 365;
+  });
+
+  const prochains = data.interventions
+    .filter(i=>i.date && i.date >= today)
+    .sort((a,b)=>(a.date||'').localeCompare(b.date||''))
+    .slice(0,8);
+
+  let dashboardHtml = '';
+  if(devisAvertir.length){
+    dashboardHtml += `<div class="alerte rouge"><div class="alerte-titre">Pièces à commander — devis validé${devisAvertir.length>1?'s':''}</div>`;
+    devisAvertir.forEach(i=>{
+      const { v, c } = infosVehicule(i.vehiculeId);
+      dashboardHtml += `
+        <div class="alerte-ligne">
+          <span class="desc" onclick="allerInterventions('${i.vehiculeId}')"><b>${esc(i.titre)}</b> — ${esc(c?.prenom)} ${esc(c?.nom)}, ${esc(v?.marque)} ${esc(v?.modele)}</span>
+          <button class="discret commande-btn" onclick="basculerPiecesCommandees('${i.id}')">Marquer commandé</button>
+        </div>`;
+    });
+    dashboardHtml += `</div>`;
+  }
+  if(impayes.length){
+    const totalImpaye = arrondi(impayes.reduce((s,i)=>s+(totalFiche(i)-(i.acompte||0)),0));
+    dashboardHtml += `<div class="alerte rouge"><div class="alerte-titre">Factures non payées — ${formatEuros(totalImpaye)} € au total</div>`;
+    impayes.forEach(i=>{
+      const { v, c } = infosVehicule(i.vehiculeId);
+      const solde = arrondi(totalFiche(i) - (i.acompte||0));
+      dashboardHtml += `
+        <div class="alerte-ligne">
+          <span class="desc" onclick="allerInterventions('${i.vehiculeId}')"><b>${esc(i.titre)}</b> — ${esc(c?.prenom)} ${esc(c?.nom)}, ${esc(v?.marque)} ${esc(v?.modele)}${i.acompte>0 ? ` (solde ${formatEuros(solde)} €)` : ''}</span>
+          <button class="discret commande-btn" onclick="basculerPaiement('${i.id}')">Marquer payé</button>
+        </div>`;
+    });
+    dashboardHtml += `</div>`;
+  }
+  if(prochains.length){
+    dashboardHtml += `<div class="alerte"><div class="alerte-titre">Prochains rendez-vous</div>`;
+    prochains.forEach(i=>{
+      const { v, c } = infosVehicule(i.vehiculeId);
+      dashboardHtml += `
+        <div class="alerte-ligne">
+          <span class="desc" onclick="allerInterventions('${i.vehiculeId}')"><b>${esc(i.titre)}</b> — ${esc(c?.prenom)} ${esc(c?.nom)}, ${esc(v?.marque)} ${esc(v?.modele)}</span>
+          <span class="quand">${formatDate(i.date)}</span>
+        </div>`;
+    });
+    dashboardHtml += `</div>`;
+  }
+  if(devisAAncienner.length){
+    dashboardHtml += `<div class="alerte"><div class="alerte-titre">Devis à relancer — en attente depuis 7 jours ou plus</div>`;
+    devisAAncienner.forEach(i=>{
+      const { v, c } = infosVehicule(i.vehiculeId);
+      const jours = Math.floor((Date.now() - new Date(i.date+'T00:00:00').getTime()) / 86400000);
+      dashboardHtml += `
+        <div class="alerte-ligne">
+          <span class="desc" onclick="allerInterventions('${i.vehiculeId}')"><b>${esc(i.titre)}</b> — ${esc(c?.prenom)} ${esc(c?.nom)}, ${esc(v?.marque)} ${esc(v?.modele)} (${jours} j)</span>
+          ${c?.telephone ? `<a href="tel:${esc(c.telephone)}"><button class="discret commande-btn">Appeler</button></a>` : ''}
+        </div>`;
+    });
+    dashboardHtml += `</div>`;
+  }
+  if(devisExpires.length){
+    dashboardHtml += `<div class="alerte rouge"><div class="alerte-titre">Devis expiré${devisExpires.length>1?'s':''} — durée de validité (${dureeValiditeDevis} j) dépassée</div>`;
+    devisExpires.forEach(i=>{
+      const { v, c } = infosVehicule(i.vehiculeId);
+      dashboardHtml += `
+        <div class="alerte-ligne">
+          <span class="desc" onclick="allerInterventions('${i.vehiculeId}')"><b>${esc(i.titre)}</b> — ${esc(c?.prenom)} ${esc(c?.nom)}, ${esc(v?.marque)} ${esc(v?.modele)}</span>
+          <button class="discret commande-btn" onclick="changerStatutDevis('${i.id}','refuse')">Marquer refusé</button>
+        </div>`;
+    });
+    dashboardHtml += `</div>`;
+  }
+  if(vehiculesSansNouvelles.length){
+    dashboardHtml += `<div class="alerte"><div class="alerte-titre">Véhicules sans intervention depuis plus d'un an</div>`;
+    vehiculesSansNouvelles.forEach(v=>{
+      const c = data.clients.find(c=>c.id===v.clientId);
+      dashboardHtml += `
+        <div class="alerte-ligne">
+          <span class="desc" onclick="allerInterventions('${v.id}')"><span class="pastille-marque" style="background:${couleurMarque(v.marque)};"></span><b>${esc(v.marque)} ${esc(v.modele)}</b> — ${esc(c?.prenom)} ${esc(c?.nom)}</span>
+          ${c?.telephone ? `<a href="tel:${esc(c.telephone)}"><button class="discret commande-btn">Appeler</button></a>` : ''}
+        </div>`;
+    });
+    dashboardHtml += `</div>`;
+  }
+  if(clients.length){
+    const dernierExport = localStorage.getItem('tab-dernier-export');
+    const joursDepuis = dernierExport ? Math.floor((Date.now() - new Date(dernierExport).getTime()) / 86400000) : null;
+    if(joursDepuis === null || joursDepuis >= 30){
+      dashboardHtml += `<div class="alerte rouge"><div class="alerte-titre">${joursDepuis === null ? "Vous n'avez jamais fait de sauvegarde" : `Dernière sauvegarde il y a ${joursDepuis} jours`}</div>
+        <div class="alerte-ligne" style="border-top:none;">
+          <span class="desc" style="cursor:default;">Pense à exporter tes données régulièrement, en cas de perte du téléphone.</span>
+          <button class="discret commande-btn" onclick="exporterSauvegarde()">Exporter maintenant</button>
+        </div>
+      </div>`;
+    }
+  }
+
+  const alertesUrgentes = devisAvertir.length + impayes.length + devisAAncienner.length + devisExpires.length + vehiculesSansNouvelles.length;
+
+  let html = `
+    <div class="panneau-header">
+      <div>
+        <h2>Dossiers clients</h2>
+        <div class="sous">${clients.length} client${clients.length>1?'s':''}</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button type="button" id="bouton-cloche" onclick="basculerPanneauNotifs()" style="position:relative;font-size:16px;padding:9px 12px;">
+          🔔${alertesUrgentes > 0 ? `<span class="pastille-cloche">${alertesUrgentes}</span>` : ''}
+        </button>
+        <button class="primaire" onclick="ouvrirFormClient()">+ Nouveau client</button>
+      </div>
+    </div>
+    <div class="stats-periodes">
+      <div class="stat-carte">
+        <div class="stat-titre">☀️ Aujourd'hui</div>
+        <div class="stat-nb">${statsJour.nb} intervention${statsJour.nb>1?'s':''}</div>
+        <div class="stat-montant compteur" data-valeur="${statsJour.total}">0 €</div>
+        <div class="stat-marge">marge ${formatEuros(statsJour.marge)} €</div>
+      </div>
+      <div class="stat-carte">
+        <div class="stat-titre">📅 Ce mois-ci</div>
+        <div class="stat-nb">${statsMois.nb} intervention${statsMois.nb>1?'s':''}</div>
+        <div class="stat-montant compteur" data-valeur="${statsMois.total}">0 €</div>
+        <div class="stat-marge">marge ${formatEuros(statsMois.marge)} €</div>
+        <div style="margin-top:6px;">${sparkline(valeurs30j, 110, 22)}</div>
+        ${tendanceMois ? `<div class="stat-tendance">${tendanceMois}</div>` : ''}
+      </div>
+      <div class="stat-carte">
+        <div class="stat-titre">📈 Cette année</div>
+        <div class="stat-nb">${statsAnnee.nb} intervention${statsAnnee.nb>1?'s':''}</div>
+        <div class="stat-montant compteur" data-valeur="${statsAnnee.total}">0 €</div>
+        <div class="stat-marge">marge ${formatEuros(statsAnnee.marge)} €</div>
+      </div>
+      <div class="stat-carte" style="border-left:3px solid var(--steel);">
+        <div class="stat-titre">⏳ Potentiel (devis validés)</div>
+        <div class="stat-nb">${devisValidesEnAttente.length} devis en attente de réalisation</div>
+        <div class="stat-montant compteur" data-valeur="${potentielTotal}">0 €</div>
+        <div class="stat-marge">marge potentielle ${formatEuros(potentielMarge)} €</div>
+      </div>
+    </div>
+    <div id="panneau-notifs" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <span style="font-family:'Oswald',sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);">Notifications</span>
+        <button class="discret" onclick="basculerPanneauNotifs()" style="padding:2px 6px;">✕</button>
+      </div>
+      ${dashboardHtml || '<div class="vide" style="--icone-vide:\'🔕\';">Aucune alerte pour le moment.</div>'}
+    </div>
+    <div class="barre-outils">
+      <button onclick="exporterSauvegarde()">Exporter la sauvegarde</button>
+      <button onclick="declencherImport()">Importer une sauvegarde</button>
+      <input type="file" id="import-fichier" class="cache" accept="application/json" onchange="importerSauvegarde(event)">
+    </div>
+    <div class="recherche-zone">
+      <input type="text" id="recherche-globale" placeholder="Rechercher un client, une immatriculation, une intervention…" value="${esc(requeteRecherche)}" oninput="rechercherGlobal(this.value)">
+    </div>
+    <div class="formulaire" id="form-client">
+      <h3 id="form-client-titre">Nouveau client</h3>
+      <button type="button" class="secondaire" onclick="importerContact()" style="margin-bottom:12px;">📇 Importer depuis mes contacts</button>
+      <div class="grille">
+        <div class="champ"><label>Prénom <span style="color:var(--danger);">*</span></label><input id="c-prenom" type="text" placeholder="ex. Julie"></div>
+        <div class="champ"><label>Nom <span style="color:var(--danger);">*</span></label><input id="c-nom" type="text" placeholder="ex. Bernard"></div>
+        <div class="champ"><label>Téléphone</label><input id="c-tel" type="tel" placeholder="ex. 06 12 34 56 78"></div>
+        <div class="champ"><label>Email</label><input id="c-email" type="email" placeholder="ex. julie.bernard@mail.com"></div>
+      </div>
+      <div class="erreur" id="c-erreur" style="display:none;"></div>
+      <div class="form-actions">
+        <button onclick="fermerFormClient()">Annuler</button>
+        <button class="primaire" onclick="enregistrerClient()">Enregistrer</button>
+      </div>
+    </div>
+    <div id="zone-resultats"></div>
+  `;
+  cont.innerHTML = html;
+  if(requeteRecherche.trim()){
+    afficherResultatsRecherche(requeteRecherche);
+    return;
+  }
+  const zone = document.getElementById('zone-resultats');
+  if(!clients.length){
+    zone.innerHTML = `<div class="vide" style="padding:48px 20px;">
+      <div style="font-size:15px;color:var(--text);font-weight:600;margin-bottom:6px;">Bienvenue dans TAB</div>
+      Crée ton premier dossier client pour commencer à suivre véhicules et interventions.
+      <div style="margin-top:16px;"><button class="primaire" onclick="ouvrirFormClient()">+ Créer mon premier client</button></div>
+    </div>`;
+  } else {
+    let listeHtml = '';
+    let lettreCourante = null;
+    clients.forEach(c=>{
+      const nb = data.vehicules.filter(v=>v.clientId===c.id).length;
+      const lettre = (c.nom[0]||'?').toUpperCase();
+      if(lettre !== lettreCourante){
+        lettreCourante = lettre;
+        listeHtml += `<div class="lettre-groupe">${esc(lettre)}</div>`;
+      }
+      listeHtml += `
+        <button type="button" class="dossier" style="border-left:3px solid ${couleurAvatar(c.nom+c.prenom)};" onclick="allerVehicules('${c.id}')">
+          <span class="avatar-client" style="background:${couleurAvatar(c.nom+c.prenom)};">${esc((c.prenom[0]||'')+(c.nom[0]||'')).toUpperCase()}</span>
+          <div class="info">
+            <div class="titre-d">${esc(c.prenom)} ${esc(c.nom)}</div>
+          </div>
+          <span class="compte">${nb} véhicule${nb>1?'s':''}</span>
+        </button>`;
+    });
+    zone.innerHTML = listeHtml;
+  }
+}
+
+function rechercherGlobal(valeur){
+  requeteRecherche = valeur;
+  if(!valeur.trim()){ renderClients(); return; }
+  afficherResultatsRecherche(valeur);
+}
+
+function afficherResultatsRecherche(valeur){
+  const zone = document.getElementById('zone-resultats');
+  if(!zone) return;
+  const q = valeur.trim().toLowerCase();
+  if(!q){ zone.innerHTML = ''; return; }
+
+  const clientsTrouves = data.clients.filter(c=>
+    (c.prenom+' '+c.nom).toLowerCase().includes(q) ||
+    (c.telephone||'').toLowerCase().includes(q) ||
+    (c.email||'').toLowerCase().includes(q));
+  const vehiculesTrouves = data.vehicules.filter(v=>
+    (v.marque+' '+v.modele).toLowerCase().includes(q) ||
+    (v.immatriculation||'').toLowerCase().includes(q));
+  const interventionsTrouvees = data.interventions.filter(i=>
+    (i.titre||'').toLowerCase().includes(q));
+
+  if(!clientsTrouves.length && !vehiculesTrouves.length && !interventionsTrouvees.length){
+    zone.innerHTML = `<div class="vide" style="--icone-vide:'🔍';">Aucun résultat pour « ${esc(valeur)} ».</div>`;
+    return;
+  }
+
+  let html = '';
+  if(clientsTrouves.length){
+    html += `<div class="resultat-groupe"><div class="resultat-groupe-titre">Clients</div>`;
+    clientsTrouves.forEach(c=>{
+      html += `<button type="button" class="dossier" onclick="allerVehicules('${c.id}')">
+        <span class="avatar-client" style="background:${couleurAvatar(c.nom+c.prenom)};">${esc((c.prenom[0]||'')+(c.nom[0]||'')).toUpperCase()}</span>
+        <div class="info"><div class="titre-d">${esc(c.prenom)} ${esc(c.nom)}</div></div>
+      </button>`;
+    });
+    html += `</div>`;
+  }
+  if(vehiculesTrouves.length){
+    html += `<div class="resultat-groupe"><div class="resultat-groupe-titre">Véhicules</div>`;
+    vehiculesTrouves.forEach(v=>{
+      const c = data.clients.find(c=>c.id===v.clientId);
+      html += `<button type="button" class="dossier" onclick="allerInterventions('${v.id}')">
+        <span class="tab">${esc(v.immatriculation||'—')}</span>
+        <div class="info"><div class="titre-d"><span class="pastille-marque" style="background:${couleurMarque(v.marque)};"></span>${esc(v.marque)} ${esc(v.modele)} — ${esc(c?.prenom)} ${esc(c?.nom)}</div></div>
+      </button>`;
+    });
+    html += `</div>`;
+  }
+  if(interventionsTrouvees.length){
+    html += `<div class="resultat-groupe"><div class="resultat-groupe-titre">Fiches</div>`;
+    interventionsTrouvees.forEach(i=>{
+      const { v, c } = infosVehicule(i.vehiculeId);
+      html += `<button type="button" class="dossier" onclick="allerInterventions('${i.vehiculeId}')">
+        <span class="tab">${formatDate(i.date)}</span>
+        <div class="info"><div class="titre-d">${esc(i.titre)} — ${esc(v?.marque)} ${esc(v?.modele)}, ${esc(c?.prenom)} ${esc(c?.nom)}</div></div>
+      </button>`;
+    });
+    html += `</div>`;
+  }
+  zone.innerHTML = html;
+}
+
+let clientEnEdition = null;
+function ouvrirFormClient(){
+  clientEnEdition = null;
+  document.getElementById('form-client-titre').textContent = 'Nouveau client';
+  document.getElementById('form-client').classList.add('ouvert');
+}
+function ouvrirEditionClient(id){
+  const c = data.clients.find(c=>c.id===id);
+  if(!c) return;
+  clientEnEdition = id;
+  document.getElementById('form-client-titre').textContent = 'Modifier le client';
+  document.getElementById('c-prenom').value = c.prenom || '';
+  document.getElementById('c-nom').value = c.nom || '';
+  document.getElementById('c-tel').value = c.telephone || '';
+  document.getElementById('c-email').value = c.email || '';
+  document.getElementById('form-client').classList.add('ouvert');
+}
+function fermerFormClient(){
+  document.getElementById('form-client').classList.remove('ouvert');
+  ['c-prenom','c-nom','c-tel','c-email'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('c-erreur').style.display='none';
+  clientEnEdition = null;
+}
+async function importerContact(){
+  if(!('contacts' in navigator) || !('ContactsManager' in window)){
+    afficherToast('L\'import de contacts n\'est pas pris en charge sur cet appareil/navigateur (fonctionne sur Chrome Android).', 'erreur');
+    return;
+  }
+  try{
+    const contacts = await navigator.contacts.select(['name','tel','email'], { multiple: false });
+    if(!contacts || !contacts.length) return;
+    const contact = contacts[0];
+    const nomComplet = (contact.name && contact.name[0]) || '';
+    const parties = nomComplet.trim().split(/\s+/);
+    document.getElementById('c-prenom').value = parties[0] || '';
+    document.getElementById('c-nom').value = parties.slice(1).join(' ') || '';
+    if(contact.tel && contact.tel[0]) document.getElementById('c-tel').value = contact.tel[0];
+    if(contact.email && contact.email[0]) document.getElementById('c-email').value = contact.email[0];
+    afficherToast('Contact importé — vérifie les champs avant d\'enregistrer.', 'succes');
+  } catch(e){
+    console.error(e);
+  }
+}
+
+async function enregistrerClient(){
+  const prenom = document.getElementById('c-prenom').value.trim();
+  const nom = document.getElementById('c-nom').value.trim();
+  const telephone = document.getElementById('c-tel').value.trim();
+  const email = document.getElementById('c-email').value.trim();
+  const err = document.getElementById('c-erreur');
+  if(!prenom || !nom){ err.textContent='Merci de renseigner le nom et le prénom.'; err.style.display='block'; secouerChamp(!prenom?'c-prenom':'c-nom'); return; }
+  if(clientEnEdition){
+    const c = data.clients.find(c=>c.id===clientEnEdition);
+    Object.assign(c, { prenom, nom, telephone, email, _maj: Date.now() });
+  } else {
+    data.clients.push({ id: genId(), prenom, nom, telephone, email, _maj: Date.now() });
+  }
+  await sauvegarder();
+  fermerFormClient();
+  render();
+}
+
+/* ---------- VEHICULES ---------- */
+let vehiculeEnEdition = null;
+
+function renderVehicules(){
+  const cont = document.getElementById('contenu');
+  const c = data.clients.find(c=>c.id===clientCourant);
+  const vehicules = data.vehicules.filter(v=>v.clientId===clientCourant);
+  const total = totalClient(clientCourant);
+  const coordonnees = [c?.telephone, c?.email].filter(Boolean).join(' · ');
+  let actionsRapides = '';
+  if(c?.telephone){
+    actionsRapides += `<a href="tel:${esc(c.telephone)}"><button class="secondaire">📞 Appeler</button></a>`;
+    actionsRapides += `<a href="sms:${esc(c.telephone)}"><button class="secondaire">💬 SMS</button></a>`;
+  }
+  if(c?.email){
+    actionsRapides += `<a href="mailto:${esc(c.email)}"><button class="secondaire">✉️ Email</button></a>`;
+  }
+  let html = `
+    <div class="panneau-header">
+      <div>
+        <h2>${esc(c?.prenom)} ${esc(c?.nom)}</h2>
+        <div class="sous">${vehicules.length} véhicule${vehicules.length>1?'s':''}${coordonnees ? ' — ' + esc(coordonnees) : ''}</div>
+        ${total > 0 ? `<div class="total-ligne">Total facturé&nbsp;: <b>${formatEuros(total)} €</b></div>` : ''}
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="secondaire" onclick="ouvrirEditionClient('${clientCourant}')">✎ Modifier</button>
+        <button class="secondaire" onclick="imprimerReleveClient('${clientCourant}')">📄 Relevé PDF</button>
+        <button class="secondaire" onclick="imprimerDossierCompletClient('${clientCourant}')">📦 Dossier complet PDF</button>
+        <button class="danger-sub" onclick="supprimerClient('${clientCourant}')">🗑 Supprimer</button>
+        <button class="primaire" onclick="ouvrirFormVehicule()">+ Nouveau véhicule</button>
+      </div>
+    </div>
+    ${actionsRapides ? `<div class="barre-outils">${actionsRapides}</div>` : ''}
+    <div class="formulaire" id="form-client">
+      <h3 id="form-client-titre">Modifier le client</h3>
+      <div class="grille">
+        <div class="champ"><label>Prénom <span style="color:var(--danger);">*</span></label><input id="c-prenom" type="text"></div>
+        <div class="champ"><label>Nom <span style="color:var(--danger);">*</span></label><input id="c-nom" type="text"></div>
+        <div class="champ"><label>Téléphone</label><input id="c-tel" type="tel"></div>
+        <div class="champ"><label>Email</label><input id="c-email" type="email"></div>
+      </div>
+      <div class="erreur" id="c-erreur" style="display:none;"></div>
+      <div class="form-actions">
+        <button onclick="fermerFormClient()">Annuler</button>
+        <button class="primaire" onclick="enregistrerClient()">Enregistrer</button>
+      </div>
+    </div>
+    <div class="formulaire" id="form-vehicule">
+      <h3 id="form-vehicule-titre">Nouveau véhicule</h3>
+      <div class="grille">
+        <div class="champ"><label>Marque <span style="color:var(--danger);">*</span></label><input id="v-marque" type="text" placeholder="ex. Mercedes"></div>
+        <div class="champ"><label>Modèle <span style="color:var(--danger);">*</span></label><input id="v-modele" type="text" placeholder="ex. 230SL"></div>
+        <div class="champ"><label>Immatriculation</label><input id="v-immat" type="text" placeholder="ex. AB-123-CD"></div>
+        <div class="champ"><label>Numéro de série (VIN)</label><input id="v-serie" type="text" placeholder="ex. WDB1234567A123456"></div>
+        <div class="champ"><label>Prochain contrôle technique</label><input id="v-ct" type="date"></div>
+        <div class="champ"><label>Prochain entretien prévu</label><input id="v-entretien-libelle" type="text" placeholder="ex. Vidange"></div>
+        <div class="champ"><label>Date de l'entretien prévu</label><input id="v-entretien-date" type="date"></div>
+      </div>
+      <div class="erreur" id="v-erreur" style="display:none;"></div>
+      <div class="form-actions">
+        <button onclick="fermerFormVehicule()">Annuler</button>
+        <button class="primaire" onclick="enregistrerVehicule()">Enregistrer</button>
+      </div>
+    </div>
+  `;
+  if(!vehicules.length){
+    html += `<div class="vide" style="--icone-vide:'🚗';">Aucun véhicule pour ce client.<br>Ajoute-en un pour créer des fiches d'intervention.
+      <div style="margin-top:14px;"><button class="primaire" onclick="ouvrirFormVehicule()">+ Ajouter un véhicule</button></div>
+    </div>`;
+  } else {
+    vehicules.forEach(v=>{
+      const nb = data.interventions.filter(i=>i.vehiculeId===v.id).length;
+      const totalV = totalVehicule(v.id);
+      const derniere = data.interventions
+        .filter(i=>i.vehiculeId===v.id && i.date)
+        .sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0];
+      html += `
+        <button type="button" class="dossier" onclick="allerInterventions('${v.id}')">
+          <span class="tab">${esc(v.immatriculation || '—')}</span>
+          <div class="info">
+            <div class="titre-d"><span class="pastille-marque" style="background:${couleurMarque(v.marque)};"></span>${esc(v.marque)} ${esc(v.modele)}</div>
+            <div class="sous-info">${derniere ? 'Dernière intervention : ' + tempsRelatif(derniere.date) : 'Aucune intervention enregistrée'}</div>
+          </div>
+          <span class="compte">${nb} fiche${nb>1?'s':''}${totalV>0?' · '+formatEuros(totalV)+' €':''}</span>
+        </button>`;
+    });
+  }
+  cont.innerHTML = html;
+}
+function ouvrirFormVehicule(){
+  vehiculeEnEdition = null;
+  document.getElementById('form-vehicule-titre').textContent = 'Nouveau véhicule';
+  document.getElementById('form-vehicule').classList.add('ouvert');
+}
+function fermerFormVehicule(){
+  document.getElementById('form-vehicule').classList.remove('ouvert');
+  ['v-marque','v-modele','v-immat','v-serie','v-ct','v-entretien-libelle','v-entretien-date'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('v-erreur').style.display='none';
+  vehiculeEnEdition = null;
+}
+function ouvrirEditionVehicule(id){
+  const v = data.vehicules.find(v=>v.id===id);
+  if(!v) return;
+  vehiculeEnEdition = id;
+  document.getElementById('form-vehicule-titre').textContent = 'Modifier le véhicule';
+  document.getElementById('v-marque').value = v.marque || '';
+  document.getElementById('v-modele').value = v.modele || '';
+  document.getElementById('v-immat').value = v.immatriculation || '';
+  document.getElementById('v-serie').value = v.numeroSerie || '';
+  document.getElementById('v-ct').value = v.prochainCT || '';
+  document.getElementById('v-entretien-libelle').value = v.entretienLibelle || '';
+  document.getElementById('v-entretien-date').value = v.entretienDate || '';
+  document.getElementById('form-vehicule').classList.add('ouvert');
+}
+async function enregistrerVehicule(){
+  const marque = document.getElementById('v-marque').value.trim();
+  const modele = document.getElementById('v-modele').value.trim();
+  const immatriculation = document.getElementById('v-immat').value.trim();
+  const numeroSerie = document.getElementById('v-serie').value.trim();
+  const prochainCT = document.getElementById('v-ct').value;
+  const entretienLibelle = document.getElementById('v-entretien-libelle').value.trim();
+  const entretienDate = document.getElementById('v-entretien-date').value;
+  const err = document.getElementById('v-erreur');
+  if(!marque || !modele){ err.textContent='Merci de renseigner au moins la marque et le modèle.'; err.style.display='block'; secouerChamp(!marque?'v-marque':'v-modele'); return; }
+  if(vehiculeEnEdition){
+    const v = data.vehicules.find(v=>v.id===vehiculeEnEdition);
+    Object.assign(v, { marque, modele, immatriculation, numeroSerie, prochainCT, entretienLibelle, entretienDate, _maj: Date.now() });
+  } else {
+    data.vehicules.push({ id: genId(), clientId: clientCourant, marque, modele, immatriculation, numeroSerie, prochainCT, entretienLibelle, entretienDate, _maj: Date.now() });
+  }
+  await sauvegarder();
+  fermerFormVehicule();
+  render();
+}
+
+/* ---------- INTERVENTIONS ---------- */
+let piecesJointesTemp = { factures: [], controles: [] };
+let defautsTemp = [];
+let typeSelectionne = 'intervention';
+let interventionEnEdition = null;
+
+function renderInterventions(){
+  const cont = document.getElementById('contenu');
+  const v = data.vehicules.find(v=>v.id===vehiculeCourant);
+  const interventions = data.interventions
+    .filter(i=>i.vehiculeId===vehiculeCourant)
+    .sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+
+  let ctHtml = '';
+  if(v?.prochainCT){
+    const enRetard = v.prochainCT < new Date().toISOString().slice(0,10);
+    ctHtml = `<div class="carte-rappel${enRetard?' retard':''}"><span class="carte-rappel-icone">🔧</span><div class="carte-rappel-texte"><div class="carte-rappel-titre">Contrôle technique</div><div>${formatDate(v.prochainCT)}${enRetard?' — dépassé':''}</div></div><button class="discret" onclick="ouvrirEditionVehicule('${v.id}')">modifier</button></div>`;
+  } else {
+    ctHtml = `<div class="carte-rappel"><span class="carte-rappel-icone">🔧</span><div class="carte-rappel-texte"><div class="carte-rappel-titre">Contrôle technique</div><div>Non renseigné</div></div><button class="discret" onclick="ouvrirEditionVehicule('${v.id}')">renseigner</button></div>`;
+  }
+  let entretienHtml = '';
+  if(v?.entretienLibelle || v?.entretienDate){
+    const enRetardE = v.entretienDate && v.entretienDate < new Date().toISOString().slice(0,10);
+    entretienHtml = `<div class="carte-rappel${enRetardE?' retard':''}"><span class="carte-rappel-icone">🛠️</span><div class="carte-rappel-texte"><div class="carte-rappel-titre">${esc(v.entretienLibelle||'Entretien prévu')}</div><div>${v.entretienDate ? formatDate(v.entretienDate) : 'Date non renseignée'}${enRetardE?' — dépassé':''}</div></div><button class="discret" onclick="ouvrirEditionVehicule('${v.id}')">modifier</button></div>`;
+  }
+  const totalV = totalVehicule(vehiculeCourant);
+
+  let html = `
+    <div class="panneau-header">
+      <div>
+        <h2><span class="pastille-marque" style="background:${couleurMarque(v?.marque)};"></span>${esc(v?.marque)} ${esc(v?.modele)}</h2>
+        <div class="sous">${esc(v?.immatriculation||'immatriculation non renseignée')}${v?.numeroSerie ? ' · VIN : ' + esc(v.numeroSerie) : ''}</div>
+        ${totalV > 0 ? `<div class="total-ligne">Total facturé&nbsp;: <b>${formatEuros(totalV)} €</b></div>` : ''}
+      </div>
+      <button class="secondaire" onclick="imprimerReleveVehicule('${vehiculeCourant}')">📄 Relevé PDF</button>
+      <button class="secondaire" onclick="ouvrirEditionVehicule('${vehiculeCourant}')">✎ Modifier</button>
+      <button class="danger-sub" onclick="supprimerVehicule('${vehiculeCourant}')">🗑 Supprimer</button>
+      <button class="primaire" onclick="ouvrirFormIntervention()">+ Nouvelle fiche</button>
+    </div>
+    ${ctHtml}
+    ${entretienHtml}
+    <div class="formulaire" id="form-vehicule">
+      <h3 id="form-vehicule-titre">Modifier le véhicule</h3>
+      <div class="grille">
+        <div class="champ"><label>Marque <span style="color:var(--danger);">*</span></label><input id="v-marque" type="text"></div>
+        <div class="champ"><label>Modèle <span style="color:var(--danger);">*</span></label><input id="v-modele" type="text"></div>
+        <div class="champ"><label>Immatriculation</label><input id="v-immat" type="text"></div>
+        <div class="champ"><label>Numéro de série (VIN)</label><input id="v-serie" type="text"></div>
+        <div class="champ"><label>Prochain contrôle technique</label><input id="v-ct" type="date"></div>
+        <div class="champ"><label>Prochain entretien prévu</label><input id="v-entretien-libelle" type="text" placeholder="ex. Vidange"></div>
+        <div class="champ"><label>Date de l'entretien prévu</label><input id="v-entretien-date" type="date"></div>
+      </div>
+      <div class="erreur" id="v-erreur" style="display:none;"></div>
+      <div class="form-actions">
+        <button onclick="fermerFormVehicule()">Annuler</button>
+        <button class="primaire" onclick="enregistrerVehicule()">Enregistrer</button>
+      </div>
+    </div>
+    <div class="formulaire" id="form-intervention">
+      <h3 id="form-intervention-titre">Nouvelle fiche</h3>
+      <div class="type-select">
+        <button type="button" class="type-opt actif" id="type-intervention" onclick="choisirType('intervention')">Intervention réalisée</button>
+        <button type="button" class="type-opt" id="type-devis" onclick="choisirType('devis')">Devis</button>
+      </div>
+      <div class="champ large" style="margin-bottom:10px;">
+        <label>Intitulé <span style="color:var(--danger);">*</span></label>
+        <input id="i-titre" type="text" class="champ-titre-grand" placeholder="ex. Remplacement plaquettes avant" list="liste-catalogue" oninput="suggererTempsHabituel()">
+        <datalist id="liste-catalogue"></datalist>
+        <div class="apercu-calcul" id="suggestion-catalogue" style="display:none;"></div>
+      </div>
+      <div class="grille trois">
+        <div class="champ"><label>Date <span style="color:var(--danger);">*</span></label><input id="i-date" type="date"></div>
+        <div class="champ"><label>Kilométrage</label><input id="i-km" type="number" placeholder="ex. 84320"></div>
+        <div class="champ"><label>Acompte versé (€)</label><input id="i-acompte" type="number" placeholder="ex. 50"></div>
+      </div>
+      <div class="champ large" id="champ-statut-devis" style="display:none;margin-bottom:10px;">
+        <label>Statut du devis</label>
+        <div class="statut-select">
+          <button type="button" class="statut-opt en_attente actif" onclick="choisirStatutDevis('en_attente')">En attente</button>
+          <button type="button" class="statut-opt valide" onclick="choisirStatutDevis('valide')">Validé</button>
+          <button type="button" class="statut-opt refuse" onclick="choisirStatutDevis('refuse')">Refusé</button>
+        </div>
+      </div>
+
+      <div class="bloc-titre" style="border-top:none;padding-top:0;" id="i-pieces-label">Pièces remplacées</div>
+      <div id="pieces-lignes"></div>
+      <button class="btn-ajout-ligne" onclick="ajouterLignePiece()">+ Ajouter une pièce</button>
+      <div class="apercu-calcul" id="apercu-pieces" style="margin-top:8px;font-weight:600;"></div>
+      <div class="apercu-calcul" id="apercu-mo"></div>
+
+      <div class="bloc-titre">Défauts constatés sur le véhicule</div>
+      <div id="defauts-lignes"></div>
+      <button class="btn-ajout-ligne" onclick="ajouterLigneDefaut()">+ Ajouter un défaut</button>
+
+      <div class="bloc-titre">Documents joints (factures, devis reçus, photos...)</div>
+      <label class="upload-label" for="i-facture">Choisir un ou plusieurs fichiers</label>
+      <input type="file" id="i-facture" accept="image/*,application/pdf" multiple style="display:none;" onchange="ajouterFacture(event)">
+      <div class="apercus" id="apercu-facture"></div>
+
+      <div class="bloc-titre">Rapport(s) de contrôle technique</div>
+      <label class="upload-label" for="i-ct">Choisir un ou plusieurs fichiers</label>
+      <input type="file" id="i-ct" accept="image/*,application/pdf" multiple style="display:none;" onchange="ajouterCT(event)">
+      <div class="apercus" id="apercu-ct"></div>
+
+
+      <div class="erreur" id="i-erreur" style="display:none;margin-top:10px;"></div>
+      <div class="form-actions">
+        <button onclick="fermerFormIntervention()">Annuler</button>
+        <button class="primaire" onclick="enregistrerIntervention()">Enregistrer</button>
+      </div>
+    </div>
+  `;
+
+  if(!interventions.length){
+    html += `<div class="vide" style="--icone-vide:'🔧';">Aucune fiche enregistrée pour ce véhicule.
+      <div style="margin-top:14px;"><button class="primaire" onclick="ouvrirFormIntervention()">+ Créer une fiche</button></div>
+    </div>`;
+    cont.innerHTML = html;
+    return;
+  }
+
+  cont.innerHTML = html;
+  const ficheZone = document.createElement('div');
+  cont.appendChild(ficheZone);
+  interventions.forEach(async (i)=>{
+    const fiche = document.createElement('div');
+    fiche.className = 'fiche' + (i.type === 'devis' ? ' fiche-devis' : ' fiche-intervention');
+    let defautsHtml = '';
+    if(i.defauts && i.defauts.length){
+      defautsHtml = `<div class="bloc-titre">Défauts constatés</div><ul class="defauts-liste">${i.defauts.map(d=>`<li>${esc(d)}</li>`).join('')}</ul>`;
+    }
+    const labelPieces = i.type === 'devis' ? 'Pièces prévues' : 'Pièces remplacées';
+    let piecesHtml = '';
+    if(i.piecesListe && i.piecesListe.length){
+      piecesHtml = `<div class="fiche-pieces"><b>${labelPieces}</b><ul style="list-style:none;margin:0;padding:0;">${i.piecesListe.map(p=>{
+        const details = [];
+        const mentionType = p.typePiece === 'prestataire' ? ' (prestataire, hors CA)' : p.typePiece === 'depense_perso' ? '' : (p.margeZero ? ' (coûtant)' : '');
+        if(p.typePiece === 'depense_perso'){
+          details.push(`-${formatEuros(p.prixAchat)} € (dépense perso)`);
+        } else if(p.prixFacture){
+          details.push(`${formatEuros(p.prixFacture)} €${mentionType}`);
+        }
+        if(p.heures) details.push(`MO ${p.heures} h (${formatEuros(p.tarifMO)} €)`);
+        return `<li style="padding:3px 0;border-bottom:1px dashed var(--border);">
+          <div style="display:flex;justify-content:space-between;"><span>${esc(p.nom)}${p.ref ? ` <span style="color:var(--text-muted);font-size:11px;">(réf. ${esc(p.ref)})</span>` : ''}</span></div>
+          ${details.length ? `<div style="text-align:right;font-size:12px;color:${p.typePiece==='depense_perso'?'var(--danger)':'var(--text-muted)'};">${details.join(' · ')}</div>` : ''}
+        </li>`;
+      }).join('')}</ul></div>`;
+    } else if(i.pieces){
+      piecesHtml = `<div class="fiche-pieces"><b>${labelPieces}</b>${esc(i.pieces)}</div>`;
+    }
+    let tarifsHtml = '';
+    const tarifs = [];
+    if(i.heuresMO) tarifs.push(`<span>Main d'œuvre&nbsp;: <b>${esc(i.heuresMO)} h → ${formatEuros(i.tarifMO)} €</b></span>`);
+    if(i.prixAchatPieces) tarifs.push(`<span>Pièces&nbsp;: <b>${formatEuros(i.coutPieces)} €</b> (achat ${esc(i.prixAchatPieces)} €)</span>`);
+    const tf = totalFiche(i);
+    if(tf > 0) tarifs.push(`<span class="total">Total&nbsp;: <b>${formatEuros(tf)} €</b></span>`);
+    if(i.acompte > 0){
+      const solde = arrondi(tf - i.acompte);
+      const soldeNegatif = solde < 0;
+      tarifs.push(`<span>Acompte versé&nbsp;: <b>${formatEuros(i.acompte)} €</b></span>`);
+      tarifs.push(`<span>${soldeNegatif ? 'Trop-perçu' : 'Solde restant'}&nbsp;: <b style="${soldeNegatif ? `color:var(--danger);` : ''}">${formatEuros(Math.abs(solde))} €</b></span>`);
+    }
+    if(tarifs.length) tarifsHtml = `<div class="fiche-tarifs">${tarifs.join('')}</div>`;
+    let paiementHtml = '';
+    if(i.type === 'intervention' && tf > 0){
+      const paye = i.statutPaiement === 'paye';
+      paiementHtml = `<div class="paiement-toggle"><button type="button" class="badge ${paye?'paye':'non_paye'}" onclick="basculerPaiement('${i.id}')">${paye?'Payé':'Non payé'}</button></div>`;
+    }
+    let statutHtml = '';
+    if(i.type === 'devis'){
+      const statut = i.statutDevis || 'en_attente';
+      const libelles = { en_attente:'En attente', valide:'Validé', refuse:'Refusé' };
+      statutHtml = `<div class="statut-select">` + Object.keys(libelles).map(s=>
+        `<button type="button" class="statut-opt ${s}${s===statut?' actif':''}" onclick="changerStatutDevis('${i.id}','${s}')">${libelles[s]}</button>`
+      ).join('') + `</div>`;
+      if(statut === 'valide'){
+        statutHtml += `<div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="discret commande-btn" onclick="basculerPiecesCommandees('${i.id}')">${i.piecesCommandees ? '✓ Pièces commandées' : 'Marquer pièces commandées'}</button>
+          <button class="discret commande-btn" onclick="transformerEnIntervention('${i.id}')">Transformer en intervention</button>
+        </div>`;
+      }
+    }
+    let checklistHtml = '';
+    if(i.type === 'intervention' && data.reglages.checklist && data.reglages.checklist.length){
+      const cochees = i.checklist || {};
+      checklistHtml = `<div class="bloc-titre">Checklist de restitution</div><div class="checklist-fiche">${data.reglages.checklist.map((libelle, idx)=>{
+        return `<label class="checklist-item">
+          <input type="checkbox" ${cochees[libelle] ? 'checked' : ''} onchange="basculerChecklistItem('${i.id}', this.checked, ${idx})">
+          <span>${esc(libelle)}</span>
+        </label>`;
+      }).join('')}</div>`;
+    }
+    const aDesPhotos = i.facturePhoto || (i.factures||[]).length || (i.controles||[]).length;
+    fiche.innerHTML = `
+      <div class="fiche-top">
+        <div style="display:flex;gap:10px;align-items:flex-start;min-width:0;">
+          ${aDesPhotos ? `<img class="vignette-couverture" id="vignette-couverture-${i.id}" style="display:none;">` : ''}
+          <div class="fiche-titre-ligne">
+            <span class="badge ${i.type === 'devis' ? 'devis' : 'intervention'}">${i.type === 'devis' ? 'Devis' : 'Intervention'}</span>
+            <span class="fiche-titre${i.type==='devis' && i.statutDevis==='refuse' ? ' titre-refuse' : ''}">${esc(i.titre)}</span>
+          </div>
+        </div>
+        <div class="fiche-date-actions">
+          <span class="fiche-date">${formatDate(i.date)}${i.km ? `<span class="km">${esc(i.km)} km</span>` : ''}</span>
+          <button class="bouton-icone" title="Modifier" onclick="ouvrirEditionIntervention('${i.id}')">✎</button>
+          <button class="bouton-icone danger" title="Supprimer">✕</button>
+        </div>
+      </div>
+      ${piecesHtml}
+      ${tarifsHtml}
+      ${paiementHtml}
+      ${statutHtml}
+      ${defautsHtml}
+      ${checklistHtml}
+      <div class="bloc-titre" id="pj-titre-${i.id}" style="display:none;">Pièces jointes</div>
+      <div class="pieces-jointes" id="pj-${i.id}"></div>
+      <div class="fiche-actions-bas">
+        <button class="primaire" onclick="imprimerFiche('${i.id}')">📄 Exporter en PDF</button>
+        <button class="secondaire" onclick="ouvrirDiagnostic('${i.id}')">🔍 Diagnostic</button>
+        <div class="conteneur-menu-fiche">
+          <button class="secondaire" onclick="basculerMenuFiche('${i.id}')" title="Plus d'actions">⋯</button>
+          <div class="menu-fiche" id="menu-fiche-${i.id}" style="display:none;">
+            <button onclick="dupliquerFiche('${i.id}'); basculerMenuFiche('${i.id}');">⧉ Dupliquer</button>
+            ${i.date ? `<button onclick="ouvrirGoogleAgendaParId('${i.id}'); basculerMenuFiche('${i.id}');">📅 Ajouter à Google Agenda</button>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+    fiche.querySelector('button[title="Supprimer"]').addEventListener('click', async ()=>{
+      if(!(await confirmerAction(`Supprimer définitivement la fiche "${i.titre}" ? Les documents joints seront aussi supprimés. Cette action est irréversible.`))) return;
+      if(i.facturePhoto) await supprimerImg(i.id+':facture');
+      (i.factures||[]).forEach(async (_,idx)=>await supprimerImg(i.id+':facture:'+idx));
+      (i.controles||[]).forEach(async (_,idx)=>await supprimerImg(i.id+':ct:'+idx));
+      data.interventions = data.interventions.filter(x=>x.id!==i.id);
+      await sauvegarder();
+      render();
+    });
+    ficheZone.appendChild(fiche);
+    await renderPiecesJointes(i);
+  });
+}
+
+async function renderPiecesJointes(i){
+  const cont = document.getElementById('pj-'+i.id);
+  const titreEl = document.getElementById('pj-titre-'+i.id);
+  const couverture = document.getElementById('vignette-couverture-'+i.id);
+  if(!cont) return;
+  let any = false;
+  let couvertureRemplie = false;
+  function tenterCouverture(url){
+    if(!couvertureRemplie && couverture && url && url.startsWith('data:image')){
+      couverture.src = url;
+      couverture.style.display = 'block';
+      couverture.onclick = ()=>ouvrirLightbox(url);
+      couvertureRemplie = true;
+    }
+  }
+  if(i.facturePhoto){
+    const url = await chargerImg(i.id+':facture');
+    if(url){ any = true; cont.appendChild(creerVignette(url, 'Document')); tenterCouverture(url); }
+  }
+  for(let idx=0; idx<(i.factures||[]).length; idx++){
+    const url = await chargerImg(i.id+':facture:'+idx);
+    if(url){ any = true; cont.appendChild(creerVignette(url, 'Document')); tenterCouverture(url); }
+  }
+  for(let idx=0; idx<(i.controles||[]).length; idx++){
+    const url = await chargerImg(i.id+':ct:'+idx);
+    if(url){ any = true; cont.appendChild(creerVignette(url, 'Contrôle technique')); tenterCouverture(url); }
+  }
+  if(any) titreEl.style.display = 'block';
+}
+
+function telechargerFichier(dataUrl, nomFichier){
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = nomFichier;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function ouvrirLightbox(dataUrl){
+  const overlay = document.getElementById('lightbox');
+  overlay.innerHTML = `
+    <img src="${dataUrl}" style="max-width:92vw;max-height:80vh;border-radius:var(--rayon-s);box-shadow:0 8px 24px rgba(0,0,0,0.3);">
+    <button class="primaire" onclick="fermerLightbox()">Fermer</button>
+  `;
+  overlay.style.display = 'flex';
+}
+function fermerLightbox(){
+  document.getElementById('lightbox').style.display = 'none';
+  document.getElementById('lightbox').innerHTML = '';
+}
+
+function creerVignette(dataUrl, label){
+  let el;
+  const estImage = dataUrl.startsWith('data:image');
+  if(estImage){
+    el = document.createElement('img');
+    el.className = 'vignette';
+    el.src = dataUrl;
+    el.title = label;
+    el.addEventListener('click', ()=>ouvrirLightbox(dataUrl));
+  } else {
+    el = document.createElement('div');
+    el.className = 'vignette-doc';
+    el.textContent = label + ' (PDF) — télécharger';
+    el.addEventListener('click', ()=>telechargerFichier(dataUrl, label.replace(/\s+/g,'-').toLowerCase() + '.pdf'));
+  }
+  return el;
+}
+
+function choisirType(type){
+  typeSelectionne = type;
+  document.getElementById('type-intervention').classList.toggle('actif', type==='intervention');
+  document.getElementById('type-devis').classList.toggle('actif', type==='devis');
+  document.getElementById('i-pieces-label').textContent = type==='devis' ? 'Pièces prévues' : 'Pièces remplacées';
+  document.getElementById('champ-statut-devis').style.display = type==='devis' ? 'block' : 'none';
+}
+
+let statutDevisSelectionne = 'en_attente';
+function choisirStatutDevis(statut){
+  statutDevisSelectionne = statut;
+  document.querySelectorAll('#champ-statut-devis .statut-opt').forEach(el=>{
+    el.classList.toggle('actif', el.classList.contains(statut));
+  });
+}
+
+function ouvrirFormIntervention(){
+  interventionEnEdition = null;
+  piecesJointesTemp = { factures: [], controles: [] };
+  defautsTemp = [];
+  typeSelectionne = 'intervention';
+  statutDevisSelectionne = 'en_attente';
+  document.getElementById('form-intervention-titre').textContent = 'Nouvelle fiche';
+  document.getElementById('form-intervention').classList.add('ouvert');
+  document.getElementById('i-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('defauts-lignes').innerHTML = '';
+  document.getElementById('pieces-lignes').innerHTML = '';
+  document.getElementById('apercu-facture').innerHTML = '';
+  document.getElementById('apercu-ct').innerHTML = '';
+  document.getElementById('apercu-mo').textContent = '';
+  document.getElementById('apercu-pieces').textContent = '';
+  document.getElementById('suggestion-catalogue').style.display = 'none';
+  peuplerListeCatalogue();
+  choisirType('intervention');
+  choisirStatutDevis('en_attente');
+  ajouterLigneDefaut();
+  ajouterLignePiece();
+}
+
+function peuplerListeCatalogue(){
+  const dl = document.getElementById('liste-catalogue');
+  const catalogue = data.reglages.catalogue || [];
+  dl.innerHTML = catalogue.map(entree=>`<option value="${esc(entree.nom)}">`).join('');
+}
+
+function suggererTempsHabituel(){
+  const titre = document.getElementById('i-titre').value.trim().toLowerCase();
+  const catalogue = data.reglages.catalogue || [];
+  const trouve = catalogue.find(entree=>entree.nom.toLowerCase() === titre);
+  const zone = document.getElementById('suggestion-catalogue');
+  if(trouve && trouve.heures){
+    zone.style.display = 'block';
+    zone.innerHTML = `⏱ Temps habituel pour cette intervention : ${trouve.heures} h — <button type="button" class="discret" style="text-decoration:underline;padding:0;" onclick="appliquerTempsHabituel(${trouve.heures})">Appliquer à la première pièce</button>`;
+  } else {
+    zone.style.display = 'none';
+  }
+}
+
+function appliquerTempsHabituel(heures){
+  const premiereCarte = document.querySelector('#pieces-lignes .piece-carte');
+  if(premiereCarte){
+    premiereCarte.querySelector('.piece-heures').value = heures;
+    calculerApercus();
+  }
+}
+
+async function ouvrirEditionIntervention(id){
+  const i = data.interventions.find(x=>x.id===id);
+  if(!i) return;
+  interventionEnEdition = id;
+  piecesJointesTemp = { factures: [], controles: [] };
+  document.getElementById('form-intervention-titre').textContent = 'Modifier la fiche';
+  document.getElementById('form-intervention').classList.add('ouvert');
+  document.getElementById('i-titre').value = i.titre || '';
+  peuplerListeCatalogue();
+  document.getElementById('suggestion-catalogue').style.display = 'none';
+  document.getElementById('i-date').value = i.date || '';
+  document.getElementById('i-km').value = i.km || '';
+  document.getElementById('i-acompte').value = i.acompte || '';
+  choisirType(i.type || 'intervention');
+  if(i.type === 'devis') choisirStatutDevis(i.statutDevis || 'en_attente');
+
+  document.getElementById('pieces-lignes').innerHTML = '';
+  if(i.piecesListe && i.piecesListe.length){
+    i.piecesListe.forEach(p=>ajouterLignePiece(p.nom, p.ref, p.prixAchat, p.heures, p.typePiece || (p.margeZero !== undefined ? p.margeZero : i.margeZero)));
+  } else if(i.prixAchatPieces || i.heuresMO){
+    ajouterLignePiece(i.pieces || 'Pièces', '', i.prixAchatPieces, i.heuresMO, i.margeZero);
+  } else {
+    ajouterLignePiece();
+  }
+  calculerApercus();
+
+  document.getElementById('defauts-lignes').innerHTML = '';
+  if(i.defauts && i.defauts.length){
+    i.defauts.forEach(d=>{
+      ajouterLigneDefaut();
+      const inputs = document.querySelectorAll('#defauts-lignes input');
+      inputs[inputs.length-1].value = d;
+    });
+  } else {
+    ajouterLigneDefaut();
+  }
+
+  document.getElementById('apercu-facture').innerHTML = '';
+  document.getElementById('apercu-ct').innerHTML = '';
+  if(i.facturePhoto){
+    const url = await chargerImg(id+':facture');
+    if(url){
+      const item = document.createElement('div');
+      item.className = 'apercu-item';
+      item.appendChild(creerVignette(url, 'Document existant'));
+      document.getElementById('apercu-facture').appendChild(item);
+    }
+  }
+  for(let idx=0; idx<(i.factures||[]).length; idx++){
+    const url = await chargerImg(id+':facture:'+idx);
+    if(url){
+      const item = document.createElement('div');
+      item.className = 'apercu-item';
+      item.appendChild(creerVignette(url, 'Document existant'));
+      document.getElementById('apercu-facture').appendChild(item);
+    }
+  }
+  for(let idx=0; idx<(i.controles||[]).length; idx++){
+    const url = await chargerImg(id+':ct:'+idx);
+    if(url){
+      const item = document.createElement('div');
+      item.className = 'apercu-item';
+      item.appendChild(creerVignette(url, 'Contrôle technique actuel'));
+      document.getElementById('apercu-ct').appendChild(item);
+    }
+  }
+}
+
+function fermerFormIntervention(){
+  document.getElementById('form-intervention').classList.remove('ouvert');
+  ['i-titre','i-km','i-acompte'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('pieces-lignes').innerHTML = '';
+  document.getElementById('i-date').value='';
+  document.getElementById('i-erreur').style.display='none';
+  document.getElementById('champ-statut-devis').style.display='none';
+  document.getElementById('apercu-mo').textContent = '';
+  document.getElementById('apercu-pieces').textContent = '';
+  piecesJointesTemp = { factures: [], controles: [] };
+  defautsTemp = [];
+  interventionEnEdition = null;
+}
+
+function arrondi(n){ return Math.round(n*100)/100; }
+
+function calculerPrixFacturePiece(typePiece, prixAchat){
+  if(typePiece === 'depense_perso') return 0;
+  if(typePiece === 'zero' || typePiece === 'prestataire') return arrondi(prixAchat);
+  return arrondi(prixAchat * (1 + (data.reglages.margePieces||0)));
+}
+
+function ajouterLignePiece(nom, ref, prixAchat, heures, typePieceOuBool){
+  let typePiece = 'normale';
+  if(typePieceOuBool === true) typePiece = 'zero';
+  else if(typeof typePieceOuBool === 'string') typePiece = typePieceOuBool;
+  const cont = document.getElementById('pieces-lignes');
+  const carte = document.createElement('div');
+  carte.className = 'piece-carte';
+  carte.dataset.marge = typePiece;
+  carte.innerHTML = `
+    <div class="piece-entete">
+      <input type="text" class="piece-nom" placeholder="Nom de la pièce" value="${nom ? esc(nom) : ''}">
+      <button type="button" class="discret" onclick="this.closest('.piece-carte').remove(); calculerApercus();">✕</button>
+    </div>
+    <div class="piece-champs">
+      <div class="champ"><label>Référence</label><input type="text" class="piece-ref" placeholder="Réf." value="${ref ? esc(ref) : ''}"></div>
+      <div class="champ"><label>Prix d'achat €</label><input type="number" class="piece-prix" placeholder="0" value="${prixAchat ? esc(String(prixAchat)) : ''}" oninput="calculerApercus()"></div>
+      <div class="champ"><label>Main d'œuvre (h)</label><input type="number" step="0.25" class="piece-heures" placeholder="0" value="${heures ? esc(String(heures)) : ''}" oninput="calculerApercus()"></div>
+    </div>
+    <div class="piece-marge-select">
+      <button type="button" class="marge-mini-opt ${typePiece==='normale' ? 'actif' : ''}" data-marge="normale" onclick="choisirMargePiece(this,'normale')">Marge ${Math.round((data.reglages.margePieces||0)*100)}%</button>
+      <button type="button" class="marge-mini-opt ${typePiece==='zero' ? 'actif' : ''}" data-marge="zero" onclick="choisirMargePiece(this,'zero')">Prix coûtant</button>
+      <button type="button" class="marge-mini-opt ${typePiece==='prestataire' ? 'actif' : ''}" data-marge="prestataire" onclick="choisirMargePiece(this,'prestataire')">Prestataire</button>
+      <button type="button" class="marge-mini-opt ${typePiece==='depense_perso' ? 'actif' : ''}" data-marge="depense_perso" onclick="choisirMargePiece(this,'depense_perso')">Dépense perso</button>
+    </div>
+    <div class="piece-sous-total"></div>
+  `;
+  cont.appendChild(carte);
+  calculerApercus();
+}
+
+function choisirMargePiece(bouton, type){
+  const carte = bouton.closest('.piece-carte');
+  carte.dataset.marge = type;
+  carte.querySelectorAll('.marge-mini-opt').forEach(b=>b.classList.toggle('actif', b.dataset.marge===type));
+  calculerApercus();
+}
+
+function calculerApercus(){
+  let totalAchat = 0, totalFacture = 0, totalHeures = 0, totalMO = 0, horsCA = 0, depensePerso = 0;
+  document.querySelectorAll('#pieces-lignes .piece-carte').forEach(carte=>{
+    const typePiece = carte.dataset.marge;
+    const prix = parseFloat(carte.querySelector('.piece-prix').value);
+    const heures = parseFloat(carte.querySelector('.piece-heures').value);
+    const sousTotal = carte.querySelector('.piece-sous-total');
+    const parties = [];
+    if(prix > 0){
+      const facture = calculerPrixFacturePiece(typePiece, prix);
+      if(typePiece === 'prestataire'){
+        parties.push(`Prestataire (hors CA)&nbsp;: ${formatEuros(facture)} €`);
+        horsCA += facture;
+      } else if(typePiece === 'depense_perso'){
+        parties.push(`Dépense perso (déduite)&nbsp;: -${formatEuros(prix)} €`);
+        depensePerso += prix;
+      } else {
+        parties.push(`Pièce&nbsp;: ${formatEuros(facture)} €`);
+      }
+      totalAchat += prix; totalFacture += facture;
+    }
+    if(heures > 0){
+      const tarifLigne = arrondi(heures * data.reglages.tauxHoraire);
+      parties.push(`MO&nbsp;: ${formatEuros(tarifLigne)} €`);
+      totalHeures += heures; totalMO += tarifLigne;
+    }
+    sousTotal.innerHTML = parties.join(' · ');
+  });
+  const apercuPieces = document.getElementById('apercu-pieces');
+  const apercuMO = document.getElementById('apercu-mo');
+  apercuPieces.textContent = totalFacture > 0 ? `Total pièces facturées : ${formatEuros(arrondi(totalFacture))} €` : '';
+  apercuMO.textContent = totalMO > 0 ? `Total main d'œuvre : ${totalHeures} h → ${formatEuros(arrondi(totalMO))} €` : '';
+  const notes = [];
+  if(horsCA > 0) notes.push(`${formatEuros(arrondi(horsCA))} € en prestataire (hors chiffre)`);
+  if(depensePerso > 0) notes.push(`${formatEuros(arrondi(depensePerso))} € en dépense perso (déduite du chiffre et de la marge)`);
+  if(notes.length) apercuMO.textContent += (apercuMO.textContent ? ' — ' : '') + notes.join(' — ');
+}
+
+function ajouterLigneDefaut(){
+  const cont = document.getElementById('defauts-lignes');
+  const ligne = document.createElement('div');
+  ligne.className = 'defaut-ligne';
+  ligne.innerHTML = `<input type="text" placeholder="ex. Jeu important sur rotule de direction">
+    <button type="button" class="discret" onclick="this.parentElement.remove()">✕</button>`;
+  cont.appendChild(ligne);
+}
+
+async function ajouterFacture(evt){
+  const files = Array.from(evt.target.files);
+  const cont = document.getElementById('apercu-facture');
+  for(const file of files){
+    const url = await fichierVersBase64(file);
+    const idx = piecesJointesTemp.factures.length;
+    piecesJointesTemp.factures.push(url);
+    const item = document.createElement('div');
+    item.className = 'apercu-item';
+    item.appendChild(creerVignette(url, 'Document'));
+    const retirer = document.createElement('button');
+    retirer.className = 'retirer'; retirer.textContent = '✕';
+    retirer.onclick = ()=>{ piecesJointesTemp.factures[idx] = null; item.remove(); };
+    item.appendChild(retirer);
+    cont.appendChild(item);
+  }
+}
+
+async function ajouterCT(evt){
+  const files = Array.from(evt.target.files);
+  const cont = document.getElementById('apercu-ct');
+  for(const file of files){
+    const url = await fichierVersBase64(file);
+    const idx = piecesJointesTemp.controles.length;
+    piecesJointesTemp.controles.push(url);
+    const item = document.createElement('div');
+    item.className = 'apercu-item';
+    item.appendChild(creerVignette(url, 'Contrôle technique'));
+    const retirer = document.createElement('button');
+    retirer.className = 'retirer'; retirer.textContent = '✕';
+    retirer.onclick = ()=>{ piecesJointesTemp.controles[idx] = null; item.remove(); };
+    item.appendChild(retirer);
+    cont.appendChild(item);
+  }
+}
+
+function sautDePageSiNecessaire(doc, y){
+  if(y > 275){ doc.addPage(); return 20; }
+  return y;
+}
+
+function finaliserPdf(doc){
+  const nbPages = doc.internal.getNumberOfPages();
+  for(let p = 1; p <= nbPages; p++){
+    doc.setPage(p);
+    doc.setDrawColor(231,222,205); doc.line(14, 283, 196, 283);
+    doc.setFont('helvetica','bold'); doc.setFontSize(9);
+    doc.setTextColor(190,183,170);
+    doc.text('TAB', 14, 289);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8);
+    doc.setTextColor(160,152,138);
+    doc.text(`Page ${p} / ${nbPages}`, 196, 289, { align: 'right' });
+    doc.setTextColor(43,38,31);
+  }
+}
+
+function imprimerReleveVehicule(vehiculeId){
+  const { v, c } = infosVehicule(vehiculeId);
+  const interventions = data.interventions
+    .filter(i=>i.vehiculeId===vehiculeId && i.type==='intervention')
+    .sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  if(!interventions.length){
+    afficherToast('Aucune intervention facturée pour ce véhicule pour le moment.');
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 32;
+  dessinerLogoPdf(doc);
+  doc.setFont('helvetica','bold'); doc.setFontSize(16);
+  doc.text("Relevé d'entretien", 14, y); y += 6;
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(148,138,121);
+  doc.text(`Édité le ${formatDate(new Date().toISOString().slice(0,10))}`, 14, y); y += 10;
+  doc.setTextColor(43,38,31); doc.setFontSize(11);
+  doc.text(`Client : ${c?.prenom||''} ${c?.nom||''}`, 14, y); y += 7;
+  doc.text(`Véhicule : ${v?.marque||''} ${v?.modele||''}${v?.immatriculation ? ' — '+v.immatriculation : ''}`, 14, y); y += 10;
+  doc.setFont('helvetica','bold'); doc.setFontSize(10);
+  doc.text('Date', 14, y); doc.text('Intervention', 45, y); doc.text('Montant', 196, y, { align: 'right' });
+  y += 3; doc.setDrawColor(231,222,205); doc.line(14, y, 196, y); y += 6;
+  doc.setFont('helvetica','normal');
+  interventions.forEach(i=>{
+    y = sautDePageSiNecessaire(doc, y);
+    doc.text(formatDate(i.date), 14, y);
+    const titreLignes = doc.splitTextToSize(i.titre||'', 130);
+    doc.text(titreLignes, 45, y);
+    doc.text(`${formatEuros(totalFiche(i))} €`, 196, y, { align: 'right' });
+    y += Math.max(titreLignes.length,1)*6 + 2;
+  });
+  y += 4; doc.setDrawColor(231,222,205); doc.line(14, y, 196, y); y += 9;
+  doc.setFont('helvetica','bold'); doc.setFontSize(13);
+  doc.text(`Total : ${formatEuros(totalVehicule(vehiculeId))} €`, 196, y, { align: 'right' });
+  finaliserPdf(doc);
+  doc.save(`releve-${(v?.marque||'')}-${(v?.modele||'')}.pdf`.replace(/\s+/g,'-').toLowerCase());
+}
+
+function imprimerReleveClient(clientId){
+  const c = data.clients.find(c=>c.id===clientId);
+  const vehicules = data.vehicules.filter(v=>v.clientId===clientId);
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 32;
+  dessinerLogoPdf(doc);
+  doc.setFont('helvetica','bold'); doc.setFontSize(16);
+  doc.text("Relevé d'entretien", 14, y); y += 6;
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(148,138,121);
+  doc.text(`Édité le ${formatDate(new Date().toISOString().slice(0,10))}`, 14, y); y += 10;
+  doc.setTextColor(43,38,31); doc.setFontSize(11);
+  doc.text(`Client : ${c?.prenom||''} ${c?.nom||''}`, 14, y); y += 10;
+
+  let uneSection = false;
+  vehicules.forEach(v=>{
+    const interventions = data.interventions
+      .filter(i=>i.vehiculeId===v.id && i.type==='intervention')
+      .sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    if(!interventions.length) return;
+    uneSection = true;
+    y = sautDePageSiNecessaire(doc, y);
+    doc.setFont('helvetica','bold'); doc.setFontSize(12);
+    doc.text(`${v.marque} ${v.modele}${v.immatriculation ? ' — '+v.immatriculation : ''}`, 14, y); y += 7;
+    doc.setFontSize(10);
+    doc.text('Date', 14, y); doc.text('Intervention', 45, y); doc.text('Montant', 196, y, { align: 'right' });
+    y += 3; doc.setDrawColor(231,222,205); doc.line(14, y, 196, y); y += 6;
+    doc.setFont('helvetica','normal');
+    interventions.forEach(i=>{
+      y = sautDePageSiNecessaire(doc, y);
+      doc.text(formatDate(i.date), 14, y);
+      const titreLignes = doc.splitTextToSize(i.titre||'', 130);
+      doc.text(titreLignes, 45, y);
+      doc.text(`${formatEuros(totalFiche(i))} €`, 196, y, { align: 'right' });
+      y += Math.max(titreLignes.length,1)*6 + 2;
+    });
+    doc.setFont('helvetica','bold');
+    doc.text(`Sous-total : ${formatEuros(totalVehicule(v.id))} €`, 196, y, { align: 'right' });
+    y += 12;
+  });
+
+  if(!uneSection){
+    afficherToast('Aucune intervention facturée pour ce client pour le moment.');
+    return;
+  }
+
+  y = sautDePageSiNecessaire(doc, y);
+  doc.setFontSize(14);
+  doc.text(`Total général : ${formatEuros(totalClient(clientId))} €`, 196, y, { align: 'right' });
+  finaliserPdf(doc);
+  doc.save(`releve-${(c?.prenom||'')}-${(c?.nom||'')}.pdf`.replace(/\s+/g,'-').toLowerCase());
+}
+
+function imprimerDossierCompletClient(clientId){
+  const c = data.clients.find(c=>c.id===clientId);
+  const vehicules = data.vehicules.filter(v=>v.clientId===clientId);
+  const toutesFiches = data.interventions.filter(i=>vehicules.some(v=>v.id===i.vehiculeId));
+  if(!toutesFiches.length){
+    afficherToast('Aucune fiche pour ce client pour le moment.');
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 32;
+  dessinerLogoPdf(doc);
+  doc.setFont('helvetica','bold'); doc.setFontSize(16);
+  doc.text('Dossier complet', 14, y); y += 6;
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(148,138,121);
+  doc.text(`Édité le ${formatDate(new Date().toISOString().slice(0,10))}`, 14, y); y += 10;
+  doc.setTextColor(43,38,31); doc.setFontSize(11);
+  doc.text(`Client : ${c?.prenom||''} ${c?.nom||''}`, 14, y);
+  if(c?.telephone){ doc.text(`Tél. : ${c.telephone}`, 196, y, { align: 'right' }); }
+  y += 10;
+
+  vehicules.forEach(v=>{
+    const fiches = data.interventions
+      .filter(i=>i.vehiculeId===v.id)
+      .sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    if(!fiches.length) return;
+
+    y = sautDePageSiNecessaire(doc, y);
+    doc.setDrawColor(44,93,112); doc.setLineWidth(0.8); doc.line(14, y, 196, y); y += 8;
+    doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(44,93,112);
+    doc.text(`${v.marque||''} ${v.modele||''}${v.immatriculation ? ' — '+v.immatriculation : ''}`, 14, y);
+    doc.setTextColor(43,38,31); y += 6;
+    if(v.numeroSerie){ doc.setFontSize(9); doc.setTextColor(148,138,121); doc.text(`VIN : ${v.numeroSerie}`, 14, y); doc.setTextColor(43,38,31); y += 6; }
+    y += 3;
+
+    fiches.forEach(i=>{
+      y = sautDePageSiNecessaire(doc, y);
+      doc.setFont('helvetica','bold'); doc.setFontSize(12);
+      doc.text(`${i.type==='devis'?'Devis':'Intervention'} — ${i.titre||''}`, 14, y);
+      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(148,138,121);
+      doc.text(formatDate(i.date), 196, y, { align: 'right' });
+      doc.setTextColor(43,38,31); y += 6;
+      if(i.km){ doc.setFontSize(9); doc.setTextColor(148,138,121); doc.text(`${i.km} km`, 14, y); doc.setTextColor(43,38,31); doc.setFontSize(11); y += 6; }
+
+      if(i.piecesListe && i.piecesListe.length){
+        doc.setFontSize(10);
+        i.piecesListe.forEach(p=>{
+          y = sautDePageSiNecessaire(doc, y);
+          const nomAffiche = p.ref ? `${p.nom} (réf. ${p.ref})` : p.nom;
+          doc.text(`• ${nomAffiche}`, 18, y);
+          if(p.prixFacture) doc.text(`${formatEuros(p.prixFacture)} €`, 196, y, { align: 'right' });
+          y += 5.5;
+        });
+      }
+      if(i.defauts && i.defauts.length){
+        doc.setFontSize(9); doc.setTextColor(148,138,121);
+        i.defauts.forEach(d=>{
+          y = sautDePageSiNecessaire(doc, y);
+          const lignes = doc.splitTextToSize('• ' + d, 175);
+          doc.text(lignes, 18, y); y += lignes.length*5;
+        });
+        doc.setTextColor(43,38,31);
+      }
+      const tf = totalFiche(i);
+      if(tf > 0){
+        doc.setFont('helvetica','bold'); doc.setFontSize(10);
+        doc.text(`Total : ${formatEuros(tf)} €${i.statutPaiement==='paye' ? ' (payé)' : ''}`, 196, y, { align: 'right' });
+        y += 6;
+      }
+      y += 4;
+    });
+
+    doc.setFont('helvetica','bold'); doc.setFontSize(11);
+    doc.text(`Sous-total véhicule : ${formatEuros(totalVehicule(v.id))} €`, 196, y, { align: 'right' });
+    y += 10;
+  });
+
+  y = sautDePageSiNecessaire(doc, y);
+  doc.setFontSize(14);
+  doc.text(`Total général : ${formatEuros(totalClient(clientId))} €`, 196, y, { align: 'right' });
+  finaliserPdf(doc);
+  doc.save(`dossier-complet-${(c?.prenom||'')}-${(c?.nom||'')}.pdf`.replace(/\s+/g,'-').toLowerCase());
+}
+
+function ouvrirGoogleAgendaParId(id){
+  const i = data.interventions.find(x=>x.id===id);
+  if(!i) return;
+  const { v, c } = infosVehicule(i.vehiculeId);
+  ouvrirGoogleAgenda(i, c, v);
+}
+
+function ouvrirGoogleAgenda(intervention, client, vehicule){
+  const debut = dateVersICS(intervention.date, 0);
+  const fin = dateVersICS(intervention.date, 1);
+  const resume = `${intervention.type === 'devis' ? 'Devis' : 'Intervention'} — ${intervention.titre}`;
+  const description = `${vehicule ? vehicule.marque + ' ' + vehicule.modele : ''}${vehicule?.immatriculation ? ' (' + vehicule.immatriculation + ')' : ''}${client ? ' — client : ' + client.prenom + ' ' + client.nom : ''}`;
+  const url = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
+    + '&text=' + encodeURIComponent(resume)
+    + '&dates=' + debut + '/' + fin
+    + '&details=' + encodeURIComponent(description);
+  window.open(url, '_blank');
+}
+
+function dessinerLogoPdf(doc){
+  doc.setFillColor(44,93,112);
+  doc.roundedRect(14, 10, 11, 11, 2, 2, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(255,255,255);
+  doc.text('T', 19.5, 18, { align: 'center' });
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(43,38,31);
+  doc.text('TAB', 28, 16);
+  doc.setTextColor(43,38,31);
+}
+
+const RGB_STATUT_DIAG = { ok: [53,106,79], a_prevoir: [163,116,42], urgent: [168,66,47], na: [124,146,154] };
+
+async function imprimerDiagnostic(interventionId){
+  const i = data.interventions.find(x=>x.id===interventionId);
+  if(!i) return;
+  const { v, c } = infosVehicule(i.vehiculeId);
+  const modele = obtenirModeleDiagnostic();
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 32;
+  dessinerLogoPdf(doc);
+  doc.setFont('helvetica','bold'); doc.setFontSize(16);
+  doc.text('Diagnostic visuel', 14, y); y += 6;
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(148,138,121);
+  doc.text(`Édité le ${formatDate(new Date().toISOString().slice(0,10))}`, 14, y); y += 8;
+  doc.setTextColor(43,38,31); doc.setFontSize(11);
+  doc.text(`Client : ${c?.prenom||''} ${c?.nom||''}`, 14, y); y += 6;
+  doc.text(`Véhicule : ${v?.marque||''} ${v?.modele||''}${v?.immatriculation ? ' — '+v.immatriculation : ''}${i.km ? ' — '+i.km+' km' : ''}`, 14, y); y += 10;
+
+  modele.forEach(sec=>{
+    y = sautDePageSiNecessaire(doc, y);
+    doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(44,93,112);
+    doc.text(sec.categorie, 14, y); doc.setTextColor(43,38,31); y += 7;
+    sec.items.forEach(item=>{
+      y = sautDePageSiNecessaire(doc, y);
+      const cle = cleItemDiag(sec.categorie, item);
+      const entree = (i.diagnostic && i.diagnostic[cle]) || {};
+      const statut = entree.statut;
+      doc.setFont('helvetica','normal'); doc.setFontSize(10);
+      doc.text(`• ${item}`, 18, y);
+      if(statut){
+        const rgb = RGB_STATUT_DIAG[statut];
+        doc.setFont('helvetica','bold'); doc.setTextColor(rgb[0],rgb[1],rgb[2]);
+        doc.text(LIBELLES_STATUT_DIAG[statut], 196, y, { align: 'right' });
+        doc.setTextColor(43,38,31);
+      } else {
+        doc.setTextColor(180,175,165);
+        doc.text('non contrôlé', 196, y, { align: 'right' });
+        doc.setTextColor(43,38,31);
+      }
+      y += 5.5;
+      if(entree.remarque){
+        doc.setFontSize(9); doc.setTextColor(148,138,121);
+        const lignes = doc.splitTextToSize('— ' + entree.remarque, 172);
+        y = sautDePageSiNecessaire(doc, y);
+        doc.text(lignes, 22, y); y += lignes.length*4.5;
+        doc.setTextColor(43,38,31); doc.setFontSize(10);
+      }
+    });
+    y += 3;
+  });
+
+  if(i.diagnosticCommentaire){
+    y = sautDePageSiNecessaire(doc, y);
+    doc.setFont('helvetica','bold'); doc.setFontSize(11);
+    doc.text('Commentaires généraux', 14, y); y += 6;
+    doc.setFont('helvetica','normal'); doc.setFontSize(10);
+    const lignes = doc.splitTextToSize(i.diagnosticCommentaire, 180);
+    y = sautDePageSiNecessaire(doc, y);
+    doc.text(lignes, 14, y); y += lignes.length*5;
+  }
+
+  finaliserPdf(doc);
+  doc.save(`diagnostic-${(v?.marque||'')}-${(v?.modele||'')}.pdf`.replace(/\s+/g,'-').toLowerCase());
+}
+
+function imprimerFiche(id){
+  const i = data.interventions.find(x=>x.id===id);
+  if(!i) return;
+  const { v, c } = infosVehicule(i.vehiculeId);
+  const labelPieces = i.type === 'devis' ? 'Pièces prévues' : 'Pièces remplacées';
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 32;
+  dessinerLogoPdf(doc);
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(16);
+  doc.text(i.type==='devis' ? 'Devis' : "Fiche d'intervention", 14, y);
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(148,138,121);
+  doc.text(formatDate(i.date), 196, y, { align: 'right' });
+  y += 6; doc.setDrawColor(231,222,205); doc.line(14, y, 196, y); y += 9;
+
+  doc.setTextColor(43,38,31); doc.setFontSize(11);
+  doc.text(`Client : ${c?.prenom||''} ${c?.nom||''}`, 14, y); y += 7;
+  doc.text(`Véhicule : ${v?.marque||''} ${v?.modele||''}${v?.immatriculation ? ' — '+v.immatriculation : ''}`, 14, y); y += 7;
+  if(i.km){ doc.text(`Kilométrage : ${i.km} km`, 14, y); y += 7; }
+  y += 3;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(13);
+  doc.text(i.titre || '', 14, y); y += 8;
+  doc.setFont('helvetica','normal'); doc.setFontSize(11);
+
+  if(i.piecesListe && i.piecesListe.length){
+    doc.setFont('helvetica','bold');
+    doc.text(labelPieces + ' :', 14, y); y += 6;
+    doc.setFont('helvetica','normal');
+    i.piecesListe.forEach(p=>{
+      y = sautDePageSiNecessaire(doc, y);
+      const nomAffiche = p.ref ? `${p.nom} (réf. ${p.ref})` : p.nom;
+      doc.text(`• ${nomAffiche}`, 18, y);
+      if(p.prixFacture) doc.text(`${formatEuros(p.prixFacture)} €${p.margeZero ? ' (coûtant)' : ''}`, 196, y, { align: 'right' });
+      y += 6;
+      if(p.heures){
+        doc.setFontSize(9); doc.setTextColor(148,138,121);
+        doc.text(`Main d'œuvre : ${p.heures} h (${formatEuros(p.tarifMO)} €)`, 22, y);
+        doc.setFontSize(11); doc.setTextColor(43,38,31);
+        y += 6;
+      }
+    });
+    y += 4;
+  } else if(i.pieces){
+    const lignes = doc.splitTextToSize(`${labelPieces} : ${i.pieces}`, 180);
+    doc.text(lignes, 14, y); y += lignes.length*6 + 5;
+  }
+
+  if(i.defauts && i.defauts.length){
+    doc.setFont('helvetica','bold');
+    doc.text('Défauts constatés :', 14, y); y += 6;
+    doc.setFont('helvetica','normal');
+    i.defauts.forEach(d=>{
+      y = sautDePageSiNecessaire(doc, y);
+      const lignes = doc.splitTextToSize('• ' + d, 175);
+      doc.text(lignes, 18, y); y += lignes.length*6;
+    });
+    y += 4;
+  }
+
+  if(i.heuresMO || i.prixAchatPieces){
+    y = sautDePageSiNecessaire(doc, y);
+    doc.setDrawColor(231,222,205); doc.line(14, y, 196, y); y += 9;
+    doc.setFontSize(11);
+    if(i.heuresMO){
+      doc.text(`Main d'œuvre (${i.heuresMO} h)`, 14, y);
+      doc.text(`${formatEuros(i.tarifMO)} €`, 196, y, { align: 'right' }); y += 7;
+    }
+    if(i.prixAchatPieces){
+      doc.text('Pièces', 14, y);
+      doc.text(`${formatEuros(i.coutPieces)} €`, 196, y, { align: 'right' }); y += 7;
+    }
+    doc.setFont('helvetica','bold');
+    doc.text('Total', 14, y);
+    doc.text(`${formatEuros(totalFiche(i))} €`, 196, y, { align: 'right' });
+    if(i.acompte > 0){
+      const soldePdf = arrondi(totalFiche(i) - i.acompte);
+      y += 7;
+      doc.setFont('helvetica','normal');
+      doc.text('Acompte versé', 14, y);
+      doc.text(`${formatEuros(i.acompte)} €`, 196, y, { align: 'right' });
+      y += 7;
+      doc.setFont('helvetica','bold');
+      doc.text(soldePdf < 0 ? 'Trop-perçu' : 'Solde restant', 14, y);
+      doc.text(`${formatEuros(Math.abs(soldePdf))} €`, 196, y, { align: 'right' });
+    }
+  }
+
+  const nomBase = (i.titre||'fiche').replace(/[^a-z0-9]+/gi,'-').toLowerCase();
+  finaliserPdf(doc);
+  doc.save(`${i.type==='devis'?'devis':'intervention'}-${nomBase}.pdf`);
+}
+
+function icsEscape(str){
+  return String(str||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');
+}
+function dateVersICS(iso, decalageJours){
+  const d = new Date(iso + 'T00:00:00');
+  d.setDate(d.getDate() + (decalageJours||0));
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const j = String(d.getDate()).padStart(2,'0');
+  return `${y}${m}${j}`;
+}
+function creerEtTelechargerICS(intervention, client, vehicule){
+  const debut = dateVersICS(intervention.date, 0);
+  const fin = dateVersICS(intervention.date, 1);
+  const maintenant = new Date().toISOString().replace(/[-:]/g,'').split('.')[0] + 'Z';
+  const resume = `${intervention.type === 'devis' ? 'Devis' : 'Intervention'} — ${intervention.titre}`;
+  const description = `${vehicule ? vehicule.marque + ' ' + vehicule.modele : ''}${vehicule?.immatriculation ? ' (' + vehicule.immatriculation + ')' : ''}${client ? ' — client : ' + client.prenom + ' ' + client.nom : ''}`;
+  const ics = [
+    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//TAB//FR','CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT',
+    'UID:' + intervention.id + '@tab-app',
+    'DTSTAMP:' + maintenant,
+    'DTSTART;VALUE=DATE:' + debut,
+    'DTEND;VALUE=DATE:' + fin,
+    'SUMMARY:' + icsEscape(resume),
+    'DESCRIPTION:' + icsEscape(description),
+    'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:Rappel','TRIGGER:-P1D','END:VALARM',
+    'END:VEVENT','END:VCALENDAR'
+  ].join('\r\n');
+  const blob = new Blob([ics], { type: 'text/calendar' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'rdv-' + intervention.id + '.ics';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 3000);
+}
+
+async function enregistrerIntervention(){
+  const titre = document.getElementById('i-titre').value.trim();
+  const date = document.getElementById('i-date').value;
+  const km = document.getElementById('i-km').value.trim();
+  const acompte = parseFloat(document.getElementById('i-acompte').value) || 0;
+
+  const piecesListe = Array.from(document.querySelectorAll('#pieces-lignes .piece-carte'))
+    .map(carte=>{
+      const nom = carte.querySelector('.piece-nom').value.trim();
+      const ref = carte.querySelector('.piece-ref').value.trim();
+      const prixAchat = parseFloat(carte.querySelector('.piece-prix').value);
+      const heures = parseFloat(carte.querySelector('.piece-heures').value);
+      const typePiece = carte.dataset.marge || 'normale';
+      if(!nom && !(prixAchat > 0) && !(heures > 0)) return null;
+      const prixFacture = prixAchat > 0 ? calculerPrixFacturePiece(typePiece, prixAchat) : 0;
+      const tarifMOligne = heures > 0 ? arrondi(heures * data.reglages.tauxHoraire) : 0;
+      return {
+        nom: nom || 'Pièce', ref,
+        prixAchat: prixAchat > 0 ? prixAchat : 0, prixFacture,
+        heures: heures > 0 ? heures : 0, tarifMO: tarifMOligne,
+        typePiece, margeZero: typePiece === 'zero'
+      };
+    })
+    .filter(Boolean);
+  const prixAchatPieces = piecesListe.length ? arrondi(piecesListe.reduce((s,p)=>s+p.prixAchat,0)) : '';
+  const coutPieces = piecesListe.length ? arrondi(piecesListe.reduce((s,p)=>s+p.prixFacture,0)) : '';
+  const heuresMO = piecesListe.length ? arrondi(piecesListe.reduce((s,p)=>s+p.heures,0)) : '';
+  const tarifMO = piecesListe.length ? arrondi(piecesListe.reduce((s,p)=>s+p.tarifMO,0)) : '';
+  const montantHorsCA = arrondi(piecesListe.filter(p=>p.typePiece==='prestataire').reduce((s,p)=>s+p.prixFacture,0));
+  const depensePerso = arrondi(piecesListe.filter(p=>p.typePiece==='depense_perso').reduce((s,p)=>s+p.prixAchat,0));
+  const achatPiecesCA = arrondi(piecesListe.filter(p=>p.typePiece==='normale'||p.typePiece==='zero').reduce((s,p)=>s+p.prixAchat,0));
+
+  const err = document.getElementById('i-erreur');
+  if(!titre || !date){ err.textContent='Merci de renseigner au moins l\'intitulé et la date.'; err.style.display='block'; secouerChamp(!titre?'i-titre':'i-date'); return; }
+
+  const defauts = Array.from(document.querySelectorAll('#defauts-lignes input'))
+    .map(inp=>inp.value.trim()).filter(Boolean);
+
+  const id = interventionEnEdition || genId();
+  const controlesValides = piecesJointesTemp.controles.filter(Boolean);
+  const facturesValides = piecesJointesTemp.factures.filter(Boolean);
+
+  if(interventionEnEdition){
+    const existante = data.interventions.find(x=>x.id===interventionEnEdition);
+    const nbControlesAvant = (existante.controles||[]).length;
+    const nbFacturesAvant = (existante.factures||[]).length;
+    Object.assign(existante, {
+      type: typeSelectionne, titre, date, km,
+      piecesListe, heuresMO, prixAchatPieces, tarifMO, coutPieces, acompte, montantHorsCA, depensePerso, achatPiecesCA,
+      statutDevis: typeSelectionne==='devis' ? statutDevisSelectionne : null,
+      defauts, _maj: Date.now()
+    });
+    delete existante.pieces;
+    for(let idx=0; idx<facturesValides.length; idx++){
+      await sauvegarderImg(id+':facture:'+(nbFacturesAvant+idx), facturesValides[idx]);
+    }
+    if(facturesValides.length){
+      existante.factures = [...(existante.factures||[]), ...facturesValides.map(()=>true)];
+    }
+    for(let idx=0; idx<controlesValides.length; idx++){
+      await sauvegarderImg(id+':ct:'+(nbControlesAvant+idx), controlesValides[idx]);
+    }
+    if(controlesValides.length){
+      existante.controles = [...(existante.controles||[]), ...controlesValides.map(()=>true)];
+    }
+    await sauvegarder();
+    fermerFormIntervention();
+    render();
+    return;
+  }
+
+  const nouvelleIntervention = {
+    id, vehiculeId: vehiculeCourant, type: typeSelectionne, titre, date, km,
+    piecesListe, heuresMO, prixAchatPieces, tarifMO, coutPieces, acompte, montantHorsCA, depensePerso, achatPiecesCA,
+    statutDevis: typeSelectionne==='devis' ? statutDevisSelectionne : null,
+    statutPaiement: typeSelectionne==='intervention' ? 'non_paye' : null,
+    piecesCommandees: false,
+    defauts,
+    factures: facturesValides.map(()=>true),
+    controles: controlesValides.map(()=>true),
+    _maj: Date.now()
+  };
+  data.interventions.push(nouvelleIntervention);
+
+  for(let idx=0; idx<facturesValides.length; idx++){
+    await sauvegarderImg(id+':facture:'+idx, facturesValides[idx]);
+  }
+  for(let idx=0; idx<controlesValides.length; idx++){
+    await sauvegarderImg(id+':ct:'+idx, controlesValides[idx]);
+  }
+
+  await sauvegarder();
+  const { v, c } = infosVehicule(vehiculeCourant);
+  creerEtTelechargerICS(nouvelleIntervention, c, v);
+  fermerFormIntervention();
+  render();
+}
+
+charger();
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
