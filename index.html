@@ -3117,7 +3117,7 @@ async function budgetTests(){
   alert(res.join('\n'));
 }
 /* ================= BUDGET v3 : lecture et optimisation par Haiku ================= */
-let budgetAnalyse = null, budgetAnalyseEnCours = false;
+let budgetAnalyse = null, budgetAnalyseEnCours = false, budgetAnalyseErreur = '';
 try{ budgetAnalyse = JSON.parse(localStorage.getItem('tab-analyse') || 'null'); }catch(e){}
 
 function budgetContexteIA(){
@@ -3149,21 +3149,21 @@ async function budgetAnalyseIA(){
     if(!await confirmerAction("Envoyer à Claude un résumé de ton budget (totaux par catégorie sur 3 mois, charges, objectifs, solde) ? Aucun libellé de mouvement ni numéro de compte n'est envoyé."))  return;
     localStorage.setItem('tab-ia-ok', '1');
   }
-  budgetAnalyseEnCours = true; render();
+  budgetAnalyseEnCours = true; budgetAnalyseErreur = ''; render();
   try{
     const texte = await budgetAppelClaude(
 `Tu es un conseiller budget pour Alan, gérant d'un petit garage automobile en France. À partir du résumé JSON, produis UNIQUEMENT un objet JSON (sans texte autour, sans markdown) de cette forme :
 {"resume":"2 phrases max","score":0-100,"points":[{"type":"alerte"|"ok"|"info","texte":"..."}],"actions":[{"type":"enveloppe"|"plafond"|"provision"|"objectif","categorie":"(enveloppe uniquement, parmi Alimentation, Logement, Carburant, Santé, Loisirs, Abonnements, Enfants)","nom":"(objectif uniquement)","montant":nombre,"pourquoi":"1 phrase","economie_mensuelle":nombre}]}
 Règles : 3 à 6 points, 2 à 5 actions concrètes et chiffrées, réalistes d'après les données (jamais de chiffre inventé : appuie-toi sur les moyennes des 3 mois). "enveloppe" = plafond mensuel pour une catégorie perso ; "plafond" = plafond mensuel perso global ; "provision" = pourcentage (0-100) du résultat atelier à mettre de côté ; "objectif" = cible d'épargne. Ne donne pas de conseil fiscal définitif. Français.`,
-      JSON.stringify(budgetContexteIA()), 1600);
+      JSON.stringify(budgetContexteIA()), 3500);
     const m = texte.match(/\{[\s\S]*\}/);
-    if(!m) throw new Error('Réponse illisible.');
-    const j = JSON.parse(m[0]);
+    if(!m) throw new Error('Réponse illisible : ' + texte.slice(0,100));
+    let j; try{ j = JSON.parse(m[0]); } catch(e){ throw new Error('Réponse mal formée, réessaie.'); }
     budgetAnalyse = { date: new Date().toISOString(), resume: String(j.resume||''), score: Math.max(0, Math.min(100, parseInt(j.score)||0)),
       points: (j.points||[]).slice(0,8).map(p=>({ type:['alerte','ok','info'].includes(p.type)?p.type:'info', texte:String(p.texte||'') })),
       actions: (j.actions||[]).slice(0,6).map((a,i)=>({ id:'a'+i, type:a.type, categorie:a.categorie, nom:a.nom, montant:parseFloat(a.montant)||0, pourquoi:String(a.pourquoi||''), economie:parseFloat(a.economie_mensuelle)||0, fait:false })) };
     try{ localStorage.setItem('tab-analyse', JSON.stringify(budgetAnalyse)); }catch(e){}
-  } catch(e){ afficherToast('Analyse : ' + e.message, 'erreur'); }
+  } catch(e){ budgetAnalyseErreur = 'Analyse impossible : ' + e.message; afficherToast('Analyse : ' + e.message, 'erreur'); }
   budgetAnalyseEnCours = false; render();
 }
 function budgetActionLibelle(a){
@@ -3199,6 +3199,7 @@ async function budgetToutAppliquer(){
 }
 function budgetHtmlAnalyse(){
   if(budgetAnalyseEnCours) return `<div class="bud-sq"></div><div class="bud-sq" style="width:70%"></div><div class="bud-sq" style="width:85%"></div>`;
+  if(budgetAnalyseErreur) return `<div class="bud-pt-ia alerte">⚠️ ${esc(budgetAnalyseErreur)}</div>`;
   const a = budgetAnalyse; if(!a) return '';
   const couleur = a.score >= 70 ? 'var(--money)' : a.score >= 45 ? 'var(--warning)' : 'var(--danger)';
   const eco = arrondi(a.actions.filter(x=>!x.fait).reduce((s,x)=>s+(x.economie||0),0));
