@@ -2410,32 +2410,37 @@ async function budgetAppelClaude(systeme, utilisateur, maxTokens){
   return (json.content||[]).map(c=>c.text||'').join('\n');
 }
 async function budgetClasserIA(){
-  const aClasser = budgetMouvements().filter(x=>x.banque && x.categorie==='Autre' && x.type==='depense').sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,40);
-  if(!aClasser.length){ afficherToast('Aucun mouvement « Autre » à classer.', 'info'); return; }
-  const confirme = await confirmerAction('Envoyer ' + aClasser.length + ' libellés bancaires (libellé et montant uniquement) à Claude pour les classer ?');
+  const aClasserTout = budgetMouvements().filter(x=>x.banque && x.categorie==='Autre' && x.type==='depense').sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,60);
+  if(!aClasserTout.length){ afficherToast('Aucun mouvement « Autre » à classer.', 'info'); return; }
+  const confirme = await confirmerAction('Envoyer ' + aClasserTout.length + ' libellés bancaires (libellé et montant uniquement) à Claude pour les classer ?');
   if(!confirme) return;
   afficherToast('Claude classe les mouvements…', 'info');
+  let nb = 0;
   try{
     const permis = [...new Set([...CATEGORIES_BUDGET.perso, ...CATEGORIES_BUDGET.pro])].filter(c=>c!=='Autre');
-    const entree = aClasser.map(x=>({ id:x.id, libelle:x.note, montant:x.montant }));
-    const texte = await budgetAppelClaude(
-      "Tu classes des dépenses bancaires françaises. Réponds UNIQUEMENT par un tableau JSON, sans texte autour : [{\"id\":\"…\",\"categorie\":\"…\",\"portee\":\"perso\"|\"pro\"}]. Catégories autorisées : " + permis.join(', ') + ", Autre. 'pro' uniquement si c'est clairement lié à un garage automobile (outillage, pièces, assurance atelier…). En cas de doute : 'Autre' et 'perso'.",
-      JSON.stringify(entree), 1500);
-    const m = texte.match(/\[[\s\S]*\]/);
-    if(!m) throw new Error('Réponse illisible.');
-    const res = JSON.parse(m[0]);
-    let nb = 0;
-    res.forEach(r=>{
-      const x = aClasser.find(y=>y.id===r.id);
-      if(!x || !r.categorie || r.categorie==='Autre') return;
-      if(![...permis].includes(r.categorie)) return;
-      x.categorie = r.categorie; x.portee = r.portee==='pro' ? 'pro' : 'perso'; x._maj = Date.now();
-      budgetRegleApprendre(x.note, x.categorie, x.portee);
-      nb++;
-    });
+    for(let d=0; d<aClasserTout.length; d+=20){
+      const lot = aClasserTout.slice(d, d+20);
+      const entree = lot.map((x,k)=>({ n:k, libelle:String(x.note||'').slice(0,80), montant:x.montant }));
+      const texte = await budgetAppelClaude(
+        "Tu classes des dépenses bancaires françaises. Réponds UNIQUEMENT par un tableau JSON compact, sans texte ni markdown : [{\"n\":0,\"c\":\"catégorie\",\"p\":\"perso\"|\"pro\"}]. Catégories autorisées : " + permis.join(', ') + ", Autre. 'pro' uniquement si c'est clairement lié à un garage automobile (outillage, pièces, assurance pro, charges sociales, loyer atelier). Le champ n est le numéro de la ligne.",
+        JSON.stringify(entree), 2000);
+      const objets = texte.match(/\{[^{}]*\}/g) || [];
+      if(!objets.length) throw new Error('Réponse illisible : ' + texte.slice(0,80));
+      objets.forEach(o=>{
+        let r; try{ r = JSON.parse(o); }catch(e){ return; }
+        const x = lot[r.n];
+        if(!x || !r.c || r.c==='Autre' || !permis.includes(r.c)) return;
+        x.categorie = r.c; x.portee = r.p==='pro' ? 'pro' : 'perso'; x._maj = Date.now();
+        budgetRegleApprendre(x.note, x.categorie, x.portee);
+        nb++;
+      });
+    }
     await sauvegarder(); render();
     afficherToast(nb + ' mouvement' + (nb>1?'s':'') + ' reclassé' + (nb>1?'s':'') + '.', 'succes');
-  } catch(e){ afficherToast('Classement : ' + e.message, 'erreur'); }
+  } catch(e){
+    if(nb){ await sauvegarder(); render(); }
+    afficherToast('Classement : ' + e.message, 'erreur');
+  }
 }
 
 /* --- Rapprochement des virements reçus avec les fiches TAB impayées --- */
