@@ -1926,7 +1926,7 @@ function renderBudget(){
 
   cont.innerHTML = `
     <div class="panneau-header">
-      <div><h2>💳 Budget</h2><div class="sous">Perso et atelier, relié à TAB · v16</div></div>
+      <div><h2>💳 Budget</h2><div class="sous">Perso et atelier, relié à TAB · v17</div></div>
       <div style="display:flex;gap:6px;"><button onclick="budgetRapportPdf()" title="Rapport du mois en PDF">📄</button><button onclick="budgetBasculerCompact()" title="Tableau de bord compact">📊</button><button onclick="budgetBasculerDiscret()" title="Mode discret">${discret?'🙈':'👁'}</button></div>
     </div>
     <div class="bud-mois">
@@ -3458,7 +3458,7 @@ function budgetHtmlBarreSel(){
 /* --- Fiche de tri d'un mouvement (sans recharger la page) --- */
 let triId = null, triApplTous = true;
 function budgetLigneClic(e, id){
-  if(e.target.closest && e.target.closest('button,input,select,a,details,.bud-tag')) return;
+  if(e.target.closest && e.target.closest('button,input,select,a,details,.bud-tag[onclick]')) return;
   if(budgetModeSel) return;
   const m = budgetMouvements().find(q=>q.id===id); if(!m || m.type!=='depense') return;
   budgetOuvrirTri(id);
