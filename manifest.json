@@ -5,9 +5,9 @@
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#F5F0E7",
   "theme_color": "#C68A4E",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "icon-192.png",
@@ -20,6 +20,30 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Budget",
+      "short_name": "Budget",
+      "url": "./index.html?go=budget",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Nouvelle dépense",
+      "short_name": "Dépense",
+      "url": "./index.html?go=depense",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }
