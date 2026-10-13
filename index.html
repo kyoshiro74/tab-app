@@ -3825,11 +3825,24 @@ function vocalCreerReco(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition; if(!SR) return null;
   const r = new SR(); r.lang = 'fr-FR'; r.continuous = true; r.interimResults = true;
   let silence = null, tampon = '';
+  /* Chrome mobile renvoie des résultats CUMULATIFS (« fais-moi », « fais-moi une », « fais-moi une synthèse »…) :
+     on fusionne au lieu d'empiler, pour ne plus répéter les mots. */
+  const nz = x=>String(x||'').toLowerCase().replace(/[.,;:!?'’"]/g,' ').replace(/\s+/g,' ').trim();
+  const fusion = (base, t)=>{
+    base = String(base||'').trim(); t = String(t||'').trim();
+    if(!t) return base; if(!base) return t;
+    const nb = nz(base), nt = nz(t);
+    if(nt === nb || nb.endsWith(nt)) return base;
+    if(nt.startsWith(nb)) return t;
+    const mots = base.split(' '), tm = t.split(' ');
+    for(let n = Math.min(mots.length, tm.length); n >= 1; n--){ if(nz(mots.slice(-n).join(' ')) === nz(tm.slice(0, n).join(' ')) && (n >= 2 || nz(tm[0]).length > 3)) return mots.join(' ') + ' ' + tm.slice(n).join(' '); }
+    return base + ' ' + t;
+  };
   r.onresult = e=>{
     if(vocalParle || vocalOccupe) return;
     let interim = '';
-    for(let k=e.resultIndex; k<e.results.length; k++){ const t = e.results[k][0].transcript; if(e.results[k].isFinal) tampon += ' ' + t; else interim += t; }
-    vocalDernier = (tampon + ' ' + interim).trim(); vocalMajPanneau();
+    for(let k=e.resultIndex; k<e.results.length; k++){ const t = e.results[k][0].transcript; if(e.results[k].isFinal) tampon = fusion(tampon, t); else interim = fusion(interim, t); }
+    vocalDernier = fusion(tampon, interim).trim(); vocalMajPanneau();
     clearTimeout(silence);
     if(tampon.trim()) silence = setTimeout(()=>{ const t = tampon.trim(); tampon = ''; try{ r.abort(); }catch(e){} vocalTraiter(t); }, m8Silence());
   };
