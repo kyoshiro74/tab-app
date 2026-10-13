@@ -1809,10 +1809,11 @@ async function afficherVignettesDiag(i, cle){
 
 /* ================= BUDGET ================= */
 const CATEGORIES_BUDGET = {
-  perso: ['Alimentation','Courses','Logement','Crédit','Carburant','Santé','Loisirs','Abonnements','Internet','Téléphone','Cigarettes','Enfants','Espèces','Autre'],
-  pro: ['Outillage','Loyer atelier','Assurances','Charges sociales','Carburant','Fournitures','Autre']
+  perso: ['Alimentation','Courses','Loyer','Logement','Électricité','Gaz','Eau','Assurances','Crédit','Carburant','Santé','Loisirs','Abonnements','Internet','Téléphone','Impôts','Frais bancaires','Cigarettes','Enfants','Restaurants','Transports','Vêtements','Mutuelle','Entretien véhicule','Animaux','Voyages','Éducation','Cadeaux','Maison','Abonnements divers','Espèces','Autre'],
+  pro: ['Outillage','Loyer atelier','Électricité','Gaz','Eau','Assurances','Internet','Téléphone','Abonnements','Charges sociales','Impôts','Frais bancaires','Carburant','Fournitures','Pièces et stock','Comptabilité','Publicité','Déplacements','Entretien atelier','Abonnements divers','Autre'],
+  revenu: ['Salaire','Revenu','Aides','Remboursement','Vente','Loyers perçus','Autre']
 };
-const ICONES_BUDGET = { 'Alimentation':'🛒','Logement':'🏠','Carburant':'⛽','Santé':'💊','Loisirs':'🎉','Abonnements':'📱','Enfants':'🧒','Espèces':'💶','Courses':'🛍️','Crédit':'🏦','Cigarettes':'🚬','Internet':'🌐','Téléphone':'📞','Outillage':'🔧','Loyer atelier':'🏭','Assurances':'🛡️','Charges sociales':'🏛️','Fournitures':'📦','Revenu':'💰','Autre':'🔖' };
+const ICONES_BUDGET = { 'Loyer':'🔑','Électricité':'⚡','Gaz':'🔥','Eau':'💧','Impôts':'🧾','Frais bancaires':'🏦', 'Alimentation':'🛒','Logement':'🏠','Carburant':'⛽','Santé':'💊','Loisirs':'🎉','Abonnements':'📱','Enfants':'🧒','Espèces':'💶','Courses':'🛍️','Crédit':'🏦','Cigarettes':'🚬','Internet':'🌐','Téléphone':'📞','Outillage':'🔧','Loyer atelier':'🏭','Assurances':'🛡️','Charges sociales':'🏛️','Fournitures':'📦','Revenu':'💰','Salaire':'💼','Aides':'🤝','Remboursement':'↩️','Vente':'🏷️','Loyers perçus':'🏘️','Restaurants':'🍽️','Transports':'🚌','Vêtements':'👕','Mutuelle':'🩺','Entretien véhicule':'🚗','Animaux':'🐾','Voyages':'✈️','Éducation':'🎓','Cadeaux':'🎁','Maison':'🛠️','Abonnements divers':'🔁','Pièces et stock':'📦','Comptabilité':'📒','Publicité':'📣','Déplacements':'🧭','Entretien atelier':'🧹','Autre':'🔖' };
 let budgetMois = isoLocal(new Date()).slice(0,7);
 let budgetFiltre = 'tous';
 
@@ -1956,7 +1957,7 @@ function renderBudget(){
 
   const e = budgetBrouillon.id ? budgetBrouillon : null;
   const typeForm = budgetBrouillon.type, porteeForm = budgetBrouillon.portee;
-  const optsCat = (typeForm==='revenu' ? ['Revenu','Autre'] : (CATEGORIES_BUDGET[porteeForm]||[])).map(c=>`<option ${budgetBrouillon.categorie===c?'selected':''}>${c}</option>`).join('');
+  const optsCat = (typeForm==='revenu' ? CATEGORIES_BUDGET.revenu : (CATEGORIES_BUDGET[porteeForm]||[])).map(c=>`<option ${budgetBrouillon.categorie===c?'selected':''}>${c}</option>`).join('');
   const recs = (r.recurrents||[]).map(x=>`<div class="bud-ligne"><div class="bud-ico">🔁</div><div class="bud-info"><div class="bud-titre">${esc(x.libelle)} <span class="bud-tag ${x.portee}">${x.portee==='pro'?'Atelier':'Perso'}</span></div><div class="bud-sous">le ${x.jour} de chaque mois · ${esc(x.categorie)}</div></div><div class="bud-montant depense">−${formatEuros(parseFloat(x.montant)||0)} €</div><button class="bouton-icone" onclick="budgetSupprimerRecurrent('${x.id}')">🗑️</button></div>`).join('') || `<div class="bud-sous">Aucune charge récurrente (loyer, abonnements, crédit…).</div>`;
 
   const serie = budgetSerieSolde();
@@ -2310,6 +2311,13 @@ async function budgetIA(question){
 
 /* ================= BANQUE (Enable Banking via fonction Firebase) ================= */
 const CATEGORIES_AUTO = [
+  [/\bedf\b|enedis|octopus|ekwateur|mint [eé]nergie|plenitude|ohm [eé]nergie|[eé]lectricit|total ?energies? elec|engie.{0,12}elec/i, 'Électricité'],
+  [/\bgaz\b|butagaz|primagaz|engie|antargaz|propane/i, 'Gaz'],
+  [/veolia|suez|\bsaur\b|\beau\b|\beaux\b|r[eé]gie des eaux/i, 'Eau'],
+  [/maif|macif|maaf|matmut|\baxa\b|allianz|groupama|\bgmf\b|generali|pacifica|direct assurance|hiscox|lovys|bpce vie|assurance|april\b|\bgan\b/i, 'Assurances'],
+  [/dgfip|imp[oô]ts?|tr[eé]sor public|taxe fonci|taxe d.habitation|dg ?finances/i, 'Impôts'],
+  [/cotisation (?:carte|cb|bancaire)|frais bancaire|commission d.intervention|agios|frais de tenue|frais de compte/i, 'Frais bancaires'],
+  [/\bloyer\b|foncia|nexity|citya|sergic|laforet|century 21|guis immobilier/i, 'Loyer'],
   [/carrefour|leclerc|auchan|intermarche|lidl|aldi|monoprix|casino|super ?u\b|u express|franprix|netto|leader ?price|biocoop|grand frais|\bcora\b|supermarche|hypermarche|courses/i, 'Courses'],
   [/cr[eé]dit|pr[eê]t |pret$|[eé]ch[eé]ance|cofidis|cetelem|sofinco|franfinance|younited|\boney\b|remboursement pr/i, 'Crédit'],
   [/tabac|buraliste|cigar|marlboro|camel|vapot|vape|chicha|\bpmu\b/i, 'Cigarettes'],
@@ -2332,7 +2340,7 @@ const MCC_CATEGORIES = [
 ];
 function banqueCategorie(libelle, type, mcc){
   if(type !== 'revenu' && mcc){ for(const [re,c] of MCC_CATEGORIES) if(re.test(String(mcc))) return c; }
-  if(type === 'revenu') return 'Revenu';
+  if(type === 'revenu'){ if(/salaire|\bpaie\b|r[ée]mun[ée]ration|employeur/i.test(libelle||'')) return 'Salaire'; if(/\bcaf\b|cpam|france travail|p[oô]le emploi|allocation|\burssaf\b|\bprime\b/i.test(libelle||'')) return 'Aides'; if(/rembours|\bremb\b/i.test(libelle||'')) return 'Remboursement'; return 'Revenu'; }
   for(const [re, cat] of CATEGORIES_AUTO) if(re.test(libelle)) return cat;
   return 'Autre';
 }
@@ -2565,7 +2573,7 @@ async function budgetClasserIA(auto){
     if(!auto || nb) afficherToast(nb + ' mouvement' + (nb>1?'s':'') + ' reclassé' + (nb>1?'s':'') + (auto?' automatiquement par Claude':'') + '.', 'succes');
   } catch(e){
     if(nb){ await sauvegarder(); render(); }
-    if(!auto) afficherToast('Classement : ' + e.message, 'erreur');
+    if(!auto || window._clErr !== e.message){ window._clErr = e.message; afficherToast('Classement par Claude impossible : ' + m6Clair(e.message) + (/jeton/i.test(e.message) ? ' → entre le jeton dans Réglages (Contrôle de sécurité) sur cet appareil.' : ''), 'erreur'); }
   }
 }
 
@@ -2731,7 +2739,39 @@ function budgetHtmlSections(b, plafond){
 }
 
 /* ================= BUDGET : prévision, provision, comparaison, rapport PDF, alertes, partage ================= */
-const CATS_FIXES = ['Logement','Crédit','Abonnements','Internet','Téléphone','Assurances','Charges sociales','Loyer atelier','Enfants'];
+const CATS_FIXES = ['Loyer','Électricité','Gaz','Eau','Impôts','Frais bancaires','Logement','Crédit','Abonnements','Internet','Téléphone','Assurances','Charges sociales','Loyer atelier','Enfants'];
+/* opérations « en attente » réellement en cours : on écarte celles de plus de 8 jours et celles déjà passées en opération validée */
+function budgetAttenteNette(){
+  const brut = (data.reglages.banqueAttente||[]), lim = new Date(); lim.setDate(lim.getDate()-8); const limite = isoLocal(lim).slice(0,10);
+  const mv = budgetMouvements().filter(x=>x.banque && !x.virtuel);
+  return brut.filter(t=>{
+    const m = parseFloat(t.montant)||0; if(!(m>0)) return false;
+    if(t.date && t.date < limite) return false;
+    const d0 = t.date ? new Date(t.date+'T00:00:00') : null;
+    return !mv.some(x=>x.type===t.type && Math.abs((parseFloat(x.montant)||0)-m) < 0.01 && (!d0 || Math.abs((new Date((x.date||'')+'T00:00:00') - d0)/86400000) <= 8));
+  });
+}
+/* prélèvements / virements qui reviennent chaque mois (crédits, loyer, abonnements) et pas encore passés ce mois-ci */
+function budgetFixesAttendus(jour, nbJ, moisIso){
+  const excl = new Set(m13Liste('abonnementsExclus')), g = {};
+  const d0 = new Date(); d0.setMonth(d0.getMonth()-5); const depuis = isoLocal(d0).slice(0,10);
+  budgetMouvements().filter(x=>x.type==='depense' && !x.neutre && !x.virtuel && !x.carte && !x.interne && x.date && x.date >= depuis).forEach(x=>{ const c = m13Cle(x); if(c && !excl.has(c)) (g[c] = g[c] || []).push(x); });
+  const out = [];
+  Object.keys(g).forEach(c=>{
+    const l = g[c].sort((a,b)=>a.date.localeCompare(b.date)), parMois = {};
+    l.forEach(x=>{ (parMois[x.date.slice(0,7)] = parMois[x.date.slice(0,7)] || []).push(x); });
+    const mois = Object.keys(parMois).filter(m=>m < moisIso).sort().slice(-4);
+    if(mois.length < 3 || Object.keys(parMois).some(m=>m<moisIso && parMois[m].length > 1)) return;
+    const mts = mois.map(m=>parseFloat(parMois[m][0].montant)||0), moy = mts.reduce((a,b)=>a+b,0)/mts.length;
+    if(!(moy > 0) || mts.some(v=>Math.abs(v-moy) > moy*0.12)) return;
+    const dernierMois = mois[mois.length-1], prev = new Date(moisIso+'-01T00:00:00'); prev.setMonth(prev.getMonth()-1);
+    if(dernierMois !== isoLocal(prev).slice(0,7)) return;
+    if(parMois[moisIso]) return;
+    const j = Math.min(parseInt(parMois[dernierMois][0].date.slice(8,10)), nbJ);
+    if(j > jour) out.push({ jour:j, libelle:(parMois[dernierMois][0].note||c).slice(0,28), montant:-arrondi(moy), nature:'fixe' });
+  });
+  return out;
+}
 function budgetPrevision(){
   const r = data.reglages;
   if(!r.banqueSolde || budgetMois !== isoLocal(new Date()).slice(0,7)) return null;
@@ -2748,7 +2788,7 @@ function budgetPrevision(){
   const calc = liste=>liste.reduce((t,x)=>t+Math.min(parseFloat(x.montant)||0, plafondTicket),0);
   const jFen = Math.max(14, Math.min(45, Math.round((auj - new Date(depuis))/86400000)));
   const parJourCarte = calc(recents.filter(x=>x.carte))/jFen;
-  const parJourAutre = calc(recents.filter(x=>!x.carte))/jFen;
+  const parJourAutre = calc(recents.filter(x=>!x.carte && /retrait|\bdab\b|ch[eè]que|\bchq\b/i.test(x.note||'')))/jFen;
   /* 2) carte à débit différé */
   const enc = budgetEncoursCarte();
   let jourDebit = null;
@@ -2763,24 +2803,26 @@ function budgetPrevision(){
     const j = Math.min(parseInt(x.jour)||1, nbJ), m = parseFloat(x.montant)||0, t = x.type||'depense';
     if(j > jour && !dejaVu(m, t)) ev.push({ jour:j, libelle:x.libelle, montant: t==='revenu' ? m : -m, nature:'fixe' });
   });
+  try{ budgetFixesAttendus(jour, nbJ, budgetMois).forEach(e=>{ if(!ev.some(x=>x.nature==='fixe' && Math.abs(Math.abs(x.montant)-Math.abs(e.montant)) < 1.5)) ev.push(e); }); }catch(e){}
   const sal = parseFloat(r.salaireBase)||0, js = Math.min(parseInt(r.salaireJour)||1, nbJ);
   if(sal > 0 && js > jour && !dejaVu(sal,'revenu')) ev.push({ jour:js, libelle:'Salaire', montant:sal, nature:'revenu' });
-  const attDep = arrondi((r.banqueAttente||[]).filter(t=>t.type==='depense').reduce((s,t)=>s+(parseFloat(t.montant)||0),0));
-  const attRev = arrondi((r.banqueAttente||[]).filter(t=>t.type==='revenu').reduce((s,t)=>s+(parseFloat(t.montant)||0),0));
+  const attDep = arrondi(budgetAttenteNette().filter(t=>t.type==='depense').reduce((s,t)=>s+(parseFloat(t.montant)||0),0));
+  const attRev = arrondi(budgetAttenteNette().filter(t=>t.type==='revenu').reduce((s,t)=>s+(parseFloat(t.montant)||0),0));
   if(jourDebit) ev.push({ jour:jourDebit, libelle:'Débit différé carte', montant:-(enc.total + enc.totalAtt*0), nature:'carte' });
   /* 4) simulation jour par jour */
+  const carteImmediate = !enc.dernier;
   const solde0 = r.banqueSolde.montant - attDep + attRev;
   const courbe = [{ j:jour, v:arrondi(solde0) }];
   let bal = solde0, min = { v:bal, j:jour };
   for(let j=jour+1; j<=nbJ; j++){
     bal -= parJourAutre;
-    if(!jourDebit) { /* achats carte payés le mois suivant */ } else bal -= parJourCarte * (j<=jourDebit ? 1 : 0);
+    if(carteImmediate) bal -= parJourCarte; else if(jourDebit) bal -= parJourCarte * (j<=jourDebit ? 1 : 0);
     ev.filter(e=>e.jour===j).forEach(e=>{ bal += e.montant; });
     courbe.push({ j, v:arrondi(bal) });
     if(bal < min.v) min = { v:bal, j };
   }
   const prevu = arrondi(bal);
-  const variable = arrondi((parJourAutre + (jourDebit?parJourCarte:0)) * restants);
+  const variable = arrondi(parJourAutre*restants + (carteImmediate ? parJourCarte*restants : jourDebit ? parJourCarte*Math.max(0,jourDebit-jour) : 0));
   const marge = arrondi(variable*0.25);
   return { solde: r.banqueSolde.montant, prevu, bas: arrondi(prevu - marge), haut: arrondi(prevu + marge), restants,
     attente: arrondi(attRev - attDep), encours: jourDebit ? enc.total : 0, encoursHors: jourDebit ? 0 : enc.total, jourDebit,
@@ -2986,7 +3028,7 @@ function budgetHtmlExtras(b){
           ${pv.evenements.map(e=>`${e.nature==='carte'?'💳':e.montant>=0?'💶':'🔁'} ${formatDate(budgetMois+'-'+String(e.jour).padStart(2,'0'))} · ${esc(e.libelle)} : ${e.montant>=0?'+':'−'}${eur(Math.abs(e.montant))}`).join('<br>')}${pv.evenements.length?'<br>':''}
           🛒 Dépenses courantes : environ ${eur(pv.parJour)} par jour (${pv.restants} j restant${pv.restants>1?'s':''}) = −${eur(pv.variable)}<br>
           ${pv.encoursHors ? `💳 Encours carte ${eur(pv.encoursHors)} : débité le mois prochain, non compté ici.<br>` : ''}
-          <em>Rythme calculé sur 45 jours, sans les charges fixes ni les très gros achats isolés.</em>
+          <em>Rythme des achats par carte et retraits sur 45 jours, hors très gros achats isolés. Les prélèvements et virements qui reviennent chaque mois sont ajoutés à leur date habituelle.</em>
         </div></details>
       ${pv.point_bas.v < 0 ? `<div class="bud-alerte rouge" style="margin-top:10px;">Découvert prévu vers le ${pv.point_bas.j} (${(pv.point_bas.v<0?'−':'')+eur(Math.abs(pv.point_bas.v))}).</div>` : ''}</div>` : '';
   const pr = budgetProvision(b);
@@ -3073,11 +3115,21 @@ const ICONES_SVG = {
   'Assurances':'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z',
   'Charges sociales':'M3 10l9-6 9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18',
   'Fournitures':'M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10',
+  'Loyer':'M6 21V4h12v17M3 21h18M14 12h.01',
+  'Électricité':'M13 2L4 14h7l-1 8 9-12h-7z',
+  'Gaz':'M12 2c1 4 5 6 5 11a5 5 0 01-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-4-1-7 1-10z',
+  'Eau':'M12 3s6 6.5 6 11a6 6 0 01-12 0c0-4.5 6-11 6-11z',
+  'Impôts':'M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2zM9 8h6M9 12h6',
+  'Frais bancaires':'M3 10l9-6 9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 21h18',
+  'Internet':'M12 3a9 9 0 100 18 9 9 0 000-18zM3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18',
+  'Téléphone':'M7 2h10v20H7zM11 18h2',
+  'Crédit':'M3 6h18v12H3zM3 10h18M7 15h3',
+  'Courses':'M6 6h15l-1.5 9h-12zM6 6L5 3H2M9 20.5a.5.5 0 100-1 .5.5 0 000 1zM18 20.5a.5.5 0 100-1 .5.5 0 000 1z',
   'Revenu':'M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v10M9.5 9.5h4a1.7 1.7 0 010 3.4h-3a1.7 1.7 0 000 3.4h4',
   'Autre':'M3 12V3h9l9 9-9 9zM7.5 7.5h.01'
 };
 function budgetCouleurCat(cat){
-  const toutes = [...new Set([...CATEGORIES_BUDGET.perso, ...CATEGORIES_BUDGET.pro, 'Revenu'])];
+  const toutes = [...new Set([...CATEGORIES_BUDGET.perso, ...CATEGORIES_BUDGET.pro, ...CATEGORIES_BUDGET.revenu])];
   const i = toutes.indexOf(cat);
   return COULEURS_BUDGET[(i < 0 ? toutes.length : i) % COULEURS_BUDGET.length];
 }
@@ -3575,7 +3627,7 @@ function budgetHtmlBarreSel(){
 
 function budgetHeroDispo(){
   const r = data.reglages; if(!r.banqueSolde) return '';
-  const enc = budgetEncoursCarte(), att = (r.banqueAttente||[]).filter(t=>t.type==='depense').reduce((s,t)=>s+(parseFloat(t.montant)||0),0);
+  const enc0 = budgetEncoursCarte(), enc = enc0.dernier ? enc0 : Object.assign({}, enc0, { total:0 }), att = budgetAttenteNette().filter(t=>t.type==='depense').reduce((s,t)=>s+(parseFloat(t.montant)||0),0);
   const dispo = arrondi(r.banqueSolde.montant - enc.total - att);
   const pv = budgetPrevision();
   const l = [];
@@ -3596,8 +3648,8 @@ function budgetHtmlDernieres(){
   if(!l.length) return '';
   const nb = budgetATrierNb();
   return `<div class="formulaire ouvert"><h3>🧾 Dernières opérations</h3>
-    ${nb ? `<div class="bud-alerte" style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;"><span>🏷️ ${nb} dépense${nb>1?'s':''} à classer</span><button onclick="budgetTrierMaintenant()">Trier maintenant</button></div>` : ''}
-    ${l.map(x=>`<div class="bud-ligne" ${x.type==='depense'?`onclick="budgetOuvrirTri('${x.id}')" style="cursor:pointer"`:''}><div class="bud-ico" style="color:${budgetCouleurCat(x.categorie)};background:color-mix(in srgb,${budgetCouleurCat(x.categorie)} 14%,transparent)">${budgetIcone(x.categorie)}</div><div class="bud-info"><div class="bud-titre">${esc((x.note||x.categorie).slice(0,38))}</div><div class="bud-sous">${esc(x.categorie)} · ${formatDate(x.date)}</div></div><div class="bud-montant ${x.type}">${x.type==='depense'?'−':'+'}${formatEuros(parseFloat(x.montant)||0)} €</div></div>`).join('')}
+    ${nb ? `<div class="bud-alerte" style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;"><span>🏷️ ${nb} dépense${nb>1?'s':''} à classer</span><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;"><button onclick="budgetClasserIA(false)">🤖 Classer avec Claude</button><button onclick="budgetTrierMaintenant()">Trier à la main</button></span></div>` : ''}
+    ${l.map(x=>`<div class="bud-ligne" ${!x.virtuel?`onclick="budgetOuvrirTri('${x.id}')" style="cursor:pointer"`:''}><div class="bud-ico" style="color:${budgetCouleurCat(x.categorie)};background:color-mix(in srgb,${budgetCouleurCat(x.categorie)} 14%,transparent)">${budgetIcone(x.categorie)}</div><div class="bud-info"><div class="bud-titre">${esc((x.note||x.categorie).slice(0,38))}</div><div class="bud-sous">${esc(x.categorie)} · ${formatDate(x.date)}</div></div><div class="bud-montant ${x.type}">${x.type==='depense'?'−':'+'}${formatEuros(parseFloat(x.montant)||0)} €</div></div>`).join('')}
     <div class="form-actions" style="margin-top:8px;"><button onclick="budgetChoisirOnglet('mouvements')">Tout voir</button></div></div>`;
 }
 /* ================= ASSISTANT VOCAL (mains libres) ================= */
@@ -4288,7 +4340,7 @@ function lhRemisePct(p){ const t = lhTotalBrutForm(); document.getElementById('i
 function lhLigneRapide(nom, h){ ajouterLignePiece(nom, '', '', h, 'normale'); calculerApercus(); }
 
 /* ================= LOT H3 : budget, insights, tri, vocal ================= */
-const LH_BESOINS = ['Logement','Courses','Alimentation','Santé','Crédit','Carburant','Internet','Téléphone','Enfants'];
+const LH_BESOINS = ['Loyer','Électricité','Gaz','Eau','Assurances','Impôts','Logement','Courses','Alimentation','Santé','Crédit','Carburant','Internet','Téléphone','Enfants'];
 const LH_ENVIES = ['Loisirs','Cigarettes','Abonnements','Espèces'];
 function lhMoisMv(){ return budgetMouvements().filter(x=>!x.neutre && !x.virtuel && x.type==='depense' && (x.date||'').slice(0,7)===budgetMois); }
 function lhCommercant(x){ return (x.note||x.categorie||'').replace(/^(CARTE|CB|PRLV|VIR)\s+(X\d+\s+)?/i,'').replace(/\s+\d{2}\/\d{2}.*$/,'').trim().slice(0,28) || x.categorie; }
@@ -6538,7 +6590,7 @@ reparerDonnees = function(d){ let n = 0; try{ n = m11Nettoyer(d); }catch(e){} co
 /* ===== v29.1 · abonnements : détection plus stricte + correction manuelle ===== */
 const M13_MARQUES = /netflix|spotify|disney|prime video|amazon prime|canal\+?|apple|itunes|google|youtube|deezer|adobe|microsoft|openai|anthropic|chatgpt|dropbox|icloud|ovh|basic.?fit|fitness|playstation|xbox|nintendo|audible|crunchyroll|molotov|salto|ocs|mediapart|le monde|figaro|free|orange|sfr|bouygues|sosh|red by|b&you|la poste mobile|prixtel|nordvpn|proton|notion|canva|zoom|slack|github|ionos|gandi|wix|shopify/i;
 const M13_CREDIT = /floa|alma|oney|cetelem|cofidis|sofinco|personal financ|franfinance|cr[eé]dit|pr[eê]t|ce c[oô]te|ce rh[oô]ne|caisse d.[eé]pargne|echeance|remboursement/i;
-const M13_CATS_NON = ['Crédit','Logement','Carburant','Courses','Alimentation','Espèces','Santé','Enfants','Loisirs'];
+const M13_CATS_NON = ['Loyer','Électricité','Gaz','Eau','Impôts','Frais bancaires','Crédit','Logement','Carburant','Courses','Alimentation','Espèces','Santé','Enfants','Loisirs'];
 function m13Cle(x){ return banqueCle(String(x.note || x.categorie || '').replace(/\bfact\b/ig,' ').replace(/\d{4,}/g,' ')); }
 const m13Liste = k=>{ const r = data.reglages; return r[k] = r[k] || []; };
 budgetAbonnements = function(){
@@ -6682,7 +6734,7 @@ let triId = null, triApplTous = true;
 function budgetLigneClic(e, id){
   if(e.target.closest && e.target.closest('button,input,select,a,details,.bud-tag[onclick]')) return;
   if(budgetModeSel) return;
-  const m = budgetMouvements().find(q=>q.id===id); if(!m || m.type!=='depense') return;
+  const m = budgetMouvements().find(q=>q.id===id); if(!m || m.virtuel) return;
   budgetOuvrirTri(id);
 }
 function budgetOuvrirTri(id){
@@ -7079,7 +7131,7 @@ async function banqueEnregistrerSeuil(){ data.reglages.banqueSeuilAlerte = parse
 function budgetHtmlLotD(){
   const r = data.reglages; const pret = !!(r.banqueUrl && banqueJeton());
   const comptes = r.banqueComptes || [];
-  const att = r.banqueAttente || [];
+  const att = budgetAttenteNette();
   return `<div class="formulaire ouvert"><h3>🏦 Comptes bancaires</h3>
     ${comptes.length ? comptes.map(c=>`<div style="display:flex;justify-content:space-between;padding:4px 0;"><span>${esc(c.nom||('Compte '+c.uid.slice(-4)))}</span><b>${formatEuros(c.montant)} €</b></div>`).join('') : '<p class="bud-sous">Les comptes apparaissent après la première actualisation.</p>'}
     ${att.length ? `<div class="bud-sous" style="margin-top:8px;">⏳ ${att.length} opération${att.length>1?'s':''} en attente : ${att.slice(0,3).map(t=>esc(t.libelle.slice(0,24))+' '+formatEuros(t.montant)+' €').join(' · ')}</div>`:''}
@@ -7225,7 +7277,7 @@ function budgetEncoursCarte(){
   const diffs = mv.filter(x=>x.differe && x.type==='depense').sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const dernier = diffs.length ? diffs[0].date : '';
   const achats = mv.filter(x=>x.carte && x.type==='depense' && !x.neutre && !x.differe && (x.date||'') > dernier).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-  const attente = (data.reglages.banqueAttente||[]).filter(t=>t.type==='depense');
+  const attente = budgetAttenteNette().filter(t=>t.type==='depense');
   const total = arrondi(achats.reduce((s,x)=>s+(parseFloat(x.montant)||0),0));
   const totalAtt = arrondi(attente.reduce((s,x)=>s+(parseFloat(x.montant)||0),0));
   const ecarts = diffs.slice(0,3).map((d,i)=>{
@@ -7326,7 +7378,7 @@ async function budgetReclasserHistorique(){
     if(!x.banque || x.type!=='depense' || x.neutre) return;
     if(budgetRegleAppliquer(x.note||'')) return;
     const c = banqueCategorie(x.note||'', 'depense');
-    if(c !== 'Autre' && c !== x.categorie && (x.categorie==='Autre' || (x.categorie==='Alimentation' && c==='Courses'))){ x.categorie = c; x._maj = Date.now(); n++; }
+    if(c !== 'Autre' && c !== x.categorie && (x.categorie==='Autre' || (x.categorie==='Alimentation' && c==='Courses') || (['Logement','Abonnements','Internet','Téléphone'].includes(x.categorie) && ['Loyer','Électricité','Gaz','Eau','Impôts','Assurances','Frais bancaires'].includes(c)))){ x.categorie = c; x._maj = Date.now(); n++; }
   });
   budgetCache.clear(); await sauvegarder(); render();
   afficherToast(n + ' mouvement' + (n>1?'s':'') + ' reclassé' + (n>1?'s':'') + ' avec les nouvelles catégories.', n?'succes':'info');

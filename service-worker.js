@@ -2,7 +2,7 @@
 // - page principale : réseau d'abord (3 s max), sinon copie en cache
 // - bibliothèques externes (jsPDF, Firebase, polices) : copie en cache après le premier chargement
 // - tout le reste (Firestore, banque, Claude) : jamais touché
-const VERSION = 'tab-v30';
+const VERSION = 'tab-v33';
 const COEUR = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 const HOTES_STATIQUES = ['cdnjs.cloudflare.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 self.addEventListener('install', e=>{
