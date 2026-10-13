@@ -2714,7 +2714,7 @@ function budgetHtmlSections(b, plafond){
   const abos = budgetAbonnements();
   const totalAbos = arrondi(abos.reduce((s,a)=>s+a.montant,0));
   const htmlAbos = abos.length
-    ? abos.map(a=>`<div class="bud-ligne"><div class="bud-ico">🔁</div><div class="bud-info"><div class="bud-titre">${esc(a.nom)}</div><div class="bud-sous">vu sur ${a.nbMois} mois</div></div><div class="bud-montant depense">−${formatEuros(a.montant)} €</div></div>`).join('') + `<div class="bud-sous" style="margin-top:8px;">Total estimé : <strong>${formatEuros(totalAbos)} € / mois</strong> (${formatEuros(arrondi(totalAbos*12))} € / an)</div>`
+    ? abos.map(a=>`<div class="bud-ligne"><div class="bud-ico">🔁</div><div class="bud-info"><div class="bud-titre">${esc(a.nom)}</div><div class="bud-sous">vu sur ${a.nbMois} mois</div></div><div class="bud-montant depense">−${formatEuros(a.montant)} €</div><button class="bouton-icone" onclick="m13Exclure('${esc(a.cle).replace(/'/g,'')}')" title="Ce n'est pas un abonnement" aria-label="Ce n'est pas un abonnement">✕</button></div>`).join('') + `<div class="bud-sous" style="margin-top:8px;">Total estimé : <strong>${formatEuros(totalAbos)} € / mois</strong> (${formatEuros(arrondi(totalAbos*12))} € / an)</div>${(r.abonnementsExclus||[]).length ? `<div class="bud-sous" style="margin-top:6px;">${(r.abonnementsExclus||[]).length} élément(s) écarté(s) · <a href="#" onclick="m13Reinit();return false">tout réafficher</a></div>` : ''}`
     : `<div class="bud-sous">Pas encore assez d'historique (3 mois minimum). ${r.banqueUrl ? 'Utilise « Importer 6 mois d\'historique » dans la section Banque.' : ''}</div>`;
   /* objectifs */
   const objs = (r.objectifs||[]).map(o=>{
@@ -3295,7 +3295,7 @@ async function budgetTests(){
     data.mouvements = [{ id:'m1', banque:true, type:'revenu', montant:150, date:'2026-01-02', note:'VIR TEST' }];
     ok('rapprochement', budgetRapprochements().length === 1);
     data.mouvements = [];
-    ['2026-01-05','2026-02-05','2026-03-05'].forEach((d,i)=>data.mouvements.push({ id:'a'+i, type:'depense', portee:'perso', categorie:'Abonnements', date:d, montant:13.49, note:'PRLV NETFLIX' }));
+    [0,1,2].forEach(i=>{ const dd = new Date(); dd.setDate(1); dd.setMonth(dd.getMonth()-i); dd.setDate(5); data.mouvements.push({ id:'a'+i, type:'depense', portee:'perso', categorie:'Abonnements', date:isoLocal(dd).slice(0,10), montant:13.49, note:'PRLV NETFLIX' }); });
     ok('abonnements', budgetAbonnements().length === 1);
     data.mouvements = [{ id:'r', type:'depense', portee:'perso', categorie:'Autre', date:isoLocal(new Date()).slice(0,7)+'-01', montant:10, note:'x', remboursable:true, neutre:true }];
     budgetCache.clear(); ok('neutre exclu', budgetCalculs(isoLocal(new Date()).slice(0,7)).depPerso === 0);
@@ -4269,7 +4269,7 @@ const lhCsv = v=>'"' + String(v==null?'':v).replace(/"/g,'""') + '"';
 function lhLignesVentes(seulementPayees){
   return data.interventions.filter(i=>i.type==='intervention' && totalFiche(i)>0 && (!seulementPayees || i.statutPaiement==='paye')).sort((a,b)=>((seulementPayees?a.datePaiement||a.date:a.date)||'').localeCompare((seulementPayees?b.datePaiement||b.date:b.date)||'')).map(i=>{
     const { v, c } = infosVehicule(i.vehiculeId);
-    return [seulementPayees ? (i.datePaiement||i.date) : i.date, i.numeroFacture||'', ((c?.prenom||'')+' '+(c?.nom||'')).trim(), i.titre, (v?((v.marque||'')+' '+(v.modele||'')).trim():''), i.statutPaiement==='paye' ? (libelleMode(i.modePaiement)||'') : 'Non payé', String(totalFiche(i)).replace('.',',')];
+    return [seulementPayees ? (i.datePaiement||i.date) : i.date, i.numeroFacture||'', ((c?.prenom||'')+' '+(c?.nom||'')).trim(), i.titre, (v?((v.marque||'')+' '+(v.modele||'')).trim():''), i.statutPaiement==='paye' ? (m14Libelle(i)||libelleMode(i.modePaiement)||'') : 'Non payé', String(totalFiche(i)).replace('.',',')];
   });
 }
 function lhLivreRecettes(){ const l = lhLignesVentes(true); if(!l.length){ afficherToast('Aucun encaissement enregistré.', 'info'); return; } lhTelecharger('livre-recettes-' + new Date().getFullYear() + '.csv', [['Date encaissement','N° facture','Client','Prestation','Véhicule','Mode de règlement','Montant TTC'], ...l].map(r=>r.map(lhCsv).join(';')).join('\n')); }
@@ -4612,7 +4612,7 @@ function jEncaisser(id){
   ${vs.length?`<div style="margin:8px 0;">${vs.map(x=>`<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>${formatDate(x.date)} · ${esc(x.mode||'')}</span><b>${formatEuros(x.montant)} €</b></div>`).join('')}</div>`:''}
   <div class="champ"><label>Montant reçu (€)</label><input id="j-mt" type="number" step="0.01" value="${reste}"></div>
   <div class="champ"><label>Mode</label><select id="j-mode"><option value="especes">Espèces</option><option value="virement">Virement</option><option value="cheque">Chèque</option><option value="carte">Carte</option></select></div>
-  <div class="form-actions"><button class="primaire" onclick="jEncaisserOk('${id}')">Enregistrer le versement</button></div>`);
+  <div class="form-actions"><button onclick="m14Ouvrir('${id}')">🔀 Plusieurs moyens à la fois</button><button class="primaire" onclick="jEncaisserOk('${id}')">Enregistrer le versement</button></div>`);
 }
 async function jEncaisserOk(id){
   const i = lhFiche(id); if(!i) return; const mt = parseFloat(String(document.getElementById('j-mt').value).replace(',','.')); if(!(mt>0)){ afficherToast('Montant invalide.', 'erreur'); return; }
@@ -6435,7 +6435,7 @@ function m10ExportAnnee(an){
   const tva = data.reglages.tvaActive ? (parseFloat(data.reglages.tvaTaux)||20)/100 : 0;
   data.interventions.filter(i=>i.type==='intervention' && (i.date||'').startsWith(an) && totalFiche(i) > 0).sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(i=>{
     const { c } = infosVehicule(i.vehiculeId), ttc = totalFiche(i), t = tva ? arrondi(ttc - ttc/(1+tva)) : 0;
-    lignes.push([i.date, i.numeroFacture||'', m10Nom(c), i.titre||'', m10Num(ttc), m10Num(t), i.modePaiement||'', i.datePaiement||'', i.statutPaiement==='paye'?'Payée':i.statutPaiement==='avoir'?'Avoir':'À payer']);
+    lignes.push([i.date, i.numeroFacture||'', m10Nom(c), i.titre||'', m10Num(ttc), m10Num(t), m14Libelle(i)||i.modePaiement||'', i.datePaiement||'', i.statutPaiement==='paye'?'Payée':i.statutPaiement==='avoir'?'Avoir':'À payer']);
     (i.avoirs||[]).forEach(a=>lignes.push([a.date||'', a.numero||'', m10Nom(c), 'Avoir sur ' + (i.numeroFacture||i.titre||''), m10Num(-Math.abs(a.montant)), m10Num(tva ? -Math.abs(a.montant) + Math.abs(a.montant)/(1+tva) : 0), '', '', 'Avoir']));
   });
   m10Dl(lignes, 'ventes-' + an + '.csv');
@@ -6534,6 +6534,149 @@ function m11Nettoyer(d){
 const _reparerDonneesM11 = reparerDonnees;
 reparerDonnees = function(d){ let n = 0; try{ n = m11Nettoyer(d); }catch(e){} const r = _reparerDonneesM11(d); return typeof r === 'number' ? r + n : r; };
 
+/* @@m13 */
+/* ===== v29.1 · abonnements : détection plus stricte + correction manuelle ===== */
+const M13_MARQUES = /netflix|spotify|disney|prime video|amazon prime|canal\+?|apple|itunes|google|youtube|deezer|adobe|microsoft|openai|anthropic|chatgpt|dropbox|icloud|ovh|basic.?fit|fitness|playstation|xbox|nintendo|audible|crunchyroll|molotov|salto|ocs|mediapart|le monde|figaro|free|orange|sfr|bouygues|sosh|red by|b&you|la poste mobile|prixtel|nordvpn|proton|notion|canva|zoom|slack|github|ionos|gandi|wix|shopify/i;
+const M13_CREDIT = /floa|alma|oney|cetelem|cofidis|sofinco|personal financ|franfinance|cr[eé]dit|pr[eê]t|ce c[oô]te|ce rh[oô]ne|caisse d.[eé]pargne|echeance|remboursement/i;
+const M13_CATS_NON = ['Crédit','Logement','Carburant','Courses','Alimentation','Espèces','Santé','Enfants','Loisirs'];
+function m13Cle(x){ return banqueCle(String(x.note || x.categorie || '').replace(/\bfact\b/ig,' ').replace(/\d{4,}/g,' ')); }
+const m13Liste = k=>{ const r = data.reglages; return r[k] = r[k] || []; };
+budgetAbonnements = function(){
+  const excl = new Set(m13Liste('abonnementsExclus')), incl = new Set(m13Liste('abonnementsInclus'));
+  const groupes = {};
+  budgetMouvements().filter(x=>x.type==='depense' && !x.neutre && x.date).forEach(x=>{ const cle = m13Cle(x); if(!cle || excl.has(cle)) return; (groupes[cle] = groupes[cle] || []).push(x); });
+  const res = [], auj = new Date(), limite = new Date(auj); limite.setDate(limite.getDate() - 50);
+  Object.entries(groupes).forEach(([cle, liste])=>{
+    const forces = incl.has(cle), note = String(liste[0].note || '');
+    if(!forces){
+      const carte = /^\s*(cb|carte|paiement|achat)\b/i.test(note) || liste.some(x=>x.carte);
+      const vir = /^\s*(vir|virement)\b/i.test(note);
+      if(M13_CREDIT.test(note)) return;
+      if(carte && !M13_MARQUES.test(note)) return;
+      if(vir) return;
+      if(liste.every(x=>M13_CATS_NON.includes(x.categorie))) return;
+    }
+    const parMois = {}; liste.forEach(x=>{ const m = x.date.slice(0,7); (parMois[m] = parMois[m] || []).push(parseFloat(x.montant)||0); });
+    const mois = Object.keys(parMois).sort();
+    if(mois.length < 3) return;
+    if(!forces && mois.length && liste.length > mois.length * 1.4) return;       /* plusieurs achats par mois : pas un abonnement */
+    const montants = liste.map(x=>parseFloat(x.montant)||0).sort((a,b)=>a-b), med = montants[Math.floor(montants.length/2)];
+    if(!(med > 0)) return;
+    const stables = mois.filter(m=>parMois[m].some(v=>Math.abs(v - med) <= Math.max(0.5, med*0.05)));
+    if(stables.length < 3 || stables.length < mois.length * 0.7) return;
+    const dernier = liste.map(x=>x.date).sort().pop();
+    if(!forces && new Date(dernier + 'T00:00:00') < limite) return;                /* plus actif */
+    res.push({ cle, nom: note.slice(0,40) || cle, montant: med, nbMois: stables.length });
+  });
+  return res.sort((a,b)=>b.montant-a.montant);
+};
+async function m13Exclure(cle){
+  if(!await confirmerAction('Ne plus considérer « ' + cle + ' » comme un abonnement ?')) return;
+  const e = m13Liste('abonnementsExclus'); if(!e.includes(cle)) e.push(cle);
+  data.reglages.abonnementsInclus = m13Liste('abonnementsInclus').filter(c=>c!==cle);
+  data.reglages._ts = data.reglages._ts || {}; data.reglages._ts.abonnementsExclus = Date.now();
+  await sauvegarder(); budgetCache.clear(); render(); afficherToast('Retiré des abonnements.', 'succes');
+}
+async function m13Reinit(){
+  data.reglages.abonnementsExclus = []; data.reglages._ts = data.reglages._ts || {}; data.reglages._ts.abonnementsExclus = Date.now();
+  await sauvegarder(); render();
+}
+
+/* @@m14 */
+/* ===== v29.2 · mensuel/ponctuel + paiement avec plusieurs moyens ===== */
+/* --- A. mensuel / ponctuel depuis la fiche d'un mouvement --- */
+function m14EstAbo(x){ const c = m13Cle(x); return budgetAbonnements().some(a=>a.cle === c); }
+function m14HtmlRecurrence(x){
+  if(x.type !== 'depense') return '';
+  const c = m13Cle(x); if(!c) return '';
+  const incl = m13Liste('abonnementsInclus').includes(c), excl = m13Liste('abonnementsExclus').includes(c), abo = incl || (!excl && m14EstAbo(x));
+  return `<div class="bud-sous" style="margin-top:10px;font-weight:700;">Cette dépense est…</div>
+   <div class="tri-seg"><button class="${abo?'actif':''}" onclick="m14Recur('${esc(x.id)}','mensuel')">🔁 Mensuelle (abonnement)</button><button class="${!abo?'actif':''}" onclick="m14Recur('${esc(x.id)}','ponctuel')">1× Ponctuelle</button></div>
+   <div class="bud-sous">${abo ? 'Comptée dans tes abonnements et dans la prévision du mois.' : 'Ignorée dans les abonnements.'}${(incl||excl) ? ' (réglé à la main)' : ''}</div>`;
+}
+async function m14Recur(id, mode){
+  const x = budgetMouvements().find(m=>m.id===id); if(!x) return; const c = m13Cle(x); if(!c) return;
+  const r = data.reglages; r._ts = r._ts || {};
+  if(mode === 'mensuel'){ r.abonnementsExclus = m13Liste('abonnementsExclus').filter(k=>k!==c); if(!m13Liste('abonnementsInclus').includes(c)) r.abonnementsInclus.push(c); }
+  else { r.abonnementsInclus = m13Liste('abonnementsInclus').filter(k=>k!==c); if(!m13Liste('abonnementsExclus').includes(c)) r.abonnementsExclus.push(c); }
+  r._ts.abonnementsExclus = r._ts.abonnementsInclus = Date.now();
+  await sauvegarder(); budgetCache.clear(); budgetRendreTri(); afficherToast(mode === 'mensuel' ? 'Marquée comme mensuelle.' : 'Marquée comme ponctuelle.', 'succes');
+}
+/* --- B. paiement avec plusieurs moyens --- */
+function m14Cle(m){ return m === 'carte' ? 'cb' : (m || ''); }
+/* répartition réelle d'un règlement : versements par moyen + solde éventuel sur le moyen unique de la fiche */
+function m14Repartition(i){
+  const rep = {}; let somme = 0;
+  (i.versements || []).forEach(v=>{ if(/^avoir/i.test(v.mode||'')) return; const k = m14Cle(v.mode) || 'autre', m = parseFloat(v.montant)||0; rep[k] = arrondi((rep[k]||0) + m); somme += m; });
+  if(i.statutPaiement === 'paye'){
+    const reste = arrondi(totalFiche(i) - somme), k = m14Cle(i.modePaiement);
+    if(reste > 0.004){ const kk = (k && k !== 'mixte') ? k : (i.especes && !k ? 'especes' : (k === 'mixte' ? 'autre' : '')); if(kk) rep[kk] = arrondi((rep[kk]||0) + reste); }
+  }
+  return rep;
+}
+const m14Esp = i=>{ const r = m14Repartition(i); return r.especes || 0; };
+function m14Libelle(i){
+  const r = m14Repartition(i), ks = Object.keys(r).filter(k=>r[k] > 0);
+  if(ks.length > 1) return ks.map(k=>libelleMode(k).toLowerCase() + ' ' + formatEuros(r[k]) + ' €').join(', ');
+  return i.modePaiement && i.modePaiement !== 'mixte' ? libelleMode(i.modePaiement).toLowerCase() : (ks[0] ? libelleMode(ks[0]).toLowerCase() : '');
+}
+let m14Lignes = [];
+function m14Ouvrir(id){
+  const i = lhFiche(id); if(!i) return; lhFermer();
+  const reste = jResteAPayer(i); m14Lignes = [{ mode:'especes', montant:'' }, { mode:'cb', montant:'' }];
+  lhFeuille(`<div class="tri-tete"><b>🔀 Plusieurs moyens de paiement</b><button class="bouton-icone" onclick="lhFermer()">✕</button></div>
+   <div class="bud-sous">Total ${formatEuros(totalFiche(i))} € · déjà versé ${formatEuros(arrondi(parseFloat(i.acompte)||0))} € · <b>reste ${formatEuros(reste)} €</b></div>
+   <div id="m14-lignes"></div>
+   <div class="form-actions" style="justify-content:flex-start;"><button onclick="m14Ajouter()">＋ Ajouter un moyen</button><button onclick="m14Solde()">Mettre le solde sur la dernière ligne</button></div>
+   <div id="m14-etat" style="margin:8px 0;font-weight:700;"></div>
+   <div class="form-actions"><button onclick="lhFermer()">Annuler</button><button class="primaire" onclick="m14Valider('${esc(id)}')">Enregistrer</button></div>`);
+  m14Rendre(id);
+}
+function m14Rendre(id){
+  const i = lhFiche(id || m14Id), z = document.getElementById('m14-lignes'); if(!z) return; m14Id = id || m14Id;
+  z.innerHTML = m14Lignes.map((l,k)=>`<div style="display:flex;gap:6px;align-items:center;margin:6px 0;"><select onchange="m14Lignes[${k}].mode=this.value" style="flex:1;min-width:0;">${MODES_PAIEMENT.filter(m=>m[0]!=='mixte').map(m=>`<option value="${m[0]}" ${l.mode===m[0]?'selected':''}>${m[1]} ${m[2]}</option>`).join('')}</select><input type="number" inputmode="decimal" step="0.01" min="0" placeholder="Montant €" value="${l.montant}" oninput="m14Lignes[${k}].montant=this.value;m14Etat()" style="width:110px;">${m14Lignes.length>1?`<button class="bouton-icone" onclick="m14Retirer(${k})" aria-label="Retirer">✕</button>`:''}</div>`).join('');
+  m14Etat();
+}
+let m14Id = '';
+function m14Somme(){ return arrondi(m14Lignes.reduce((s,l)=>s + (parseFloat(String(l.montant).replace(',','.'))||0), 0)); }
+function m14Etat(){
+  const i = lhFiche(m14Id), e = document.getElementById('m14-etat'); if(!i || !e) return;
+  const reste = jResteAPayer(i), s = m14Somme(), d = arrondi(reste - s);
+  e.style.color = d === 0 ? 'var(--success)' : d < 0 ? 'var(--danger)' : 'var(--text)';
+  e.textContent = d === 0 ? '✔ Le compte est bon : ' + formatEuros(s) + ' €' : d > 0 ? 'Saisi ' + formatEuros(s) + ' € · il restera ' + formatEuros(d) + ' €' : 'Trop perçu : ' + formatEuros(-d) + ' € de plus que le reste dû';
+}
+function m14Ajouter(){ m14Lignes.push({ mode:'virement', montant:'' }); m14Rendre(); }
+function m14Retirer(k){ m14Lignes.splice(k,1); m14Rendre(); }
+function m14Solde(){ const i = lhFiche(m14Id); if(!i) return; const n = m14Lignes.length - 1; m14Lignes[n].montant = ''; const reste = arrondi(jResteAPayer(i) - m14Somme()); m14Lignes[n].montant = reste > 0 ? String(reste) : ''; m14Rendre(); }
+async function m14Valider(id){
+  const i = lhFiche(id); if(!i) return;
+  const lignes = m14Lignes.map(l=>({ mode:l.mode, montant: arrondi(parseFloat(String(l.montant).replace(',','.'))||0) })).filter(l=>l.montant > 0);
+  if(!lignes.length){ afficherToast('Saisis au moins un montant.', 'erreur'); return; }
+  const reste = jResteAPayer(i), s = arrondi(lignes.reduce((t,l)=>t+l.montant,0));
+  if(s > reste + 0.005){ afficherToast('Le total dépasse le reste dû (' + formatEuros(reste) + ' €).', 'erreur'); return; }
+  if(s < reste - 0.005 && !await confirmerAction('Il restera ' + formatEuros(arrondi(reste - s)) + ' € à payer. Enregistrer un paiement partiel ?')) return;
+  i.versements = i.versements || [];
+  lignes.forEach(l=>i.versements.push({ date: jourLocal(), montant: l.montant, mode: l.mode }));
+  i.acompte = arrondi(i.versements.reduce((t,x)=>t + (parseFloat(x.montant)||0), 0));
+  const modes = [...new Set(i.versements.filter(x=>!/^avoir/i.test(x.mode||'')).map(x=>m14Cle(x.mode)))];
+  i.modePaiement = modes.length > 1 ? 'mixte' : (modes[0] || '');
+  if(i.acompte >= totalFiche(i) - 0.005 && i.type === 'intervention'){ i.statutPaiement = 'paye'; i.datePaiement = jourLocal(); if(i.avancement === 'pret') i.avancement = 'livre'; }
+  if(i.modePaiement !== 'especes' && i.modePaiement !== 'mixte') i.depotId = '';
+  i._maj = Date.now(); lhFermer(); await lhSauver();
+  afficherToast(i.statutPaiement === 'paye' ? 'Payé : ' + m14Libelle(i) + '.' : 'Paiement partiel enregistré.', 'succes');
+}
+/* le choix « Plusieurs moyens » dans la fenêtre de mode de règlement ouvre le formulaire de répartition */
+let m14FicheEnCours = '';
+const _choisirModeM14 = choisirModePaiement;
+choisirModePaiement = async function(titre){ const r = await _choisirModeM14(titre); if(r === 'mixte'){ const id = m14FicheEnCours; setTimeout(()=>m14Ouvrir(id), 60); return '__annuler'; } return r; };
+const _basculerPaiementM14 = basculerPaiement;
+basculerPaiement = async function(id){ m14FicheEnCours = id; return _basculerPaiementM14(id); };
+const _changerModeM14 = changerModePaiement;
+changerModePaiement = async function(id){ m14FicheEnCours = id; return _changerModeM14(id); };
+/* espèces en caisse : seule la part réellement payée en espèces compte */
+const _fichesEspM14 = budgetFichesEspeces;
+budgetFichesEspeces = function(){ return data.interventions.filter(i=>i.type==='intervention' && i.statutPaiement==='paye' && m14Esp(i) > 0.004); };
+
 /* --- Fiche de tri d'un mouvement (sans recharger la page) --- */
 let triId = null, triApplTous = true;
 function budgetLigneClic(e, id){
@@ -6559,6 +6702,7 @@ function budgetRendreTri(){
     <div class="tri-seg"><button class="${x.portee==='perso'?'actif':''}" onclick="budgetTriPortee('perso')">👤 Perso</button><button class="${x.portee==='pro'?'actif':''}" onclick="budgetTriPortee('pro')">🔧 Atelier</button></div>
     <div class="tri-grille">${cats.map(c=>`<button class="${x.categorie===c?'actif':''}" onclick="budgetTriCategorie(${JSON.stringify(c).replace(/"/g,'&quot;')})"><span class="i">${budgetIcone(c)}</span>${esc(c)}</button>`).join('')}</div>
     ${memes ? `<label class="bud-sous" style="display:flex;gap:8px;align-items:center;"><input type="checkbox" style="width:auto;" ${triApplTous?'checked':''} onchange="triApplTous=this.checked"> Appliquer aux ${memes} autre${memes>1?'s':''} mouvement${memes>1?'s':''} du même commerçant</label>` : ''}
+    ${m14HtmlRecurrence(x)}
     <div class="bud-sous" style="margin-top:6px;">${x.banque?'La règle est retenue pour les prochains imports.':''}${restants?` · ${restants} « Autre » restant${restants>1?'s':''}`:''}</div>
     <div class="form-actions" style="margin-top:12px;"><button onclick="budgetFermerTri();budgetModifier('${x.id}')">✏️ Modifier</button>${restants && x.categorie==='Autre'?`<button onclick="budgetTriSuivant()">Suivant ›</button>`:''}<button onclick="budgetFermerTri()">Fermer</button></div>
   </div>`;
@@ -6774,7 +6918,7 @@ async function imprimerFacture(id, partager){
   if(acompte){ lg('Acompte versé', formatEuros(acompte) + ' €'); lg(reste < 0 ? 'Trop-perçu' : 'Reste à payer', formatEuros(Math.abs(reste)) + ' €', true); }
   y += 20 + nb*7;
   doc.setFontSize(8); doc.setTextColor(...PDF_GRIS);
-  const mentions = [ tva ? '' : 'TVA non applicable, art. 293 B du CGI.', i.statutPaiement==='paye' ? ('Facture acquittée' + (i.modePaiement ? ' (' + libelleMode(i.modePaiement).toLowerCase() + ')' : '') + '.') : (e.delaiPaiement>0 ? ('Paiement à ' + e.delaiPaiement + ' jours, soit avant le ' + formatDate((()=>{ const dd = new Date((i.dateFacture||i.date)+'T00:00:00'); dd.setDate(dd.getDate()+e.delaiPaiement); return isoLocal(dd).slice(0,10); })()) + '.') : 'Paiement à réception de la facture.'), l5MentionRetard(c), e.iban ? 'IBAN : ' + e.iban : '', ...l5MentionsPlus(i, c, e) ].filter(Boolean);
+  const mentions = [ tva ? '' : 'TVA non applicable, art. 293 B du CGI.', i.statutPaiement==='paye' ? ('Facture acquittée' + (m14Libelle(i) ? ' (' + m14Libelle(i) + ')' : '') + '.') : (e.delaiPaiement>0 ? ('Paiement à ' + e.delaiPaiement + ' jours, soit avant le ' + formatDate((()=>{ const dd = new Date((i.dateFacture||i.date)+'T00:00:00'); dd.setDate(dd.getDate()+e.delaiPaiement); return isoLocal(dd).slice(0,10); })()) + '.') : 'Paiement à réception de la facture.'), l5MentionRetard(c), e.iban ? 'IBAN : ' + e.iban : '', ...l5MentionsPlus(i, c, e) ].filter(Boolean);
   mentions.forEach(m=>{ const ls = doc.splitTextToSize(m, 180); if(y + ls.length*4 > 270){ doc.addPage(); y = 25; } doc.text(ls, 14, y); y += ls.length*4 + 2; });
   try{
     if(e.iban && i.statutPaiement!=='paye' && window.qrcode){
@@ -7123,12 +7267,12 @@ function budgetFichesEspeces(){
 }
 function budgetEspecesEnCaisse(){
   const fiches = budgetFichesEspeces();
-  const recu = fiches.reduce((s,i)=>s+(totalFiche(i)||0),0);
+  const recu = fiches.reduce((s,i)=>s+(m14Esp(i)),0);
   const enCaisse = fiches.filter(i=>!i.depotId);
   const lies = new Set(fiches.filter(i=>i.depotId).map(i=>i.depotId));
   const depotsLibres = budgetMouvements().filter(x=>x.depotEspeces && !lies.has(x.id)).reduce((s,x)=>s+(parseFloat(x.montant)||0),0);
-  const reste = enCaisse.reduce((s,i)=>s+(totalFiche(i)||0),0) - depotsLibres;
-  const depose = recu - enCaisse.reduce((s,i)=>s+(totalFiche(i)||0),0) + depotsLibres;
+  const reste = enCaisse.reduce((s,i)=>s+(m14Esp(i)),0) - depotsLibres;
+  const depose = recu - enCaisse.reduce((s,i)=>s+(m14Esp(i)),0) + depotsLibres;
   return { recu: arrondi(recu), depose: arrondi(depose), reste: arrondi(reste), enCaisse };
 }
 let budgetCaisseSel = new Set();
@@ -7149,7 +7293,7 @@ async function budgetAnnulerDepot(id){
 }
 function budgetSuggestionDepot(montant, fiches){
   const n = Math.min(fiches.length, 16), cible = Math.round(montant*100);
-  const v = fiches.slice(0,n).map(f=>Math.round((totalFiche(f)||0)*100));
+  const v = fiches.slice(0,n).map(f=>Math.round((m14Esp(f)||0)*100));
   let meilleur = null, mp = 99;
   for(let m=1; m < (1<<n); m++){
     let sum = 0, pc = 0; for(let k=0;k<n;k++) if(m & (1<<k)){ sum += v[k]; pc++; }
@@ -7164,8 +7308,8 @@ function budgetHtmlEspeces(){
   const credits = budgetMouvements().filter(x=>x.banque && x.type==='revenu' && !x.rapproche && (x.depotEspeces || true)).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,15);
   const liesIds = new Set(budgetFichesEspeces().filter(f=>f.depotId).map(f=>f.depotId));
   const propositions = budgetMouvements().filter(x=>x.banque && x.type==='revenu' && x.depotEspeces && !liesIds.has(x.id)).map(x=>({ m:x, fiches: budgetSuggestionDepot(parseFloat(x.montant)||0, trie) })).filter(x=>x.fiches);
-  const totalSel = arrondi([...budgetCaisseSel].reduce((s,id)=>{ const f = data.interventions.find(i=>i.id===id); return s + (f ? (totalFiche(f)||0) : 0); },0));
-  const ligne = i=>{ const { c } = infosVehicule(i.vehiculeId); return `<label class="bud-ligne" style="display:flex;gap:8px;align-items:center;padding:6px 0;"><input type="checkbox" style="width:auto;" ${budgetCaisseSel.has(i.id)?'checked':''} onchange="budgetCaisseCocher('${i.id}')"><span class="bud-info"><span class="bud-titre">${esc(c?.nom||'')} · ${esc(i.titre||'')}</span> <span class="bud-sous">${formatDate(i.datePaiement||i.date)} · ${formatEuros(totalFiche(i))} €</span></span></label>`; };
+  const totalSel = arrondi([...budgetCaisseSel].reduce((s,id)=>{ const f = data.interventions.find(i=>i.id===id); return s + (f ? (m14Esp(f)||0) : 0); },0));
+  const ligne = i=>{ const { c } = infosVehicule(i.vehiculeId); return `<label class="bud-ligne" style="display:flex;gap:8px;align-items:center;padding:6px 0;"><input type="checkbox" style="width:auto;" ${budgetCaisseSel.has(i.id)?'checked':''} onchange="budgetCaisseCocher('${i.id}')"><span class="bud-info"><span class="bud-titre">${esc(c?.nom||'')} · ${esc(i.titre||'')}</span> <span class="bud-sous">${formatDate(i.datePaiement||i.date)} · ${formatEuros(m14Esp(i))} €</span></span></label>`; };
   return `<div class="formulaire ouvert"><h3>💶 Espèces en caisse</h3>
     <div class="bud-sous" style="margin-bottom:8px;">Les fiches réglées en espèces sont déjà dans ton chiffre d'affaires. Quand tu déposes l'argent à la banque, rapproche le dépôt : il ne sera pas recompté.</div>
     <div class="bud-prev"><div><span class="bud-sous">Reçu en espèces</span><strong class="bud-s">${formatEuros(e.recu)} €</strong></div><div class="bud-fleche">−</div><div><span class="bud-sous">Déposé</span><strong class="bud-s">${formatEuros(e.depose)} €</strong></div><div class="bud-fleche">=</div><div><span class="bud-sous">En caisse</span><strong class="bud-s" style="color:var(--money)">${formatEuros(e.reste)} €</strong></div></div>
@@ -7475,7 +7619,7 @@ async function basculerPiecesCommandees(id){
   await sauvegarder();
   render();
 }
-const MODES_PAIEMENT = [['especes','💶','Espèces'],['cb','💳','Carte'],['virement','🏦','Virement'],['cheque','🧾','Chèque'],['autre','•••','Autre']];
+const MODES_PAIEMENT = [['especes','💶','Espèces'],['cb','💳','Carte'],['virement','🏦','Virement'],['cheque','🧾','Chèque'],['mixte','🔀','Plusieurs moyens'],['autre','•••','Autre']];
 function libelleMode(k){ const m = MODES_PAIEMENT.find(x=>x[0]===k); return m ? m[2] : ''; }
 function iconeMode(k){ const m = MODES_PAIEMENT.find(x=>x[0]===k); return m ? m[1] : ''; }
 function choisirModePaiement(titre){
@@ -8320,7 +8464,7 @@ function renderInterventions(){
     let paiementHtml = '';
     if(i.type === 'intervention' && tf > 0){
       const paye = i.statutPaiement === 'paye';
-      paiementHtml = `<div class="paiement-toggle"><button type="button" class="badge ${paye?'paye':'non_paye'}" onclick="basculerPaiement('${i.id}')">${paye?'Payé':'Non payé'}</button>${paye?` <button type="button" class="badge" title="Mode de règlement" onclick="changerModePaiement('${i.id}')">${i.modePaiement?iconeMode(i.modePaiement)+' '+libelleMode(i.modePaiement):'+ mode'}${i.depotId?' · déposé':''}</button>`:''}</div>`;
+      paiementHtml = `<div class="paiement-toggle"><button type="button" class="badge ${paye?'paye':'non_paye'}" onclick="basculerPaiement('${i.id}')">${paye?'Payé':'Non payé'}</button>${paye?` <button type="button" class="badge" title="Mode de règlement" onclick="changerModePaiement('${i.id}')">${i.modePaiement==='mixte'?'🔀 '+m14Libelle(i):i.modePaiement?iconeMode(i.modePaiement)+' '+libelleMode(i.modePaiement):'+ mode'}${i.depotId?' · déposé':''}</button>`:''}</div>`;
     }
     let statutHtml = '';
     if(i.type === 'devis'){
