@@ -411,6 +411,29 @@
     .fiche, .dossier, .stat-carte{box-shadow:none;border:1px solid #ccc;break-inside:avoid;}
   }
   .tri-fond{position:fixed;inset:0;background:rgba(20,18,14,.4);z-index:1050;display:flex;align-items:flex-end;justify-content:center;} .tri-fiche{background:var(--surface);color:var(--text);width:100%;max-width:560px;max-height:85vh;overflow:auto;border-radius:20px 20px 0 0;padding:16px 16px 22px;box-shadow:0 -10px 40px rgba(0,0,0,.25);} .tri-tete{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:10px;} .tri-tete b{display:block;font-size:16px;word-break:break-word;} .tri-grille{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0;} .tri-grille button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px;font-size:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);} .tri-grille button.actif{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);font-weight:700;} .tri-grille button .i{font-size:20px;} .tri-seg{display:flex;gap:8px;margin:6px 0;} .tri-seg button{flex:1;padding:9px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);} .tri-seg button.actif{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);font-weight:700;}
+
+  /* --- Éditeur de fiche / devis plein écran --- */
+  #form-intervention.ouvert{position:fixed;inset:0;z-index:950;margin:0;border:none;border-radius:0;background:var(--bg);overflow-y:auto;padding:0 0 110px;max-width:none;counter-reset:etape;}
+  body:has(#form-intervention.ouvert){overflow:hidden;} body:has(#form-intervention.ouvert) .fab, body:has(#form-intervention.ouvert) #bouton-haut{display:none !important;}
+  #form-intervention.ouvert>*{max-width:640px;margin-left:auto;margin-right:auto;}
+  #form-intervention.ouvert>h3{position:sticky;top:0;z-index:5;margin:0 auto;padding:16px 16px 10px;background:var(--bg);max-width:none;font-size:18px;text-transform:none;letter-spacing:0;}
+  #form-intervention.ouvert>*:not(h3):not(.bi-barre){margin-left:auto;margin-right:auto;padding-left:16px;padding-right:16px;box-sizing:border-box;}
+  #form-intervention.ouvert .type-select{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;} #form-intervention.ouvert .type-opt{padding:14px 8px;border-radius:14px;font-size:15px;font-weight:600;}
+  #form-intervention.ouvert .bloc-titre{counter-increment:etape;display:flex;align-items:center;gap:10px;border:none;margin-top:22px;font-size:13px;} #form-intervention.ouvert .bloc-titre::before{content:counter(etape);display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:700;}
+  #form-intervention.ouvert .champ-titre-grand{font-size:18px;padding:14px;}
+  #form-intervention.ouvert .piece-carte{background:var(--surface);border-radius:16px;box-shadow:0 1px 6px rgba(0,0,0,.06);}
+  .bi-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;} .bi-chips button{padding:6px 11px;border-radius:999px;font-size:12.5px;border:1px solid var(--border);background:var(--surface);color:var(--text);}
+  .bi-barre{position:fixed;left:0;right:0;bottom:0;z-index:960;background:var(--surface);border-top:1px solid var(--border);box-shadow:0 -6px 24px rgba(0,0,0,.12);padding:10px 16px calc(10px + env(safe-area-inset-bottom));display:none;}
+  #form-intervention.ouvert .bi-barre{display:block;} .bi-barre-in{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:12px;} .bi-total{flex:1;min-width:0;line-height:1.25;} .bi-total b{font-size:20px;display:block;} .bi-total span{font-size:12px;color:var(--text-muted);} .bi-barre button{white-space:nowrap;padding:13px 18px;border-radius:14px;font-weight:700;}
+  #form-intervention.ouvert>.form-actions{display:none;}
+  #form-intervention.ouvert>.btn-ajout-ligne{display:block;margin-left:max(16px,calc((100% - 640px)/2 + 16px));padding:9px 14px;}
+  #vocal-btn{position:fixed;bottom:76px;left:70px;z-index:90;width:42px;height:42px;border-radius:50%;border:1px solid var(--border);background:var(--surface);font-size:20px;box-shadow:0 4px 14px rgba(0,0,0,.15);padding:0;} #vocal-btn.actif{background:var(--accent);animation:vpulse 1.4s infinite;}
+  @keyframes vpulse{0%,100%{box-shadow:0 0 0 0 rgba(30,120,140,.5)}50%{box-shadow:0 0 0 10px rgba(30,120,140,0)}}
+  body:has(#form-intervention.ouvert) #vocal-btn{display:none;}
+  #vocal-panneau{position:fixed;left:10px;right:10px;bottom:132px;z-index:1000;max-width:560px;margin:0 auto;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,.28);padding:12px 14px;display:flex;flex-direction:column;gap:8px;font-size:14px;}
+  .vp-haut{display:flex;justify-content:space-between;align-items:center;gap:8px;} .vp-haut button{padding:4px 10px;border-radius:10px;} .vp-etat{font-weight:700;font-size:13px;} .vp-etat.ecoute{color:var(--money);} .vp-etat.occ{color:var(--warning);} .vp-etat.parle{color:var(--accent);}
+  .vp-toi{background:var(--surface-2);border-radius:12px;padding:8px 10px;} .vp-claude{background:color-mix(in srgb,var(--accent) 12%,transparent);border-radius:12px;padding:8px 10px;} .vp-aide{color:var(--text-muted);font-size:12.5px;line-height:1.5;}
+  .vp-saisie{display:flex;gap:6px;} .vp-saisie input{flex:1;min-width:0;} .vp-saisie button{padding:8px 14px;border-radius:12px;}
 </style>
 <link rel="manifest" href="manifest.json">
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -1926,7 +1949,7 @@ function renderBudget(){
 
   cont.innerHTML = `
     <div class="panneau-header">
-      <div><h2>💳 Budget</h2><div class="sous">Perso et atelier, relié à TAB · v18</div></div>
+      <div><h2>💳 Budget</h2><div class="sous">Perso et atelier, relié à TAB · v20</div></div>
       <div style="display:flex;gap:6px;"><button onclick="budgetRapportPdf()" title="Rapport du mois en PDF">📄</button><button onclick="budgetBasculerCompact()" title="Tableau de bord compact">📊</button><button onclick="budgetBasculerDiscret()" title="Mode discret">${discret?'🙈':'👁'}</button></div>
     </div>
     <div class="bud-mois">
@@ -3543,6 +3566,283 @@ function budgetHtmlDernieres(){
     ${l.map(x=>`<div class="bud-ligne" ${x.type==='depense'?`onclick="budgetOuvrirTri('${x.id}')" style="cursor:pointer"`:''}><div class="bud-ico" style="color:${budgetCouleurCat(x.categorie)};background:color-mix(in srgb,${budgetCouleurCat(x.categorie)} 14%,transparent)">${budgetIcone(x.categorie)}</div><div class="bud-info"><div class="bud-titre">${esc((x.note||x.categorie).slice(0,38))}</div><div class="bud-sous">${esc(x.categorie)} · ${formatDate(x.date)}</div></div><div class="bud-montant ${x.type}">${x.type==='depense'?'−':'+'}${formatEuros(parseFloat(x.montant)||0)} €</div></div>`).join('')}
     <div class="form-actions" style="margin-top:8px;"><button onclick="budgetChoisirOnglet('mouvements')">Tout voir</button></div></div>`;
 }
+/* ================= ASSISTANT VOCAL (mains libres) ================= */
+const VOCAL_MODELE = 'claude-sonnet-5-5';
+let vocalActif = false, vocalReco = null, vocalOccupe = false, vocalParle = false, vocalHist = [], vocalUndo = [], vocalDernier = '', vocalReponse = '', vocalEtat = '';
+const VOCAL_ARRET = /^(stop|arr[eê]te|arr[eê]te[- ]toi|termin[eé]|c'?est tout|au revoir|merci c'?est bon|ferme)\b/i;
+const VOCAL_ANNULE = /^(annule|annuler|annule [çc]a|annule la derni[eè]re|oublie [çc]a)\b/i;
+const vocalObj = (p, req)=>({ type:'object', properties:p, required:req||[] });
+const VOCAL_LIGNES = { type:'array', description:'Lignes de la fiche : une pièce et/ou des heures de main d\'œuvre par ligne.', items: vocalObj({ nom:{type:'string'}, prix_achat:{type:'number',description:'Prix d\'achat de la pièce en € (0 si aucune pièce)'}, heures:{type:'number',description:'Heures de main d\'œuvre'}, type_piece:{type:'string',enum:['normale','zero','prestataire'],description:'normale = marge habituelle, zero = au prix coûtant, prestataire = sous-traité hors CA'} }, ['nom']) };
+const VOCAL_OUTILS = [
+  { name:'chercher_client', description:'Cherche des clients (nom, prénom, téléphone, immatriculation ou véhicule). Renvoie leurs véhicules.', input_schema: vocalObj({ texte:{type:'string'} }, ['texte']) },
+  { name:'chercher_fiches', description:'Liste des fiches (devis/interventions) filtrées.', input_schema: vocalObj({ texte:{type:'string'}, client_id:{type:'string'}, vehicule_id:{type:'string'}, filtre:{type:'string',enum:['toutes','impayees','devis_en_attente','recentes']}, limite:{type:'number'} }) },
+  { name:'creer_client', description:'Crée un client (après avoir vérifié avec chercher_client qu\'il n\'existe pas).', input_schema: vocalObj({ prenom:{type:'string'}, nom:{type:'string'}, telephone:{type:'string'}, email:{type:'string'} }, ['nom']) },
+  { name:'creer_vehicule', description:'Crée un véhicule pour un client.', input_schema: vocalObj({ client_id:{type:'string'}, marque:{type:'string'}, modele:{type:'string'}, immatriculation:{type:'string'} }, ['client_id','marque','modele']) },
+  { name:'creer_fiche', description:'Crée un devis ou une intervention réalisée pour un véhicule.', input_schema: vocalObj({ vehicule_id:{type:'string'}, type:{type:'string',enum:['devis','intervention']}, titre:{type:'string'}, date:{type:'string',description:'AAAA-MM-JJ, aujourd\'hui par défaut'}, km:{type:'number'}, lignes:VOCAL_LIGNES, remise:{type:'number'}, acompte:{type:'number'} }, ['vehicule_id','type','titre','lignes']) },
+  { name:'ajouter_lignes_fiche', description:'Ajoute des lignes (pièces / main d\'œuvre) à une fiche existante.', input_schema: vocalObj({ fiche_id:{type:'string'}, lignes:VOCAL_LIGNES }, ['fiche_id','lignes']) },
+  { name:'modifier_fiche', description:'Modifie une fiche : titre, date, km, remise, acompte, statut du devis, paiement (payé ou non, mode de règlement).', input_schema: vocalObj({ fiche_id:{type:'string'}, titre:{type:'string'}, date:{type:'string'}, km:{type:'number'}, remise:{type:'number'}, acompte:{type:'number'}, statut_devis:{type:'string',enum:['en_attente','valide','refuse']}, statut_paiement:{type:'string',enum:['paye','non_paye']}, mode_paiement:{type:'string',enum:['especes','cb','virement','cheque','autre']} }, ['fiche_id']) },
+  { name:'devis_vers_intervention', description:'Transforme un devis en intervention réalisée.', input_schema: vocalObj({ fiche_id:{type:'string'} }, ['fiche_id']) },
+  { name:'ajouter_mouvement', description:'Ajoute une dépense ou un revenu dans le budget.', input_schema: vocalObj({ type:{type:'string',enum:['depense','revenu']}, montant:{type:'number'}, categorie:{type:'string'}, note:{type:'string'}, portee:{type:'string',enum:['perso','pro']}, date:{type:'string'} }, ['type','montant']) },
+  { name:'chercher_mouvements', description:'Cherche des mouvements du budget (par texte, catégorie, depuis une date).', input_schema: vocalObj({ texte:{type:'string'}, categorie:{type:'string'}, depuis:{type:'string'}, limite:{type:'number'} }) },
+  { name:'classer_mouvement', description:'Change la catégorie (et la portée) d\'un ou plusieurs mouvements. Avec tous=true, applique à tous les mouvements bancaires du même commerçant et retient la règle.', input_schema: vocalObj({ recherche:{type:'string',description:'Mots du libellé'}, mouvement_id:{type:'string'}, categorie:{type:'string'}, portee:{type:'string',enum:['perso','pro']}, tous:{type:'boolean'} }, ['categorie']) },
+  { name:'resume_budget', description:'Résumé du budget du mois : revenus, dépenses, solde bancaire, disponible, prévision de fin de mois, principales catégories, mouvements à classer.', input_schema: vocalObj({}) },
+  { name:'ouvrir', description:'Ouvre un écran de l\'appli.', input_schema: vocalObj({ ecran:{type:'string',enum:['clients','client','vehicule','budget','budget_mouvements','budget_banque','planning']}, id:{type:'string'} }, ['ecran']) }
+];
+function vocalSysteme(){
+  const r = data.reglages, aujourdhui = new Date().toISOString().slice(0,10);
+  const ecran = vue + (vue==='interventions'&&vehiculeCourant?` (véhicule ${vehiculeCourant})`:'') + (vue==='vehicules'&&clientCourant?` (client ${clientCourant})`:'');
+  return `Tu es l'assistant vocal de TAB, l'appli de gestion du garage Nova Workshop (Alan). Tu parles à voix haute, en français, de façon TRÈS brève (1 à 2 phrases courtes, sans markdown, sans listes, sans émojis). Nous sommes le ${aujourdhui}. Écran actuel : ${ecran}. Taux horaire : ${r.tauxHoraire||'?'} €/h, marge pièces : ${Math.round((r.margePieces||0)*100)} %. Catégories budget perso : ${CATEGORIES_BUDGET.perso.join(', ')} ; pro : ${CATEGORIES_BUDGET.pro.join(', ')}.
+Règles : utilise les outils pour agir ; cherche toujours le client avec chercher_client avant d'en créer un ; si plusieurs clients ou véhicules correspondent, demande lequel ; ne devine jamais un identifiant. Tu ne peux pas supprimer de données. Après chaque action, confirme à voix haute ce qui a été fait avec les montants (ex. « Devis créé pour la 4L de Dupont, 240 euros »). Pour un montant de main d'œuvre, donne des heures (le taux horaire s'applique). Si la demande est floue, pose une seule question courte. Les nombres s'énoncent naturellement en français.`;
+}
+function vocalSnapshot(){ vocalUndo.push(JSON.stringify([data.clients, data.vehicules, data.interventions, data.mouvements||[]])); if(vocalUndo.length > 6) vocalUndo.shift(); }
+async function vocalAnnuler(){
+  const s = vocalUndo.pop(); if(!s) return 'Rien à annuler.';
+  const [c,v,i,m] = JSON.parse(s); data.clients = c; data.vehicules = v; data.interventions = i; data.mouvements = m; budgetCache.clear();
+  await sauvegarder(); render(); return 'C\'est annulé.';
+}
+function vocalRecalc(f){
+  const l = f.piecesListe || [];
+  f.prixAchatPieces = arrondi(l.reduce((s,p)=>s+p.prixAchat,0)); f.coutPieces = arrondi(l.reduce((s,p)=>s+p.prixFacture,0));
+  f.heuresMO = arrondi(l.reduce((s,p)=>s+p.heures,0)); f.tarifMO = arrondi(l.reduce((s,p)=>s+p.tarifMO,0));
+  f.montantHorsCA = arrondi(l.filter(p=>p.typePiece==='prestataire').reduce((s,p)=>s+p.prixFacture,0));
+  f.depensePerso = arrondi(l.filter(p=>p.typePiece==='depense_perso').reduce((s,p)=>s+p.prixAchat,0));
+  f.achatPiecesCA = arrondi(l.filter(p=>p.typePiece==='normale'||p.typePiece==='zero').reduce((s,p)=>s+p.prixAchat,0));
+}
+function vocalLignes(lignes){
+  return (lignes||[]).map(x=>{
+    const prixAchat = Math.max(0, parseFloat(x.prix_achat)||0), heures = Math.max(0, parseFloat(x.heures)||0);
+    const typePiece = ['normale','zero','prestataire'].includes(x.type_piece) ? x.type_piece : 'normale';
+    return { nom: String(x.nom||'Pièce').slice(0,80), ref:'', prixAchat, prixFacture: prixAchat>0 ? calculerPrixFacturePiece(typePiece, prixAchat) : 0, heures, tarifMO: heures>0 ? arrondi(heures*data.reglages.tauxHoraire) : 0, typePiece, margeZero: typePiece==='zero' };
+  });
+}
+function vocalFicheResume(i){
+  const { v, c } = infosVehicule(i.vehiculeId);
+  return { id:i.id, titre:i.titre, type:i.type, date:i.date, total:totalFiche(i), paiement:i.type==='intervention'?(i.statutPaiement||'non_paye'):undefined, mode:i.modePaiement||undefined, statut_devis:i.statutDevis||undefined, client: c?((c.prenom||'')+' '+(c.nom||'')).trim():'', vehicule: v?((v.marque||'')+' '+(v.modele||'')+' '+(v.immatriculation||'')).trim():'' };
+}
+async function vocalOutil(nom, a){
+  a = a || {};
+  const N = budgetNorm;
+  switch(nom){
+    case 'chercher_client': {
+      const q = N(a.texte), mots = q.split(/\s+/).filter(Boolean);
+      const res = data.clients.filter(c=>{ const veh = data.vehicules.filter(v=>v.clientId===c.id).map(v=>[v.marque,v.modele,v.immatriculation].join(' ')).join(' '); const txt = N([c.prenom,c.nom,c.telephone,veh].join(' ')); return mots.every(m=>txt.includes(m)); }).slice(0,8);
+      return res.map(c=>({ id:c.id, nom:((c.prenom||'')+' '+(c.nom||'')).trim(), tel:c.telephone||'', vehicules:data.vehicules.filter(v=>v.clientId===c.id).map(v=>({ id:v.id, desc:((v.marque||'')+' '+(v.modele||'')+' '+(v.immatriculation||'')).trim() })) }));
+    }
+    case 'chercher_fiches': {
+      let l = data.interventions.slice();
+      if(a.vehicule_id) l = l.filter(i=>i.vehiculeId===a.vehicule_id);
+      if(a.client_id){ const ids = data.vehicules.filter(v=>v.clientId===a.client_id).map(v=>v.id); l = l.filter(i=>ids.includes(i.vehiculeId)); }
+      if(a.filtre==='impayees') l = l.filter(i=>i.type==='intervention' && i.statutPaiement!=='paye' && totalFiche(i)>0);
+      if(a.filtre==='devis_en_attente') l = l.filter(i=>i.type==='devis' && (i.statutDevis||'en_attente')==='en_attente');
+      if(a.texte){ const q = N(a.texte); l = l.filter(i=>N(i.titre+' '+Object.values(vocalFicheResume(i)).join(' ')).includes(q)); }
+      l.sort((x,y)=>(y.date||'').localeCompare(x.date||''));
+      return l.slice(0, Math.min(parseInt(a.limite)||8, 15)).map(vocalFicheResume);
+    }
+    case 'creer_client': {
+      if(!a.nom) return { erreur:'nom manquant' };
+      const c = { id:genId(), prenom:a.prenom||'', nom:a.nom, telephone:a.telephone||'', email:a.email||'', _maj:Date.now() };
+      data.clients.push(c); return { ok:true, client_id:c.id };
+    }
+    case 'creer_vehicule': {
+      if(!data.clients.some(c=>c.id===a.client_id)) return { erreur:'client introuvable' };
+      const v = { id:genId(), clientId:a.client_id, marque:a.marque||'', modele:a.modele||'', immatriculation:(a.immatriculation||'').toUpperCase(), numeroSerie:'', prochainCT:'', entretienLibelle:'', entretienDate:'', _maj:Date.now() };
+      data.vehicules.push(v); return { ok:true, vehicule_id:v.id };
+    }
+    case 'creer_fiche': {
+      if(!data.vehicules.some(v=>v.id===a.vehicule_id)) return { erreur:'véhicule introuvable' };
+      const type = a.type==='devis' ? 'devis' : 'intervention';
+      const f = { id:genId(), vehiculeId:a.vehicule_id, type, titre:String(a.titre||'Intervention').slice(0,120), date:/^\d{4}-\d{2}-\d{2}$/.test(a.date||'')?a.date:new Date().toISOString().slice(0,10), km:a.km?String(a.km):'', piecesListe:vocalLignes(a.lignes), acompte:parseFloat(a.acompte)||0, remise:parseFloat(a.remise)||0, statutDevis:type==='devis'?'en_attente':null, statutPaiement:type==='intervention'?'non_paye':null, piecesCommandees:false, defauts:[], factures:[], controles:[], _maj:Date.now() };
+      vocalRecalc(f); data.interventions.push(f); return { ok:true, fiche:vocalFicheResume(f) };
+    }
+    case 'ajouter_lignes_fiche': {
+      const f = data.interventions.find(i=>i.id===a.fiche_id); if(!f) return { erreur:'fiche introuvable' };
+      f.piecesListe = (f.piecesListe||[]).concat(vocalLignes(a.lignes)); vocalRecalc(f); f._maj = Date.now(); return { ok:true, fiche:vocalFicheResume(f) };
+    }
+    case 'modifier_fiche': {
+      const f = data.interventions.find(i=>i.id===a.fiche_id); if(!f) return { erreur:'fiche introuvable' };
+      if(a.titre) f.titre = String(a.titre).slice(0,120);
+      if(/^\d{4}-\d{2}-\d{2}$/.test(a.date||'')) f.date = a.date;
+      if(a.km!==undefined) f.km = String(a.km);
+      if(a.remise!==undefined) f.remise = Math.max(0, parseFloat(a.remise)||0);
+      if(a.acompte!==undefined) f.acompte = Math.max(0, parseFloat(a.acompte)||0);
+      if(a.statut_devis && f.type==='devis') f.statutDevis = a.statut_devis;
+      if(a.statut_paiement && f.type==='intervention'){
+        f.statutPaiement = a.statut_paiement;
+        if(a.statut_paiement==='paye'){ f.datePaiement = new Date().toISOString().slice(0,10); if(a.mode_paiement) f.modePaiement = a.mode_paiement; } else { f.modePaiement=''; f.depotId=''; }
+      } else if(a.mode_paiement){ f.modePaiement = a.mode_paiement; }
+      f._maj = Date.now(); return { ok:true, fiche:vocalFicheResume(f) };
+    }
+    case 'devis_vers_intervention': {
+      const f = data.interventions.find(i=>i.id===a.fiche_id); if(!f || f.type!=='devis') return { erreur:'devis introuvable' };
+      f.type='intervention'; f.statutPaiement='non_paye'; f.futDevis=true; f._maj=Date.now(); delete f.statutDevis; delete f.piecesCommandees; return { ok:true, fiche:vocalFicheResume(f) };
+    }
+    case 'ajouter_mouvement': {
+      const montant = parseFloat(a.montant); if(!(montant>0)) return { erreur:'montant invalide' };
+      const type = a.type==='revenu' ? 'revenu' : 'depense', portee = a.portee==='pro' ? 'pro' : 'perso';
+      const permis = [...CATEGORIES_BUDGET.perso, ...CATEGORIES_BUDGET.pro];
+      const categorie = type==='revenu' ? 'Revenu' : (permis.includes(a.categorie) ? a.categorie : 'Autre');
+      const m = { id:genId(), type, portee, categorie, date:/^\d{4}-\d{2}-\d{2}$/.test(a.date||'')?a.date:new Date().toISOString().slice(0,10), montant:arrondi(montant), note:String(a.note||'').slice(0,120), _maj:Date.now() };
+      budgetMouvements().push(m); budgetCache.clear(); return { ok:true, mouvement_id:m.id, categorie };
+    }
+    case 'chercher_mouvements': {
+      let l = budgetMouvements().filter(x=>!x.virtuel);
+      if(a.texte){ const q = N(a.texte); l = l.filter(x=>N((x.note||'')+' '+x.categorie).includes(q)); }
+      if(a.categorie) l = l.filter(x=>x.categorie===a.categorie);
+      if(a.depuis) l = l.filter(x=>(x.date||'')>=a.depuis);
+      l.sort((x,y)=>(y.date||'').localeCompare(x.date||''));
+      return l.slice(0, Math.min(parseInt(a.limite)||10, 20)).map(x=>({ id:x.id, date:x.date, type:x.type, montant:x.montant, categorie:x.categorie, portee:x.portee, note:(x.note||'').slice(0,60) }));
+    }
+    case 'classer_mouvement': {
+      const permis = [...new Set([...CATEGORIES_BUDGET.perso, ...CATEGORIES_BUDGET.pro])];
+      if(!permis.includes(a.categorie)) return { erreur:'catégorie inconnue', permises:permis };
+      let cible = a.mouvement_id ? budgetMouvements().filter(x=>x.id===a.mouvement_id) : budgetMouvements().filter(x=>!x.virtuel && a.recherche && N(x.note||'').includes(N(a.recherche))).sort((x,y)=>(y.date||'').localeCompare(x.date||''));
+      if(!cible.length) return { erreur:'aucun mouvement trouvé' };
+      const premier = cible[0];
+      if(a.tous && premier.banque){ const k = banqueCle(premier.note); cible = budgetMouvements().filter(x=>x.banque && k && banqueCle(x.note)===k); } else cible = [premier];
+      cible.forEach(x=>{ x.categorie = a.categorie; if(a.portee) x.portee = a.portee; x._maj = Date.now(); });
+      if(premier.banque) budgetRegleApprendre(premier.note, a.categorie, a.portee || premier.portee);
+      budgetCache.clear(); return { ok:true, nb:cible.length, libelle:(premier.note||'').slice(0,50) };
+    }
+    case 'resume_budget': {
+      const mois = new Date().toISOString().slice(0,7), b = budgetCalculs(mois), r = data.reglages, pv = budgetPrevision();
+      const top = Object.entries(b.parCategorie||{}).sort((x,y)=>y[1]-x[1]).slice(0,5);
+      return { mois, revenus:b.totalRevenus, depenses:b.totalDepenses, solde_mois:b.bilan, depenses_perso:b.depPerso, ca_atelier:b.caTab, solde_bancaire:r.banqueSolde?r.banqueSolde.montant:null, prevu_fin_de_mois:pv?pv.prevu:null, decouvert_prevu:pv&&pv.point_bas.v<0?pv.point_bas:null, a_classer:budgetATrierNb(), top_categories:top.map(([c,m])=>({ categorie:c, montant:m })), impayes: data.interventions.filter(i=>i.type==='intervention'&&i.statutPaiement!=='paye'&&totalFiche(i)>0).length };
+    }
+    case 'ouvrir': {
+      if(a.ecran==='clients') allerClients();
+      else if(a.ecran==='client' && a.id) allerVehicules(a.id);
+      else if(a.ecran==='vehicule' && a.id){ const v = data.vehicules.find(x=>x.id===a.id); if(v) clientCourant = v.clientId; allerInterventions(a.id); }
+      else if(a.ecran==='planning') allerCalendrier();
+      else if(a.ecran && a.ecran.startsWith('budget')){ budgetOnglet = a.ecran==='budget_mouvements'?'mouvements':a.ecran==='budget_banque'?'banque':'resume'; allerBudget(); }
+      else return { erreur:'écran inconnu' };
+      return { ok:true };
+    }
+  }
+  return { erreur:'outil inconnu' };
+}
+const VOCAL_ECRITURES = new Set(['creer_client','creer_vehicule','creer_fiche','ajouter_lignes_fiche','modifier_fiche','devis_vers_intervention','ajouter_mouvement','classer_mouvement']);
+async function vocalAPI(){
+  const cle = budgetCleIA(); if(!cle) throw new Error('Ajoute ta clé API (Budget → Analyse → Conseiller).');
+  const corps = { model:VOCAL_MODELE, max_tokens:1500, system:vocalSysteme(), tools:VOCAL_OUTILS, messages:vocalHist, thinking:{ type:'disabled' } };
+  const envoyer = ()=>fetch('https://api.anthropic.com/v1/messages', { method:'POST', headers:{ 'content-type':'application/json', 'x-api-key':cle, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' }, body:JSON.stringify(corps) });
+  let rep = await envoyer(), json = await rep.json();
+  if(!rep.ok && rep.status===400 && /thinking/i.test(JSON.stringify(json))){ delete corps.thinking; rep = await envoyer(); json = await rep.json(); }
+  if(!rep.ok) throw new Error((json && json.error && json.error.message) || ('Erreur ' + rep.status));
+  try{ const k='tab-ia-usage-vocal', m=new Date().toISOString().slice(0,7); let a=JSON.parse(localStorage.getItem(k)||'null'); if(!a||a.mois!==m) a={mois:m,in:0,out:0,appels:0}; a.in+=json.usage?.input_tokens||0; a.out+=json.usage?.output_tokens||0; a.appels++; localStorage.setItem(k,JSON.stringify(a)); }catch(e){}
+  return json;
+}
+function vocalCouper(){
+  let idx = vocalHist.map((m,k)=>(m.role==='user' && typeof m.content==='string')?k:-1).filter(k=>k>=0);
+  while(vocalHist.length > 30 && idx.length > 1){ vocalHist.splice(0, idx[1]); idx = vocalHist.map((m,k)=>(m.role==='user' && typeof m.content==='string')?k:-1).filter(k=>k>=0); }
+}
+async function vocalTraiter(texte){
+  texte = String(texte||'').trim(); if(!texte || vocalOccupe) return;
+  vocalDernier = texte; vocalReponse = ''; 
+  if(VOCAL_ARRET.test(texte)){ vocalFermer(); return; }
+  vocalOccupe = true; vocalEtat = 'Je réfléchis…'; vocalMajPanneau();
+  let reponse = '';
+  try{
+    if(VOCAL_ANNULE.test(texte)){ reponse = await vocalAnnuler(); }
+    else {
+      vocalHist.push({ role:'user', content:texte }); vocalCouper();
+      let ecrit = false; vocalSnapshot();
+      for(let tour=0; tour<8; tour++){
+        const json = await vocalAPI();
+        vocalHist.push({ role:'assistant', content:json.content });
+        const utilisations = (json.content||[]).filter(b=>b.type==='tool_use');
+        if(json.stop_reason==='tool_use' && utilisations.length){
+          const resultats = [];
+          for(const u of utilisations){
+            let sortie; try{ sortie = await vocalOutil(u.name, u.input); if(VOCAL_ECRITURES.has(u.name) && sortie && sortie.ok) ecrit = true; } catch(e){ sortie = { erreur:String(e.message||e) }; }
+            resultats.push({ type:'tool_result', tool_use_id:u.id, content:JSON.stringify(sortie).slice(0,6000) });
+          }
+          vocalHist.push({ role:'user', content:resultats });
+          continue;
+        }
+        reponse = (json.content||[]).filter(b=>b.type==='text').map(b=>b.text).join(' ').trim();
+        break;
+      }
+      if(ecrit){ budgetCache.clear(); await sauvegarder(); render(); } else vocalUndo.pop();
+      if(!reponse) reponse = 'C\'est fait.';
+    }
+  } catch(e){ reponse = 'Désolé, ' + (e.message||'une erreur est survenue') ; }
+  vocalOccupe = false; vocalReponse = reponse; vocalMajPanneau();
+  vocalDire(reponse);
+}
+function vocalDire(texte){
+  const propre = String(texte).replace(/[*_#`]/g,'').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu,'').replace(/€/g,' euros').replace(/\s+/g,' ').trim();
+  try{ vocalReco && vocalReco.abort && vocalReco.abort(); }catch(e){}
+  if(!('speechSynthesis' in window) || !propre){ vocalReprendre(); return; }
+  vocalParle = true; vocalEtat = 'Je parle…'; vocalMajPanneau();
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(propre); u.lang = 'fr-FR'; u.rate = 1.05;
+  const voix = speechSynthesis.getVoices().find(v=>/^fr/i.test(v.lang)); if(voix) u.voice = voix;
+  let fini = false; const fin = ()=>{ if(fini) return; fini = true; vocalParle = false; vocalReprendre(); };
+  u.onend = fin; u.onerror = fin; setTimeout(fin, 3000 + propre.length*90);
+  speechSynthesis.speak(u);
+}
+function vocalReprendre(){
+  if(!vocalActif){ return; }
+  vocalEtat = 'Je t\'écoute…'; vocalMajPanneau();
+  if(!vocalReco) return;
+  try{ vocalReco.start(); }catch(e){}
+}
+function vocalCreerReco(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition; if(!SR) return null;
+  const r = new SR(); r.lang = 'fr-FR'; r.continuous = true; r.interimResults = true;
+  let silence = null, tampon = '';
+  r.onresult = e=>{
+    if(vocalParle || vocalOccupe) return;
+    let interim = '';
+    for(let k=e.resultIndex; k<e.results.length; k++){ const t = e.results[k][0].transcript; if(e.results[k].isFinal) tampon += ' ' + t; else interim += t; }
+    vocalDernier = (tampon + ' ' + interim).trim(); vocalMajPanneau();
+    clearTimeout(silence);
+    if(tampon.trim()) silence = setTimeout(()=>{ const t = tampon.trim(); tampon = ''; try{ r.abort(); }catch(e){} vocalTraiter(t); }, 1300);
+  };
+  r.onend = ()=>{ if(vocalActif && !vocalParle && !vocalOccupe){ setTimeout(()=>{ try{ r.start(); }catch(e){} }, 250); } };
+  r.onerror = e=>{ if(e.error==='not-allowed' || e.error==='service-not-allowed'){ afficherToast('Micro refusé : autorise-le dans les réglages du navigateur.', 'erreur'); vocalReco = null; vocalEtat = 'Micro indisponible : écris ta demande ci-dessous.'; vocalMajPanneau(); } };
+  return r;
+}
+async function vocalBasculer(){
+  if(vocalActif){ vocalFermer(); return; }
+  if(!budgetCleIA()){ afficherToast('Ajoute d\'abord ta clé API (Budget → Analyse → Conseiller).', 'erreur'); return; }
+  if(!localStorage.getItem('tab-vocal-ok')){
+    if(!await confirmerAction('L\'assistant vocal envoie ce que tu dis, ainsi que les données utiles (noms de clients, véhicules, montants), à Claude (Anthropic) pour exécuter tes demandes. Activer ?')) return;
+    try{ localStorage.setItem('tab-vocal-ok','1'); }catch(e){}
+  }
+  vocalActif = true; vocalHist = []; vocalDernier = ''; vocalReponse = '';
+  vocalReco = vocalCreerReco();
+  vocalEtat = vocalReco ? 'Je t\'écoute…' : 'Reconnaissance vocale indisponible ici : écris ta demande ci-dessous.';
+  vocalMajPanneau();
+  if(vocalReco){ try{ vocalReco.start(); }catch(e){} }
+  try{ speechSynthesis.getVoices(); }catch(e){}
+}
+function vocalFermer(){
+  vocalActif = false; vocalOccupe = false; vocalParle = false;
+  try{ vocalReco && vocalReco.abort(); }catch(e){} vocalReco = null;
+  try{ speechSynthesis.cancel(); }catch(e){}
+  const p = document.getElementById('vocal-panneau'); if(p) p.remove();
+  const b = document.getElementById('vocal-btn'); if(b) b.classList.remove('actif');
+}
+function vocalEnvoiTexte(){ const i = document.getElementById('vocal-texte'); if(!i || !i.value.trim()) return; const t = i.value; i.value = ''; vocalTraiter(t); }
+function vocalMajPanneau(){
+  let p = document.getElementById('vocal-panneau');
+  if(!vocalActif){ if(p) p.remove(); return; }
+  const b = document.getElementById('vocal-btn'); if(b) b.classList.add('actif');
+  const saisie = p ? p.querySelector('#vocal-texte') : null, valeur = saisie ? saisie.value : '';
+  if(!p){ p = document.createElement('div'); p.id = 'vocal-panneau'; document.body.appendChild(p); }
+  p.innerHTML = `<div class="vp-haut"><span class="vp-etat ${vocalOccupe?'occ':vocalParle?'parle':'ecoute'}">${esc(vocalEtat)}</span><span><button onclick="vocalTraiter('annule')" title="Annuler la dernière action">↶</button> <button onclick="vocalFermer()">✕</button></span></div>
+    ${vocalDernier ? `<div class="vp-toi">🗣️ ${esc(vocalDernier)}</div>` : '<div class="vp-aide">Dis par exemple : « crée un devis pour la Clio de Dupont, vidange et filtres » · « Dupont a payé en espèces » · « ajoute 45 euros de courses » · « où en est mon budget ? » · « annule » · « stop »</div>'}
+    ${vocalReponse ? `<div class="vp-claude">🤖 ${esc(vocalReponse)}</div>` : ''}
+    <div class="vp-saisie"><input id="vocal-texte" type="text" placeholder="Ou écris ta demande…" onkeydown="if(event.key==='Enter')vocalEnvoiTexte()"><button onclick="vocalEnvoiTexte()">➤</button></div>`;
+  const n = p.querySelector('#vocal-texte'); if(n && valeur){ n.value = valeur; }
+}
+(function(){
+  const b = document.createElement('button'); b.id = 'vocal-btn'; b.title = 'Assistant vocal'; b.textContent = '🎙️'; b.onclick = vocalBasculer;
+  const ajouter = ()=>document.body.appendChild(b);
+  if(document.body) ajouter(); else document.addEventListener('DOMContentLoaded', ajouter);
+})();
+
 /* --- Fiche de tri d'un mouvement (sans recharger la page) --- */
 let triId = null, triApplTous = true;
 function budgetLigneClic(e, id){
@@ -3763,7 +4063,7 @@ function budgetHtmlEntreprise(){
       <div class="champ large"><label>IBAN (facultatif, affiché sur les factures)</label><input id="ent-iban" value="${esc(e.iban||'')}"></div>
     </div><div class="form-actions"><button class="primaire" onclick="budgetEnregistrerEntreprise()">Enregistrer</button></div></div>`;
 }
-async function imprimerFacture(id){
+async function imprimerFacture(id, partager){
   const i = data.interventions.find(x=>x.id===id); if(!i) return;
   const r = data.reglages, e = r.entreprise || {};
   if(!i.numeroFacture){
@@ -3784,6 +4084,7 @@ async function imprimerFacture(id){
   const lignes = [];
   (i.piecesListe||[]).forEach(p=>{ if(p.prixFacture) lignes.push([p.ref?`${p.nom} (réf. ${p.ref})`:p.nom, parseFloat(p.prixFacture)||0]); if(p.heures) lignes.push([`Main d'œuvre ${p.nom} (${p.heures} h)`, parseFloat(p.tarifMO)||0]); });
   if(!lignes.length && i.heuresMO) lignes.push([`Main d'œuvre (${i.heuresMO} h)`, parseFloat(i.tarifMO)||0]);
+  if(parseFloat(i.remise) > 0) lignes.push(['Remise commerciale', -parseFloat(i.remise)]);
   doc.setFillColor(...PDF_TEAL); doc.rect(14, y-5, 182, 8, 'F');
   doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(255,255,255); doc.text('DÉSIGNATION', 18, y); doc.text('MONTANT', 192, y, { align:'right' });
   y += 8; doc.setTextColor(...PDF_TEXTE); doc.setFont('helvetica','normal'); doc.setFontSize(10);
@@ -3802,7 +4103,15 @@ async function imprimerFacture(id){
   const mentions = [ tva ? '' : 'TVA non applicable, art. 293 B du CGI.', i.statutPaiement==='paye' ? ('Facture acquittée' + (i.modePaiement ? ' (' + libelleMode(i.modePaiement).toLowerCase() + ')' : '') + '.') : 'Paiement à réception de la facture.', 'En cas de retard de paiement : pénalités au taux de trois fois le taux d\'intérêt légal et indemnité forfaitaire de 40 € pour frais de recouvrement (art. L441-10 du Code de commerce).', e.iban ? 'IBAN : ' + e.iban : '' ].filter(Boolean);
   mentions.forEach(m=>{ const ls = doc.splitTextToSize(m, 180); if(y + ls.length*4 > 280){ doc.addPage(); y = 25; } doc.text(ls, 14, y); y += ls.length*4 + 2; });
   finaliserPdf(doc);
-  doc.save('facture-' + i.numeroFacture + '.pdf');
+  const nomPdf = 'facture-' + i.numeroFacture + '.pdf';
+  if(partager){
+    try{
+      const fichier = new File([doc.output('blob')], nomPdf, { type:'application/pdf' });
+      if(navigator.canShare && navigator.canShare({ files:[fichier] })){ await navigator.share({ files:[fichier], title:'Facture ' + i.numeroFacture, text:'Bonjour, voici votre facture ' + i.numeroFacture + ' (' + formatEuros(totalFiche(i)) + ' €). ' + (e.nom||'Nova Workshop') }); return; }
+    } catch(err){ if(err && err.name==='AbortError') return; }
+    afficherToast('Partage direct indisponible ici : la facture est téléchargée, joins-la à ton message.', 'info');
+  }
+  doc.save(nomPdf);
 }
 /* --- Achats rattachés aux fiches --- */
 async function budgetRattacher(mid, fid){
@@ -4534,7 +4843,7 @@ async function basculerChecklistItem(id, coche, idx){
 function totalFiche(i){
   const mo = parseFloat(i.tarifMO) || 0;
   const p = parseFloat(i.coutPieces) || 0;
-  return mo + p;
+  return Math.max(0, arrondi(mo + p - (parseFloat(i.remise)||0)));
 }
 function montantCA(i){
   return arrondi(totalFiche(i) - (parseFloat(i.montantHorsCA)||0) - (parseFloat(i.depensePerso)||0));
@@ -5230,10 +5539,12 @@ function renderInterventions(){
         <datalist id="liste-catalogue"></datalist>
         <div class="apercu-calcul" id="suggestion-catalogue" style="display:none;"></div>
       </div>
-      <div class="grille trois">
+      <div class="bi-chips" id="chips-catalogue"></div>
+      <div class="grille trois" style="margin-top:10px;">
         <div class="champ"><label>Date <span style="color:var(--danger);">*</span></label><input id="i-date" type="date"></div>
         <div class="champ"><label>Kilométrage</label><input id="i-km" type="number" placeholder="ex. 84320"></div>
-        <div class="champ"><label>Acompte versé (€)</label><input id="i-acompte" type="number" placeholder="ex. 50"></div>
+        <div class="champ"><label>Acompte versé (€)</label><input id="i-acompte" type="number" placeholder="ex. 50" oninput="calculerApercus()"></div>
+        <div class="champ"><label>Remise (€)</label><input id="i-remise" type="number" placeholder="ex. 20" oninput="calculerApercus()"></div>
       </div>
       <div class="champ large" id="champ-statut-devis" style="display:none;margin-bottom:10px;">
         <label>Statut du devis</label>
@@ -5270,6 +5581,7 @@ function renderInterventions(){
         <button onclick="fermerFormIntervention()">Annuler</button>
         <button class="primaire" onclick="enregistrerIntervention()">Enregistrer</button>
       </div>
+      <div class="bi-barre"><div class="bi-barre-in"><button onclick="fermerFormIntervention()">✕</button><div class="bi-total"><b id="bi-total">0 €</b><span id="bi-detail">Ajoute une pièce ou des heures</span></div><button class="primaire" onclick="enregistrerIntervention()">Enregistrer</button></div></div>
     </div>
   `;
 
@@ -5379,7 +5691,7 @@ function renderInterventions(){
       <div class="pieces-jointes" id="pj-${i.id}"></div>
       <div class="fiche-actions-bas">
         <button class="primaire" onclick="imprimerFiche('${i.id}')">📄 Exporter en PDF</button>
-        ${i.type==='intervention' ? `<button onclick="imprimerFacture('${i.id}')">🧾 Facture${i.numeroFacture?' '+i.numeroFacture:''}</button>` : ''}
+        ${i.type==='intervention' ? `<button onclick="imprimerFacture('${i.id}')">🧾 Facture${i.numeroFacture?' '+i.numeroFacture:''}</button><button onclick="imprimerFacture('${i.id}', true)">📤 Envoyer</button>` : ''}
         <button class="secondaire" onclick="ouvrirDiagnostic('${i.id}')">🔍 Diagnostic</button>
         <div class="conteneur-menu-fiche">
           <button class="secondaire" onclick="basculerMenuFiche('${i.id}')" title="Plus d'actions">⋯</button>
@@ -5517,8 +5829,17 @@ function peuplerListeCatalogue(){
   const dl = document.getElementById('liste-catalogue');
   const catalogue = data.reglages.catalogue || [];
   dl.innerHTML = catalogue.map(entree=>`<option value="${esc(entree.nom)}">`).join('');
+  const ch = document.getElementById('chips-catalogue');
+  if(ch) ch.innerHTML = catalogue.slice(0,8).map((e,k)=>`<button type="button" onclick="appliquerChipCatalogue(${k})">${esc(e.nom)}${e.heures?' · '+e.heures+' h':''}</button>`).join('');
 }
 
+function appliquerChipCatalogue(k){
+  const e = (data.reglages.catalogue||[])[k]; if(!e) return;
+  document.getElementById('i-titre').value = e.nom;
+  const carte = document.querySelector('#pieces-lignes .piece-carte');
+  if(carte && e.heures && !(parseFloat(carte.querySelector('.piece-heures').value) > 0)){ carte.querySelector('.piece-heures').value = e.heures; if(!carte.querySelector('.piece-nom').value) carte.querySelector('.piece-nom').value = e.nom; }
+  calculerApercus(); document.getElementById('suggestion-catalogue').style.display='none';
+}
 function suggererTempsHabituel(){
   const titre = document.getElementById('i-titre').value.trim().toLowerCase();
   const catalogue = data.reglages.catalogue || [];
@@ -5553,6 +5874,7 @@ async function ouvrirEditionIntervention(id){
   document.getElementById('i-date').value = i.date || '';
   document.getElementById('i-km').value = i.km || '';
   document.getElementById('i-acompte').value = i.acompte || '';
+  document.getElementById('i-remise').value = i.remise || '';
   choisirType(i.type || 'intervention');
   if(i.type === 'devis') choisirStatutDevis(i.statutDevis || 'en_attente');
 
@@ -5610,7 +5932,7 @@ async function ouvrirEditionIntervention(id){
 
 function fermerFormIntervention(){
   document.getElementById('form-intervention').classList.remove('ouvert');
-  ['i-titre','i-km','i-acompte'].forEach(id=>document.getElementById(id).value='');
+  ['i-titre','i-km','i-acompte','i-remise'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('pieces-lignes').innerHTML = '';
   document.getElementById('i-date').value='';
   document.getElementById('i-erreur').style.display='none';
@@ -5668,6 +5990,25 @@ function choisirMargePiece(bouton, type){
 }
 
 function calculerApercus(){
+  try{ calculerApercusBase(); } finally { majBarreTotal(); }
+}
+function majBarreTotal(){
+  const b = document.getElementById('bi-total'); if(!b) return;
+  let facture = 0, mo = 0, achat = 0, horsCA = 0;
+  document.querySelectorAll('#pieces-lignes .piece-carte').forEach(c=>{
+    const t = c.dataset.marge, prix = parseFloat(c.querySelector('.piece-prix').value)||0, h = parseFloat(c.querySelector('.piece-heures').value)||0;
+    if(prix>0){ const f = calculerPrixFacturePiece(t, prix); if(t==='depense_perso'){} else { facture += f; if(t!=='prestataire') achat += prix; else horsCA += f; } }
+    if(h>0) mo += arrondi(h*data.reglages.tauxHoraire);
+  });
+  const remise = parseFloat(document.getElementById('i-remise').value)||0, acompte = parseFloat(document.getElementById('i-acompte').value)||0;
+  const total = Math.max(0, arrondi(facture+mo-remise));
+  b.textContent = formatEuros(total) + ' €';
+  const marge = arrondi(total - horsCA - achat);
+  const d = [];
+  if(facture) d.push('pièces ' + formatEuros(arrondi(facture)) + ' €'); if(mo) d.push('MO ' + formatEuros(arrondi(mo)) + ' €'); if(remise) d.push('remise −' + formatEuros(remise) + ' €'); if(acompte) d.push('reste ' + formatEuros(Math.max(0,arrondi(total-acompte))) + ' €'); if(total) d.push('marge ≈ ' + formatEuros(marge) + ' €');
+  document.getElementById('bi-detail').textContent = d.join(' · ') || 'Ajoute une pièce ou des heures';
+}
+function calculerApercusBase(){
   let totalAchat = 0, totalFacture = 0, totalHeures = 0, totalMO = 0, horsCA = 0, depensePerso = 0;
   document.querySelectorAll('#pieces-lignes .piece-carte').forEach(carte=>{
     const typePiece = carte.dataset.marge;
@@ -6274,6 +6615,7 @@ async function enregistrerIntervention(){
   const date = document.getElementById('i-date').value;
   const km = document.getElementById('i-km').value.trim();
   const acompte = parseFloat(document.getElementById('i-acompte').value) || 0;
+  const remise = parseFloat(document.getElementById('i-remise').value) || 0;
 
   const piecesListe = Array.from(document.querySelectorAll('#pieces-lignes .piece-carte'))
     .map(carte=>{
@@ -6317,7 +6659,7 @@ async function enregistrerIntervention(){
     const nbFacturesAvant = (existante.factures||[]).length;
     Object.assign(existante, {
       type: typeSelectionne, titre, date, km,
-      piecesListe, heuresMO, prixAchatPieces, tarifMO, coutPieces, acompte, montantHorsCA, depensePerso, achatPiecesCA,
+      piecesListe, heuresMO, prixAchatPieces, tarifMO, coutPieces, acompte, remise, montantHorsCA, depensePerso, achatPiecesCA,
       statutDevis: typeSelectionne==='devis' ? statutDevisSelectionne : null,
       defauts, _maj: Date.now()
     });
@@ -6342,7 +6684,7 @@ async function enregistrerIntervention(){
 
   const nouvelleIntervention = {
     id, vehiculeId: vehiculeCourant, type: typeSelectionne, titre, date, km,
-    piecesListe, heuresMO, prixAchatPieces, tarifMO, coutPieces, acompte, montantHorsCA, depensePerso, achatPiecesCA,
+    piecesListe, heuresMO, prixAchatPieces, tarifMO, coutPieces, acompte, remise, montantHorsCA, depensePerso, achatPiecesCA,
     statutDevis: typeSelectionne==='devis' ? statutDevisSelectionne : null,
     statutPaiement: typeSelectionne==='intervention' ? 'non_paye' : null,
     piecesCommandees: false,
